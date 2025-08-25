@@ -1,4 +1,4 @@
-/** XativaBot – App (culinario + i18n + voz + reservas) */
+/** XativaBot – App (voz optimizada + i18n + culinario + reservas) */
 
 // DOM
 const chatMessages = document.getElementById('chat-messages');
@@ -9,20 +9,25 @@ const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
 const suggestionChips = document.querySelectorAll('.chip');
 
-// State
+// Estado
 let currentLanguage = 'es';
 let recognition = null;
-let speechSynthesis = window.speechSynthesis;
+let speechSynthesisObj = window.speechSynthesis;
 let isListening = false;
 
-// Data
+// Voz
+let voicesReady = false;
+let availableVoices = [];
+let userInteracted = false; // habilita TTS tras primer gesto del usuario
+
+// Datos
 let MENU = { dishes: [] };
 let LORE = { facts: [] };
 
-// User memory
+// Memoria usuario
 let USER = { allergies: [], preferences: [], lastDish: null };
 
-// i18n texts
+// ===== i18n =====
 const I18N = {
   en:{welcome:"Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?",
       ask_allergies:"Do you have any allergies or dietary restrictions? (e.g., gluten, shellfish, egg, milk, fish, vegan, vegetarian)",
@@ -65,7 +70,7 @@ const I18N = {
       and:"i"}
 };
 
-// Keywords
+// Palabras clave
 const KEYWORDS = {
   en:{greet:["hello","hi","hey"],menu:["menu","card","dishes","food"],rec:["recommend","suggest","what should i eat"],
       allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
@@ -78,23 +83,31 @@ const KEYWORDS = {
       lore:["història","mite","tradició","origen","llegenda"],reserve:["reserva","reservar"]}
 };
 
-// Init
+// ===== INIT =====
 document.addEventListener('DOMContentLoaded', initApp);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (speechSynthesis) speechSynthesis.pause(); }
-  else { if (speechSynthesis) speechSynthesis.resume(); }
+  if (document.hidden) { if (speechSynthesisObj) speechSynthesisObj.pause(); }
+  else { if (speechSynthesisObj) speechSynthesisObj.resume(); }
 });
 
-function initApp(){
+// Marca interacción del usuario (habilita TTS en móvil)
+['click','keydown','touchstart'].forEach(evt => {
+  document.addEventListener(evt, () => { userInteracted = true; }, { once: true, passive: true });
+});
+
+async function initApp(){
   loadMemory();
   setupEventListeners();
   setupSpeechRecognition();
   checkBrowserSupport();
+  await ensureVoicesReady(); // <- clave para TTS estable
   loadData();
-  // saludo inicial según idioma
-  reply(I18N[currentLanguage].welcome);
+
+  // Bienvenida solo en texto (evita bloqueo por autoplay)
+  addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 }
 
+// ===== Datos =====
 async function loadData(){
   try{
     const [menuRes,loreRes] = await Promise.all([
@@ -103,14 +116,14 @@ async function loadData(){
     ]);
     MENU = await menuRes.json();
     LORE = await loreRes.json();
-  }catch(e){ console.warn('Data offline (SW cache will provide when available).', e); }
+  }catch(e){ console.warn('Data offline (SW cache will serve later).', e); }
 }
 
-// memory
+// ===== Memoria =====
 function loadMemory(){ try{ const raw=localStorage.getItem('xativabot-user'); if(raw) USER=JSON.parse(raw);}catch{} }
 function saveMemory(){ try{ localStorage.setItem('xativabot-user', JSON.stringify(USER)); }catch{} }
 
-// listeners
+// ===== Eventos UI =====
 function setupEventListeners(){
   sendBtn.addEventListener('click', handleSendMessage);
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
@@ -120,12 +133,13 @@ function setupEventListeners(){
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
 
+// ===== Compat =====
 function checkBrowserSupport(){
   if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){ console.warn('Speech recognition not supported'); voiceBtn.style.display='none'; }
   if(!('speechSynthesis'in window)) console.warn('Speech synthesis not supported');
 }
 
-// STT
+// ===== STT (voz a texto) =====
 function setupSpeechRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return;
@@ -139,7 +153,7 @@ function setupSpeechRecognition(){
 }
 function toggleVoiceInput(){ if(!recognition) return; isListening? recognition.stop(): recognition.start(); }
 
-// chat
+// ===== Chat =====
 function handleSendMessage(){
   const message = userInput.value.trim();
   if(message==='') return;
@@ -154,7 +168,7 @@ function addMessageToChat(message,sender){
   setTimeout(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; },10);
 }
 
-// NLU básico
+// ===== NLU básico =====
 function processUserMessage(raw){
   const msg = raw.toLowerCase();
   const K = KEYWORDS[currentLanguage];
@@ -180,12 +194,19 @@ function processUserMessage(raw){
       case 'reserve': reply(I18N[currentLanguage].reservation_prompt); showReservationForm(); break;
       default: reply(I18N[currentLanguage].unknown);
     }
-  },400);
+  },300);
 }
 
-function reply(text){ addMessageToChat(text,'bot'); if(!isMobileDevice()) speakText(text); }
+function reply(text){
+  addMessageToChat(text,'bot');
+  if (shouldSpeak()) speakText(text);
+}
+function shouldSpeak(){
+  // Habla si el usuario ya interactuó (OK en móviles) o si no es móvil (desktop suele permitir)
+  return userInteracted || !isMobileDevice();
+}
 
-// culinario
+// ===== Culinario =====
 function replyMenu(){
   if(!MENU.dishes.length){ reply("La carta se está cargando, inténtalo de nuevo…"); return; }
   const intro = I18N[currentLanguage].menu_intro;
@@ -239,30 +260,109 @@ function parseAndSaveAllergies(text){
   saveMemory();
 }
 
-// TTS
-function speakText(text){
-  if(!speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=getLangCode(currentLanguage);
-  const voices=speechSynthesis.getVoices();
-  const lc=getLangCode(currentLanguage).substring(0,2);
-  const v=voices.find(v=>v.lang.toLowerCase().startsWith(lc)); if(v) u.voice=v;
-  speechSynthesis.speak(u);
+// ===== TTS (texto a voz) – robusto =====
+
+// Espera a que las voces estén disponibles
+function ensureVoicesReady(){
+  return new Promise((resolve)=>{
+    if (!speechSynthesisObj) return resolve();
+    const load = () => {
+      availableVoices = speechSynthesisObj.getVoices();
+      if (availableVoices && availableVoices.length){
+        voicesReady = true;
+        resolve();
+      }
+    };
+    // Algunos navegadores ya las tienen
+    load();
+    if (!voicesReady){
+      // Chrome/Safari las despachan asíncronamente
+      speechSynthesisObj.onvoiceschanged = () => { load(); if (voicesReady) resolve(); };
+      // “nudge” en algunos motores
+      setTimeout(load, 250);
+      setTimeout(load, 1000);
+    }
+  });
 }
 
-// idioma
+// Selección de voz por idioma con fallback
+function pickVoiceFor(lang){
+  if (!availableVoices || !availableVoices.length) return null;
+
+  const wanted = lang.toLowerCase();              // p.ej. 'es-es' / 'ca-es'
+  const primary = wanted.slice(0,2);              // 'es' / 'ca' / 'en'
+
+  // 1) Coincidencia exacta
+  let v = availableVoices.find(v => v.lang && v.lang.toLowerCase() === wanted);
+  if (v) return v;
+
+  // 2) Coincidencia por código primario
+  v = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(primary));
+  if (v) return v;
+
+  // 3) Fallback razonable
+  const fallbacks = primary === 'ca' ? ['es','en'] : primary === 'es' ? ['en'] : ['es'];
+  for (const fb of fallbacks){
+    const m = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(fb));
+    if (m) return m;
+  }
+
+  // 4) Lo que haya
+  return availableVoices[0] || null;
+}
+
+async function speakText(text){
+  if (!speechSynthesisObj) return;
+
+  // Asegura voces listas
+  await ensureVoicesReady();
+
+  // Cancela lo que esté sonando
+  try { speechSynthesisObj.cancel(); } catch {}
+
+  const utter = new SpeechSynthesisUtterance(text);
+
+  // Voz + idioma
+  const langCode = getLangCode(currentLanguage); // 'es-ES' / 'ca-ES' / 'en-US'
+  const voice = pickVoiceFor(langCode);
+  if (voice){
+    utter.voice = voice;
+    // Usa el lang de la voz para maximizar compatibilidad cross-browser
+    utter.lang = (voice.lang || langCode);
+  } else {
+    utter.lang = langCode;
+  }
+
+  // Ajustes suaves (opcionales)
+  utter.rate = 1.0;
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
+
+  // Algunos motores requieren speak en microtask
+  setTimeout(() => {
+    try { speechSynthesisObj.speak(utter); } catch (e) { console.warn('TTS speak failed:', e); }
+  }, 0);
+}
+
+// ===== Idioma =====
 function changeLanguage(lang){
   currentLanguage = lang;
+
+  // UI traducible
   document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
   userInput.placeholder = userInput.getAttribute('data-'+lang) || userInput.placeholder;
-  if(recognition) recognition.lang = getLangCode(lang);
+
+  // STT al idioma
+  if (recognition) recognition.lang = getLangCode(lang);
+
+  // Mensaje + voz si ya hay interacción
   reply(I18N[currentLanguage].ask_allergies);
 }
+
 function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
 
-// ====== Reserva (form) ======
+// ===== Reserva =====
 function showReservationForm(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
   wrap.innerHTML=`
@@ -310,7 +410,7 @@ function showReservationForm(){
   });
 }
 
-// reserva helpers (Netlify Function)
+// ===== Helpers reserva (Netlify Function) =====
 async function submitReservation(reservation){
   const resp=await fetch('/.netlify/functions/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)});
   const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
