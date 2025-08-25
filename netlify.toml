@@ -1,0 +1,39 @@
+# netlify.toml
+[build]
+  command = ""
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+# (Solo si usas router del lado del cliente; si no, puedes omitir)
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
+
+# Headers útiles para PWA
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+  Content-Type = "application/manifest+json"
+  Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+  # Evita que se quede viejo el service worker en caché del CDN
+  Cache-Control = "no-cache"
+
+# Cache estático para assets
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icon/*"
+  [headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
+
