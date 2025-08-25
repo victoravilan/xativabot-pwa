@@ -1,12 +1,6 @@
-/**
- * XativaBot PWA - Chef Assistant (multilingüe)
- * - Intents: greeting, menu, recommend, dietary/allergies, history/myths, reservation, hours, locations, help
- * - Text + Voice según idioma seleccionado
- * - Recomendaciones con filtrado por alergias y preferencias
- * - Reserva con Function de Netlify (/.netlify/functions/reservations)
- */
+/** XativaBot – App (culinario + i18n + voz + reservas) */
 
-// ---------- DOM ----------
+// DOM
 const chatMessages = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
@@ -15,315 +9,321 @@ const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
 const suggestionChips = document.querySelectorAll('.chip');
 
-// ---------- Estado ----------
-const state = {
-  lang: 'en',
-  allergens: new Set(),       // e.g., 'gluten','nuts','shellfish','dairy','egg'
-  dietary: new Set(),         // e.g., 'vegan','vegetarian','gluten-free'
-  lastIntent: null
-};
-
-// ---------- I18N ----------
-const I18N = {
-  en: {
-    placeholder: "Type your message...",
-    chip: {
-      menu: "Menu recommendations",
-      dietary: "Special dietary needs",
-      reserve: "Make a reservation",
-      locations: "Restaurant locations"
-    },
-    welcome: "Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?",
-    ask_prefs: "Tell me your preferences (e.g., vegan, spicy, seafood) and allergies (e.g., nuts, gluten).",
-    rec_intro: "Based on your profile, I recommend:",
-    none_match: "I couldn't find perfect matches. Would you try one of these safe options?",
-    set_prefs_ok: "Got it. I'll remember that for future recommendations.",
-    ask_allergies: "Any allergies or restrictions I should consider?",
-    hours: "We're open daily 12:00–23:00 (kitchen closes 22:30).",
-    locations: "Locations: Valencia City Center, Alicante Beachfront, Madrid Salamanca.",
-    reservation: "I'd be happy to help with your reservation. Please fill your details:",
-    history_intro: "Here's a culinary story:",
-    help: "I can recommend dishes, handle reservations, filter allergies, and share culinary myths. Try: \"vegan paella\", \"gluten-free options\", \"tell me a myth\", or \"book for 2 at 20:00\"."
-  },
-  es: {
-    placeholder: "Escribe tu mensaje...",
-    chip: {
-      menu: "Recomendaciones del menú",
-      dietary: "Necesidades dietéticas especiales",
-      reserve: "Hacer una reserva",
-      locations: "Ubicaciones de restaurantes"
-    },
-    welcome: "¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?",
-    ask_prefs: "Cuéntame tus preferencias (p. ej., vegano, picante, mariscos) y alergias (p. ej., frutos secos, gluten).",
-    rec_intro: "Según tu perfil, te recomiendo:",
-    none_match: "No encontré coincidencias perfectas. ¿Te apetecen estas opciones seguras?",
-    set_prefs_ok: "Perfecto. Lo tendré en cuenta para próximas sugerencias.",
-    ask_allergies: "¿Hay alergias o restricciones que deba considerar?",
-    hours: "Abrimos todos los días 12:00–23:00 (cocina hasta 22:30).",
-    locations: "Ubicaciones: Centro de Valencia, Playa de Alicante, Salamanca (Madrid).",
-    reservation: "Con gusto te ayudo con la reserva. Por favor, completa tus datos:",
-    history_intro: "Aquí va una historia culinaria:",
-    help: "Puedo recomendar platos, gestionar reservas, filtrar alergias y compartir mitos culinarios. Prueba: «paella vegana», «opciones sin gluten», «cuéntame un mito» o «reserva para 2 a las 20:00»."
-  },
-  ca: {
-    placeholder: "Escriu el teu missatge...",
-    chip: {
-      menu: "Recomanacions del menú",
-      dietary: "Necessitats dietètiques especials",
-      reserve: "Fer una reserva",
-      locations: "Ubicacions de restaurants"
-    },
-    welcome: "Benvingut als Restaurants Xativa! Sóc l'AlexBot, el teu assistent de xef personal. Com et puc ajudar avui?",
-    ask_prefs: "Explica'm les teves preferències (p. ex., vegà, picant, marisc) i al·lèrgies (p. ex., fruits secs, gluten).",
-    rec_intro: "Segons el teu perfil, et recomano:",
-    none_match: "No he trobat coincidències perfectes. T'abelleixen aquestes opcions segures?",
-    set_prefs_ok: "Entesos. Ho tindré en compte per a futures recomanacions.",
-    ask_allergies: "Hi ha al·lèrgies o restriccions que hagi de considerar?",
-    hours: "Oberts cada dia 12:00–23:00 (cuina fins 22:30).",
-    locations: "Ubicacions: Centre de València, Platja d'Alacant, Salamanca (Madrid).",
-    reservation: "T'ajudo amb la reserva. Si us plau, completa les teves dades:",
-    history_intro: "Una història culinària:",
-    help: "Puc recomanar plats, gestionar reserves, filtrar al·lèrgies i compartir mites culinaris. Prova: «paella vegana», «opcions sense gluten», «explica'm un mite» o «reserva per a 2 a les 20:00»."
-  }
-};
-
-// ---------- Datos (fallback). Si existe /menu.json lo cargamos en init ----------
-let MENU = [
-  {
-    id: "paella_valenciana",
-    tags: ["rice","traditional"],
-    allergens: ["shellfish"], // si la haces mixta; ajusta según receta
-    name: { en:"Valencian Paella", es:"Paella Valenciana", ca:"Paella Valenciana" },
-    desc: { en:"Saffron rice with rabbit, chicken and green beans.",
-            es:"Arroz al azafrán con conejo, pollo y judías verdes.",
-            ca:"Arròs al safrà amb conill, pollastre i bajoques." }
-  },
-  {
-    id: "seafood_paella",
-    tags: ["rice","seafood"],
-    allergens: ["shellfish"],
-    name: { en:"Seafood Paella", es:"Paella de Marisco", ca:"Paella de Marisc" },
-    desc: { en:"Prawns, mussels, squid and rich fish stock.",
-            es:"Gambas, mejillones, calamar y caldo de pescado.",
-            ca:"Gambes, musclos, calamar i brou de peix." }
-  },
-  {
-    id: "tapas_patatas_bravas",
-    tags: ["tapas","vegetarian","spicy"],
-    allergens: [],
-    name: { en:"Patatas Bravas", es:"Patatas Bravas", ca:"Patates Braves" },
-    desc: { en:"Crispy potatoes with spicy brava sauce & aioli.",
-            es:"Patatas crujientes con salsa brava picante y alioli.",
-            ca:"Patates cruixents amb salsa brava i allioli." }
-  },
-  {
-    id: "gazpacho",
-    tags: ["cold","vegan","gluten-free"],
-    allergens: [],
-    name: { en:"Gazpacho", es:"Gazpacho", ca:"Gaspatxo" },
-    desc: { en:"Chilled tomato soup, refreshing and light.",
-            es:"Sopa fría de tomate, refrescante y ligera.",
-            ca:"Sopa freda de tomàquet, refrescant i lleugera." }
-  }
-];
-
-const CULINARY_FACTS = {
-  en: [
-    "Paella began around Valencia’s Albufera rice fields; the classic uses rabbit, chicken and flat beans—seafood is a later coastal adaptation.",
-    "The word 'tapa' may come from the old custom of covering (tapar) drinks with bread or ham to keep flies away."
-  ],
-  es: [
-    "La paella nació en los arrozales de l'Albufera; la clásica lleva conejo, pollo y bajoqueta. La versión de marisco es una adaptación costera posterior.",
-    "La palabra «tapa» podría venir de la costumbre de tapar la bebida con pan o jamón para evitar las moscas."
-  ],
-  ca: [
-    "La paella va néixer als arrossars de l'Albufera; la clàssica porta conill, pollastre i bajoqueta. La versió de marisc és una adaptació costanera posterior.",
-    "La paraula «tapa» pot venir de tapar la beguda amb pa o pernil per evitar les mosques."
-  ]
-};
-
-// ---------- Utilidades de idioma/voz ----------
-const speechSynth = window.speechSynthesis;
+// State
+let currentLanguage = 'es';
 let recognition = null;
+let speechSynthesis = window.speechSynthesis;
 let isListening = false;
-let preferredVoices = []; // cache
 
-function getLangCode(lang) {
-  return ({ en:'en-US', es:'es-ES', ca:'ca-ES' }[lang]) || 'en-US';
-}
+// Data
+let MENU = { dishes: [] };
+let LORE = { facts: [] };
 
-function pickVoice(lang) {
-  const code = getLangCode(lang).slice(0,2);
-  const voices = speechSynth.getVoices();
-  // Preferimos voces que empiecen por el idioma
-  let v = voices.find(v => v.lang?.toLowerCase().startsWith(code) && /female|heather|lucia|laura|mónica|paula/i.test(v.name)) ||
-          voices.find(v => v.lang?.toLowerCase().startsWith(code)) ||
-          voices.find(v => /en/i.test(v.lang)) ||
-          voices[0];
-  return v || null;
-}
+// User memory
+let USER = { allergies: [], preferences: [], lastDish: null };
 
-function speak(text) {
-  if (!speechSynth) return;
-  speechSynth.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = getLangCode(state.lang);
-  const voice = pickVoice(state.lang);
-  if (voice) u.voice = voice;
-  u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
-  speechSynth.speak(u);
-}
+// i18n texts
+const I18N = {
+  en:{welcome:"Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?",
+      ask_allergies:"Do you have any allergies or dietary restrictions? (e.g., gluten, shellfish, egg, milk, fish, vegan, vegetarian)",
+      menu_intro:"Here are some highlights from our menu:",
+      rec_ready:"Based on your preferences, I recommend:",
+      rec_need_info:"I can recommend dishes, but first tell me if you have allergies or diet preferences.",
+      saved_prefs:"Got it. I’ll remember that.",
+      no_match:"I couldn’t find a safe match. Would you like gluten-free or vegetarian options?",
+      lore_intro:"Did you know?",
+      reservation_prompt:"Great! Please fill in your reservation details:",
+      allergies_saved:"Allergies/preferences saved.",
+      say_more:"Tell me more—what are you craving today?",
+      unknown:"Thanks for your message. How else may I assist you today?",
+      and:"and"},
+  es:{welcome:"¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?",
+      ask_allergies:"¿Tienes alguna alergia o restricción? (p. ej.: gluten, marisco, huevo, leche, pescado, vegano, vegetariano)",
+      menu_intro:"Estos son algunos destacados de nuestra carta:",
+      rec_ready:"Según tus preferencias, te recomiendo:",
+      rec_need_info:"Puedo recomendarte platos, pero antes dime si tienes alergias o una dieta específica.",
+      saved_prefs:"Anotado. Lo recordaré.",
+      no_match:"No he encontrado un plato seguro. ¿Quieres ver opciones sin gluten o vegetarianas?",
+      lore_intro:"¿Sabías que…?",
+      reservation_prompt:"¡Perfecto! Completa los datos de tu reserva:",
+      allergies_saved:"Alergias/preferencias guardadas.",
+      say_more:"Cuéntame más—¿qué te apetece hoy?",
+      unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
+      and:"y"},
+  ca:{welcome:"Benvingut als Restaurants Xativa! Sóc l’AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?",
+      ask_allergies:"Tens cap al·lèrgia o restricció? (p. ex.: gluten, marisc, ou, llet, peix, vegà, vegetarià)",
+      menu_intro:"Aquests són alguns destacats de la carta:",
+      rec_ready:"Segons les teves preferències, et recomane:",
+      rec_need_info:"Et puc recomanar plats, però primer digue’m si tens al·lèrgies o una dieta concreta.",
+      saved_prefs:"Anotat. Ho recordaré.",
+      no_match:"No he trobat un plat segur. Vols veure opcions sense gluten o vegetarianes?",
+      lore_intro:"Sabies que…?",
+      reservation_prompt:"Genial! Omple les dades de la teua reserva:",
+      allergies_saved:"Al·lèrgies/preferències guardades.",
+      say_more:"Explica’m més—què et ve de gust avui?",
+      unknown:"Gràcies pel teu missatge. En què més puc ajudar-te?",
+      and:"i"}
+};
 
-if (speechSynth) {
-  speechSynth.onvoiceschanged = () => {
-    preferredVoices = speechSynth.getVoices();
-  };
-}
+// Keywords
+const KEYWORDS = {
+  en:{greet:["hello","hi","hey"],menu:["menu","card","dishes","food"],rec:["recommend","suggest","what should i eat"],
+      allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
+      lore:["history","myth","tradition","story","origin"],reserve:["reserve","reservation","book"]},
+  es:{greet:["hola","buenas"],menu:["menú","carta","platos","comida"],rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
+      allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
+      lore:["historia","mito","tradición","origen","leyenda"],reserve:["reserva","reservar","booking"]},
+  ca:{greet:["hola","bones"],menu:["menú","carta","plats","menjar"],rec:["recomana","recomanació","què menge","que menjar"],
+      allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
+      lore:["història","mite","tradició","origen","llegenda"],reserve:["reserva","reservar"]}
+};
 
-// ---------- INIT ----------
+// Init
 document.addEventListener('DOMContentLoaded', initApp);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { speechSynth?.pause(); } else { speechSynth?.resume(); }
+  if (document.hidden) { if (speechSynthesis) speechSynthesis.pause(); }
+  else { if (speechSynthesis) speechSynthesis.resume(); }
 });
 
-function initApp() {
-  // UI
+function initApp(){
+  loadMemory();
   setupEventListeners();
-  setLanguage(languageSelect?.value || 'en');
-  // Speech Recognition
   setupSpeechRecognition();
-  // Carga menú si existe (opcional)
-  fetchMenuIfAvailable();
-
-  // Mensaje de bienvenida en idioma
-  addMessageToChat(I18N[state.lang].welcome, 'bot');
+  checkBrowserSupport();
+  loadData();
+  // saludo inicial según idioma
+  reply(I18N[currentLanguage].welcome);
 }
 
-function setupEventListeners() {
+async function loadData(){
+  try{
+    const [menuRes,loreRes] = await Promise.all([
+      fetch('/data/menu.json'),
+      fetch('/data/lore.json')
+    ]);
+    MENU = await menuRes.json();
+    LORE = await loreRes.json();
+  }catch(e){ console.warn('Data offline (SW cache will provide when available).', e); }
+}
+
+// memory
+function loadMemory(){ try{ const raw=localStorage.getItem('xativabot-user'); if(raw) USER=JSON.parse(raw);}catch{} }
+function saveMemory(){ try{ localStorage.setItem('xativabot-user', JSON.stringify(USER)); }catch{} }
+
+// listeners
+function setupEventListeners(){
   sendBtn.addEventListener('click', handleSendMessage);
-  userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
-  });
+  userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn.addEventListener('click', toggleVoiceInput);
-  languageSelect.addEventListener('change', (e) => setLanguage(e.target.value));
-  suggestionChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      userInput.value = chip.textContent;
-      handleSendMessage();
-    });
-  });
-  userInput.addEventListener('input', () => {
-    userInput.style.height = 'auto';
-    userInput.style.height = (userInput.scrollHeight) + 'px';
-  });
+  languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
+  suggestionChips.forEach(chip=>{ chip.addEventListener('click',()=>{ userInput.value=chip.textContent; handleSendMessage(); }); });
+  userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
 
-function setLanguage(lang) {
-  state.lang = ['en','es','ca'].includes(lang) ? lang : 'en';
-  // placeholder + elementos con data-*
-  userInput.placeholder = I18N[state.lang].placeholder;
-  document.querySelectorAll('[data-' + state.lang + ']').forEach(el => {
-    el.textContent = el.getAttribute('data-' + state.lang);
-  });
-  // reconocimiento
-  if (recognition) recognition.lang = getLangCode(state.lang);
+function checkBrowserSupport(){
+  if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){ console.warn('Speech recognition not supported'); voiceBtn.style.display='none'; }
+  if(!('speechSynthesis'in window)) console.warn('Speech synthesis not supported');
 }
 
-// ---------- Reconocimiento de voz ----------
-function setupSpeechRecognition() {
+// STT
+function setupSpeechRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { voiceBtn.style.display = 'none'; return; }
+  if(!SR) return;
   recognition = new SR();
-  recognition.continuous = false; recognition.interimResults = false;
-  recognition.lang = getLangCode(state.lang);
-  recognition.onstart = () => { isListening = true; voiceBtn.classList.add('active'); voiceIndicator.classList.add('active'); };
-  recognition.onend   = () => { isListening = false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
-  recognition.onresult= (e) => { userInput.value = e.results[0][0].transcript; handleSendMessage(); };
-  recognition.onerror = () => { isListening = false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
+  recognition.continuous=false; recognition.interimResults=false;
+  recognition.lang=getLangCode(currentLanguage);
+  recognition.onstart=()=>{ isListening=true; voiceBtn.classList.add('active'); voiceIndicator.classList.add('active'); };
+  recognition.onend=()=>{ isListening=false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
+  recognition.onresult=(e)=>{ const transcript = e.results[0][0].transcript; userInput.value=transcript; handleSendMessage(); };
+  recognition.onerror=(e)=>{ console.error('STT error:', e.error); isListening=false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
 }
+function toggleVoiceInput(){ if(!recognition) return; isListening? recognition.stop(): recognition.start(); }
 
-function toggleVoiceInput() {
-  if (!recognition) return;
-  if (isListening) recognition.stop(); else recognition.start();
-}
-
-// ---------- Chat ----------
-function handleSendMessage() {
+// chat
+function handleSendMessage(){
   const message = userInput.value.trim();
-  if (!message) return;
-  addMessageToChat(message, 'user');
-  userInput.value = ''; userInput.style.height = 'auto';
-  setTimeout(() => handleUserMessage(message), 250);
+  if(message==='') return;
+  addMessageToChat(message,'user');
+  userInput.value=''; userInput.style.height='auto';
+  processUserMessage(message);
+}
+function addMessageToChat(message,sender){
+  const div=document.createElement('div'); div.classList.add('message', `${sender}-message`);
+  const p=document.createElement('p'); p.textContent=message; div.appendChild(p);
+  chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight;
+  setTimeout(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; },10);
 }
 
-function addMessageToChat(text, sender) {
-  const el = document.createElement('div');
-  el.classList.add('message', `${sender}-message`);
-  const p = document.createElement('p');
-  p.textContent = text;
-  el.appendChild(p);
-  chatMessages.appendChild(el);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 10);
+// NLU básico
+function processUserMessage(raw){
+  const msg = raw.toLowerCase();
+  const K = KEYWORDS[currentLanguage];
+
+  let intent='unknown';
+  if(K.reserve.some(k=>msg.includes(k))) intent='reserve';
+  else if(K.lore.some(k=>msg.includes(k))) intent='lore';
+  else if(K.allergy.some(k=>msg.includes(k))) intent='allergy';
+  else if(K.rec.some(k=>msg.includes(k))) intent='recommend';
+  else if(K.menu.some(k=>msg.includes(k))) intent='menu';
+  else if(K.greet.some(k=>msg.includes(k))) intent='greet';
+
+  setTimeout(()=>{
+    switch(intent){
+      case 'greet': reply(I18N[currentLanguage].say_more); break;
+      case 'menu': replyMenu(); break;
+      case 'recommend':
+        if(!USER.allergies.length && !USER.preferences.length) reply(I18N[currentLanguage].rec_need_info);
+        else replyRecommendations();
+        break;
+      case 'allergy': parseAndSaveAllergies(raw); reply(I18N[currentLanguage].allergies_saved); break;
+      case 'lore': replyLore(); break;
+      case 'reserve': reply(I18N[currentLanguage].reservation_prompt); showReservationForm(); break;
+      default: reply(I18N[currentLanguage].unknown);
+    }
+  },400);
 }
 
-// ---------- NLU muy simple (keywords por idioma) ----------
-const KEYWORDS = {
-  en: {
-    greet: ["hello","hi","hey"],
-    menu: ["menu","dish","dishes","what do you have","recommend"],
-    recommend: ["recommend","suggest","what to eat"],
-    reserve: ["reservation","book","reserve","booking"],
-    diet: ["diet","allerg","vegan","vegetarian","gluten","dairy","nuts","shellfish","egg"],
-    hours: ["hours","open","time","schedule"],
-    location: ["location","where","address"],
-    history: ["history","myth","story","tradition"],
-    help: ["help","what can you do"]
-  },
-  es: {
-    greet: ["hola","buenas","hey"],
-    menu: ["menú","carta","platos","qué tienen","recomendación"],
-    recommend: ["recomienda","recomendación","qué comer","sugerencia"],
-    reserve: ["reserva","reservar","booking"],
-    diet: ["dieta","alerg","vegano","vegetariano","gluten","lácteos","frutos secos","marisco","huevo","celiaco","intolerancia"],
-    hours: ["horario","abren","hora","apertura","cierre"],
-    location: ["ubicación","dónde","dirección"],
-    history: ["historia","mito","tradición","cuento"],
-    help: ["ayuda","qué puedes hacer"]
-  },
-  ca: {
-    greet: ["hola","bones","ei"],
-    menu: ["menú","carta","plats","què teniu","recomanació"],
-    recommend: ["recomana","recomanació","què menjar","suggeriment"],
-    reserve: ["reserva","reservar","booking"],
-    diet: ["dieta","al·lèrg","vegà","vegetarià","gluten","làctics","fruits secs","marisc","ou","celíac","intolerància"],
-    hours: ["horari","obriu","hora","obertura","tancament"],
-    location: ["ubicació","on","adreça"],
-    history: ["història","mite","tradició","conte"],
-    help: ["ajuda","què pots fer"]
+function reply(text){ addMessageToChat(text,'bot'); if(!isMobileDevice()) speakText(text); }
+
+// culinario
+function replyMenu(){
+  if(!MENU.dishes.length){ reply("La carta se está cargando, inténtalo de nuevo…"); return; }
+  const intro = I18N[currentLanguage].menu_intro;
+  const sample = MENU.dishes.slice(0,3).map(d=>`• ${d.names[currentLanguage]} — ${d.desc[currentLanguage]}`).join('\n');
+  reply(`${intro}\n${sample}`);
+}
+function replyRecommendations(){
+  const recs = recommendDishes(3);
+  if(!recs.length){ reply(I18N[currentLanguage].no_match); return; }
+  const lines = recs.map(d=>`• ${d.names[currentLanguage]} — ${d.desc[currentLanguage]}`);
+  reply(`${I18N[currentLanguage].rec_ready}\n${lines.join('\n')}`);
+  USER.lastDish = recs[0]?.id || null; saveMemory();
+}
+function replyLore(){
+  const topic = USER.lastDish || (['paella','fideua','all-i-pebre'][Math.floor(Math.random()*3)]);
+  const t = topic.includes('paella') ? 'paella' : topic.includes('fideu') ? 'fideua' : 'all-i-pebre';
+  const item = LORE.facts.find(f=>f.topic===t);
+  const text = item ? item[currentLanguage] : 'Food stories coming soon!';
+  reply(`${I18N[currentLanguage].lore_intro} ${text}`);
+}
+function recommendDishes(n=3){
+  const avoid=new Set(USER.allergies.map(a=>a.toLowerCase()));
+  const prefs=new Set(USER.preferences.map(p=>p.toLowerCase())); // vegan, vegetarian, gluten-free
+  const ok = MENU.dishes.filter(d=>{
+    if(d.allergens.some(a=>avoid.has(a))) return false;
+    if(prefs.size){
+      for(const p of prefs){ if(!d.tags.map(t=>t.toLowerCase()).includes(p)) return false; }
+    }
+    return true;
+  });
+  ok.sort((a,b)=> (a.category==='main'? -1:0) - (b.category==='main'? -1:0));
+  return ok.slice(0,n);
+}
+function parseAndSaveAllergies(text){
+  const map = {
+    en:{gluten:'gluten', shellfish:'shellfish', fish:'fish', egg:'egg', milk:'milk', vegan:'vegan', vegetarian:'vegetarian'},
+    es:{gluten:'gluten', marisco:'shellfish', pescado:'fish', huevo:'egg', leche:'milk', vegano:'vegan', vegetariano:'vegetarian'},
+    ca:{gluten:'gluten', marisc:'shellfish', peix:'fish', ou:'egg', llet:'milk', vegà:'vegan', vegetarià:'vegetarian'}
+  }[currentLanguage];
+
+  const found=[];
+  for(const [k,v] of Object.entries(map)){
+    const rx=new RegExp(`\\b${k}\\b`,'i'); if(rx.test(text)) found.push(v);
   }
-};
+  if(/\b(no.*alerg|sin.*alerg|no.*allerg)/i.test(text)){ USER.allergies=[]; }
+  else{ USER.allergies = Array.from(new Set([...USER.allergies, ...found])); }
 
-function detectIntent(msg, lang) {
-  const m = msg.toLowerCase();
-  const K = KEYWORDS[lang] || KEYWORDS.en;
-  const has = arr => arr.some(w => m.includes(w));
-  if (has(K.reserve))   return 'reservation';
-  if (has(K.history))   return 'history';
-  if (has(K.diet))      return 'diet';
-  if (has(K.recommend)) return 'recommend';
-  if (has(K.menu))      return 'menu';
-  if (has(K.hours))     return 'hours';
-  if (has(K.location))  return 'locations';
-  if (has(K.help))      return 'help';
-  if (has(K.greet))     return 'greeting';
-  return 'fallback';
+  if(found.includes('vegan') && !USER.preferences.includes('vegan')) USER.preferences.push('vegan');
+  if(found.includes('vegetarian') && !USER.preferences.includes('vegetarian')) USER.preferences.push('vegetarian');
+  if(found.includes('gluten') && !USER.preferences.includes('gluten-free')) USER.preferences.push('gluten-free');
+  saveMemory();
 }
 
-function handleUserMessage(message) {
-  const lang = state.lang;
-  const intent = detectIntent(message, lang);
-  state.lastIntent = intent;
+// TTS
+function speakText(text){
+  if(!speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=getLangCode(currentLanguage);
+  const voices=speechSynthesis.getVoices();
+  const lc=getLangCode(currentLanguage).substring(0,2);
+  const v=voices.find(v=>v.lang.toLowerCase().startsWith(lc)); if(v) u.voice=v;
+  speechSynthesis.speak(u);
+}
 
-  switch (intent) {
-    case 'greeting':
+// idioma
+function changeLanguage(lang){
+  currentLanguage = lang;
+  document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
+  userInput.placeholder = userInput.getAttribute('data-'+lang) || userInput.placeholder;
+  if(recognition) recognition.lang = getLangCode(lang);
+  reply(I18N[currentLanguage].ask_allergies);
+}
+function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
+function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
+
+// ====== Reserva (form) ======
+function showReservationForm(){
+  const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
+  wrap.innerHTML=`
+    <form id="reservation-form" class="reservation-form">
+      <label><span data-en="Name:" data-es="Nombre:" data-ca="Nom:">Nombre:</span><br>
+        <input type="text" name="name" required placeholder="Alex García"></label><br>
+      <label><span data-en="Email:" data-es="Correo:" data-ca="Correu:">Correo:</span><br>
+        <input type="email" name="email" placeholder="you@example.com"></label><br>
+      <label><span data-en="Phone:" data-es="Teléfono:" data-ca="Telèfon:">Teléfono:</span><br>
+        <input type="tel" name="phone" placeholder="+34 600 000 000"></label><br>
+      <label><span data-en="Date & Time:" data-es="Fecha y hora:" data-ca="Data i hora:">Fecha y hora:</span><br>
+        <input type="datetime-local" name="dateTime" required></label><br>
+      <label><span data-en="Party Size:" data-es="Número de comensales:" data-ca="Nombre de comensals:">Número de comensales:</span><br>
+        <input type="number" name="partySize" min="1" max="20" value="2"></label><br>
+      <label><span data-en="Notes:" data-es="Notas:" data-ca="Notes:">Notas:</span><br>
+        <textarea name="notes" placeholder="Alergias, preferencias..."></textarea></label><br>
+      <button type="submit" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva">Confirmar Reserva</button>
+    </form>`;
+  chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
+
+  const form=wrap.querySelector('#reservation-form');
+  const dateInput=form.querySelector('input[name="dateTime"]');
+  const now=new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const round5=new Date(Math.ceil(now.getTime()/(5*60*1000))*(5*60*1000));
+  dateInput.min=round5.toISOString().slice(0,16);
+
+  changeLanguage(currentLanguage);
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+    const data=Object.fromEntries(new FormData(form).entries()); data.id='res_'+Date.now();
+    try{ const local=new Date(data.dateTime); if(isNaN(local.getTime())) throw new Error('Invalid date');
+      data.dateTime=new Date(local.getTime()-local.getTimezoneOffset()*60000).toISOString();
+    }catch(_){ addMessageToChat("⚠️ Invalid date/time.", 'bot'); btn.disabled=false; return; }
+
+    try{ const r=await submitReservation(data);
+      addMessageToChat("✅ Reservation confirmed! ID: "+r.reservation.id,'bot');
+      wrap.remove();
+    }catch(err){
+      console.warn('Offline, queue reservation:', err.message);
+      await queueReservation(data);
+      addMessageToChat("📌 You're offline. Reservation saved and will sync when online.", 'bot');
+      wrap.remove();
+    }finally{ btn.disabled=false; }
+  });
+}
+
+// reserva helpers (Netlify Function)
+async function submitReservation(reservation){
+  const resp=await fetch('/.netlify/functions/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)});
+  const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
+}
+async function queueReservation(reservation){
+  const db=await openReservationDB(); const tx=db.transaction(['reservations'],'readwrite');
+  tx.objectStore('reservations').put(reservation);
+  if('serviceWorker'in navigator && 'SyncManager'in window){ const reg=await navigator.serviceWorker.ready; await reg.sync.register('reservation-sync'); }
+}
+function openReservationDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('xativabot-db',1);
+    req.onupgradeneeded=(ev)=>{ const db=ev.target.result; if(!db.objectStoreNames.contains('reservations')) db.createObjectStore('reservations',{keyPath:'id'}); };
+    req.onsuccess=(ev)=>resolve(ev.target.result); req.onerror=(ev)=>reject(ev.target.error);
+  });
+}
