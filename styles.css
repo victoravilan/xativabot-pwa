@@ -1,172 +1,75 @@
-/* ==========================
-  Este es el codigo deestilo de la app. Necesito mejorar algunas cosas contigo. No se ve el avatar, tampoco el logo.  os botones con las letras de información no son muy legibles, al igual que l foindo de la ventana de escritura debe ser macho mas claro si  escritura es oscura.
-   ========================== */
-/* XativaBot PWA - Main Stylesheet */
-:root {
-    --primary-color: #8B0000; /* Deep red for Xativa brand */
-    --secondary-color: #F8F1E9; /* Cream color for elegant contrast */
-    --accent-color: #D4AF37; /* Gold accent for luxury feel */
-    --text-color: #333333;
-    --light-text: #FFFFFF;
-    --background-color: #F9F9F9;
-    --card-bg: #FFFFFF;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --border-radius: 12px;
-    --transition: all 0.3s ease;
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Roboto', sans-serif;
-}
+/* ===========================
+   HOTFIX mínimo — contraste y medios
+   (pegar al FINAL del archivo)
+   =========================== */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-img { display: block; } /* evita saltos por líneas en imágenes rotas */
-body {
-    font-family: var(--font-body);
-    background-color: var(--background-color);
-    color: var(--text-color);
-    line-height: 1.6;
-    overflow-x: hidden;
-}
-
-.app-container {
-    max-width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Header Styles */
-.app-header {
-    background-color: var(--primary-color);
-    color: var(--light-text);
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-}
-
+/* 1) Logo y avatar: evitar deformaciones/desbordes */
 .logo {
-    height: 40px;
-    width: auto;
-    object-fit: contain;   /* evita deformación del logo */
+  height: 40px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
-
-/* oculta visualmente el alt si la imagen no carga, para que no se vea el texto sobre el header */
-.logo[alt] { font-size: 0; }
-
-.language-selector select {
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: var(--light-text);
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-    outline: none;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.language-selector select:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.language-selector select option {
-    background-color: var(--primary-color);
-    color: var(--light-text);
-}
-
-/* Main Chat Container */
-.chat-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-/* Chef Profile Section */
-.chef-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-    padding: 20px;
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-}
-
-.chef-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid var(--accent-color);
-    margin-right: 20px;
-    background: #f3f3f3; /* fallback si no carga la imagen */
-}
-
+.chef-avatar { background: #f2f2f2; } /* fallback si no carga */
 .chef-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* si la imagen falla, que el alt no “ensucie” el header */
+.logo[alt], .chef-avatar img[alt] { font-size: 0; }
+
+/* 2) Chips (botones de sugerencias) MÁS LEGIBLES */
+.chip { font-weight: 600; }
+
+/* Modo claro: seguimos tu paleta crema/rojo */
+@media (prefers-color-scheme: light) {
+  .chip {
+    background: #F8F1E9;
+    color: #8B0000;
+    border: 1px solid #e4d9c9;
+  }
+  .chip:hover {
+    background: #8B0000;
+    color: #fff;
+  }
 }
 
-.chef-info h1 {
-    font-family: var(--font-heading);
-    color: var(--primary-color);
-    margin-bottom: 5px;
-    font-size: 24px;
+/* Modo oscuro: alto contraste real */
+@media (prefers-color-scheme: dark) {
+  .chip {
+    background: #9b1c1c;      /* rojo más vivo */
+    color: #ffffff;           /* texto blanco */
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .chip:hover {
+    background: #8B0000;
+    color: #ffffff;
+  }
 }
 
-.chef-title {
-    color: #666;
-    font-size: 16px;
-    font-style: italic;
+/* 3) Input MUY CLARO incluso en dark mode (texto negro) */
+@media (prefers-color-scheme: dark) {
+  .user-input-container {
+    background: #ffffff;          /* fondo blanco como pediste */
+    border: 1px solid #e5e7eb;
+  }
+  #user-input {
+    color: #111 !important;       /* texto oscuro para alto contraste */
+  }
+  #user-input::placeholder {
+    color: #6b7280;               /* placeholder gris */
+  }
+  .voice-btn:hover, .send-btn:hover {
+    background: rgba(0,0,0,0.06);
+  }
 }
 
-/* Chat Messages */
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+/* 4) Burbujas del bot un pelín más claras en dark para legibilidad */
+@media (prefers-color-scheme: dark) {
+  .bot-message {
+    background: #2f2020;          /* más contraste respecto al fondo */
+    color: #f3f3f3;
+  }
 }
-
-.message {
-    max-width: 80%;
-    padding: 12px 16px;
-    border-radius: 18px;
-    margin-bottom: 10px;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.bot-message {
-    background-color: var(--secondary-color);
-    align-self: flex-start;
-    border-bottom-left-radius: 5px;
-}
-
-.user-message {
-    back
