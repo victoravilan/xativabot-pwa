@@ -1,9 +1,12 @@
 /**
- * XativaBot PWA - Main Application JavaScript
- * Handles voice recognition, speech synthesis, bot responses, and multilingual functionality
+ * XativaBot PWA - Chef Assistant (multilingüe)
+ * - Intents: greeting, menu, recommend, dietary/allergies, history/myths, reservation, hours, locations, help
+ * - Text + Voice según idioma seleccionado
+ * - Recomendaciones con filtrado por alergias y preferencias
+ * - Reserva con Function de Netlify (/.netlify/functions/reservations)
  */
 
-// DOM Elements
+// ---------- DOM ----------
 const chatMessages = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
@@ -12,326 +15,315 @@ const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
 const suggestionChips = document.querySelectorAll('.chip');
 
-// App State
-let currentLanguage = 'en';
+// ---------- Estado ----------
+const state = {
+  lang: 'en',
+  allergens: new Set(),       // e.g., 'gluten','nuts','shellfish','dairy','egg'
+  dietary: new Set(),         // e.g., 'vegan','vegetarian','gluten-free'
+  lastIntent: null
+};
+
+// ---------- I18N ----------
+const I18N = {
+  en: {
+    placeholder: "Type your message...",
+    chip: {
+      menu: "Menu recommendations",
+      dietary: "Special dietary needs",
+      reserve: "Make a reservation",
+      locations: "Restaurant locations"
+    },
+    welcome: "Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?",
+    ask_prefs: "Tell me your preferences (e.g., vegan, spicy, seafood) and allergies (e.g., nuts, gluten).",
+    rec_intro: "Based on your profile, I recommend:",
+    none_match: "I couldn't find perfect matches. Would you try one of these safe options?",
+    set_prefs_ok: "Got it. I'll remember that for future recommendations.",
+    ask_allergies: "Any allergies or restrictions I should consider?",
+    hours: "We're open daily 12:00–23:00 (kitchen closes 22:30).",
+    locations: "Locations: Valencia City Center, Alicante Beachfront, Madrid Salamanca.",
+    reservation: "I'd be happy to help with your reservation. Please fill your details:",
+    history_intro: "Here's a culinary story:",
+    help: "I can recommend dishes, handle reservations, filter allergies, and share culinary myths. Try: \"vegan paella\", \"gluten-free options\", \"tell me a myth\", or \"book for 2 at 20:00\"."
+  },
+  es: {
+    placeholder: "Escribe tu mensaje...",
+    chip: {
+      menu: "Recomendaciones del menú",
+      dietary: "Necesidades dietéticas especiales",
+      reserve: "Hacer una reserva",
+      locations: "Ubicaciones de restaurantes"
+    },
+    welcome: "¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?",
+    ask_prefs: "Cuéntame tus preferencias (p. ej., vegano, picante, mariscos) y alergias (p. ej., frutos secos, gluten).",
+    rec_intro: "Según tu perfil, te recomiendo:",
+    none_match: "No encontré coincidencias perfectas. ¿Te apetecen estas opciones seguras?",
+    set_prefs_ok: "Perfecto. Lo tendré en cuenta para próximas sugerencias.",
+    ask_allergies: "¿Hay alergias o restricciones que deba considerar?",
+    hours: "Abrimos todos los días 12:00–23:00 (cocina hasta 22:30).",
+    locations: "Ubicaciones: Centro de Valencia, Playa de Alicante, Salamanca (Madrid).",
+    reservation: "Con gusto te ayudo con la reserva. Por favor, completa tus datos:",
+    history_intro: "Aquí va una historia culinaria:",
+    help: "Puedo recomendar platos, gestionar reservas, filtrar alergias y compartir mitos culinarios. Prueba: «paella vegana», «opciones sin gluten», «cuéntame un mito» o «reserva para 2 a las 20:00»."
+  },
+  ca: {
+    placeholder: "Escriu el teu missatge...",
+    chip: {
+      menu: "Recomanacions del menú",
+      dietary: "Necessitats dietètiques especials",
+      reserve: "Fer una reserva",
+      locations: "Ubicacions de restaurants"
+    },
+    welcome: "Benvingut als Restaurants Xativa! Sóc l'AlexBot, el teu assistent de xef personal. Com et puc ajudar avui?",
+    ask_prefs: "Explica'm les teves preferències (p. ex., vegà, picant, marisc) i al·lèrgies (p. ex., fruits secs, gluten).",
+    rec_intro: "Segons el teu perfil, et recomano:",
+    none_match: "No he trobat coincidències perfectes. T'abelleixen aquestes opcions segures?",
+    set_prefs_ok: "Entesos. Ho tindré en compte per a futures recomanacions.",
+    ask_allergies: "Hi ha al·lèrgies o restriccions que hagi de considerar?",
+    hours: "Oberts cada dia 12:00–23:00 (cuina fins 22:30).",
+    locations: "Ubicacions: Centre de València, Platja d'Alacant, Salamanca (Madrid).",
+    reservation: "T'ajudo amb la reserva. Si us plau, completa les teves dades:",
+    history_intro: "Una història culinària:",
+    help: "Puc recomanar plats, gestionar reserves, filtrar al·lèrgies i compartir mites culinaris. Prova: «paella vegana», «opcions sense gluten», «explica'm un mite» o «reserva per a 2 a les 20:00»."
+  }
+};
+
+// ---------- Datos (fallback). Si existe /menu.json lo cargamos en init ----------
+let MENU = [
+  {
+    id: "paella_valenciana",
+    tags: ["rice","traditional"],
+    allergens: ["shellfish"], // si la haces mixta; ajusta según receta
+    name: { en:"Valencian Paella", es:"Paella Valenciana", ca:"Paella Valenciana" },
+    desc: { en:"Saffron rice with rabbit, chicken and green beans.",
+            es:"Arroz al azafrán con conejo, pollo y judías verdes.",
+            ca:"Arròs al safrà amb conill, pollastre i bajoques." }
+  },
+  {
+    id: "seafood_paella",
+    tags: ["rice","seafood"],
+    allergens: ["shellfish"],
+    name: { en:"Seafood Paella", es:"Paella de Marisco", ca:"Paella de Marisc" },
+    desc: { en:"Prawns, mussels, squid and rich fish stock.",
+            es:"Gambas, mejillones, calamar y caldo de pescado.",
+            ca:"Gambes, musclos, calamar i brou de peix." }
+  },
+  {
+    id: "tapas_patatas_bravas",
+    tags: ["tapas","vegetarian","spicy"],
+    allergens: [],
+    name: { en:"Patatas Bravas", es:"Patatas Bravas", ca:"Patates Braves" },
+    desc: { en:"Crispy potatoes with spicy brava sauce & aioli.",
+            es:"Patatas crujientes con salsa brava picante y alioli.",
+            ca:"Patates cruixents amb salsa brava i allioli." }
+  },
+  {
+    id: "gazpacho",
+    tags: ["cold","vegan","gluten-free"],
+    allergens: [],
+    name: { en:"Gazpacho", es:"Gazpacho", ca:"Gaspatxo" },
+    desc: { en:"Chilled tomato soup, refreshing and light.",
+            es:"Sopa fría de tomate, refrescante y ligera.",
+            ca:"Sopa freda de tomàquet, refrescant i lleugera." }
+  }
+];
+
+const CULINARY_FACTS = {
+  en: [
+    "Paella began around Valencia’s Albufera rice fields; the classic uses rabbit, chicken and flat beans—seafood is a later coastal adaptation.",
+    "The word 'tapa' may come from the old custom of covering (tapar) drinks with bread or ham to keep flies away."
+  ],
+  es: [
+    "La paella nació en los arrozales de l'Albufera; la clásica lleva conejo, pollo y bajoqueta. La versión de marisco es una adaptación costera posterior.",
+    "La palabra «tapa» podría venir de la costumbre de tapar la bebida con pan o jamón para evitar las moscas."
+  ],
+  ca: [
+    "La paella va néixer als arrossars de l'Albufera; la clàssica porta conill, pollastre i bajoqueta. La versió de marisc és una adaptació costanera posterior.",
+    "La paraula «tapa» pot venir de tapar la beguda amb pa o pernil per evitar les mosques."
+  ]
+};
+
+// ---------- Utilidades de idioma/voz ----------
+const speechSynth = window.speechSynthesis;
 let recognition = null;
-let speechSynthesis = window.speechSynthesis;
 let isListening = false;
+let preferredVoices = []; // cache
 
-// Initialize the application
+function getLangCode(lang) {
+  return ({ en:'en-US', es:'es-ES', ca:'ca-ES' }[lang]) || 'en-US';
+}
+
+function pickVoice(lang) {
+  const code = getLangCode(lang).slice(0,2);
+  const voices = speechSynth.getVoices();
+  // Preferimos voces que empiecen por el idioma
+  let v = voices.find(v => v.lang?.toLowerCase().startsWith(code) && /female|heather|lucia|laura|mónica|paula/i.test(v.name)) ||
+          voices.find(v => v.lang?.toLowerCase().startsWith(code)) ||
+          voices.find(v => /en/i.test(v.lang)) ||
+          voices[0];
+  return v || null;
+}
+
+function speak(text) {
+  if (!speechSynth) return;
+  speechSynth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = getLangCode(state.lang);
+  const voice = pickVoice(state.lang);
+  if (voice) u.voice = voice;
+  u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
+  speechSynth.speak(u);
+}
+
+if (speechSynth) {
+  speechSynth.onvoiceschanged = () => {
+    preferredVoices = speechSynth.getVoices();
+  };
+}
+
+// ---------- INIT ----------
+document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { speechSynth?.pause(); } else { speechSynth?.resume(); }
+});
+
 function initApp() {
-    setupEventListeners();
-    setupSpeechRecognition();
-    checkBrowserSupport();
+  // UI
+  setupEventListeners();
+  setLanguage(languageSelect?.value || 'en');
+  // Speech Recognition
+  setupSpeechRecognition();
+  // Carga menú si existe (opcional)
+  fetchMenuIfAvailable();
+
+  // Mensaje de bienvenida en idioma
+  addMessageToChat(I18N[state.lang].welcome, 'bot');
 }
 
-// Set up event listeners
 function setupEventListeners() {
-    sendBtn.addEventListener('click', handleSendMessage);
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
+  sendBtn.addEventListener('click', handleSendMessage);
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
+  });
+  voiceBtn.addEventListener('click', toggleVoiceInput);
+  languageSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+  suggestionChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      userInput.value = chip.textContent;
+      handleSendMessage();
     });
-    voiceBtn.addEventListener('click', toggleVoiceInput);
-    languageSelect.addEventListener('change', (e) => changeLanguage(e.target.value));
-    suggestionChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            userInput.value = chip.textContent;
-            handleSendMessage();
-        });
-    });
-    userInput.addEventListener('input', () => {
-        userInput.style.height = 'auto';
-        userInput.style.height = (userInput.scrollHeight) + 'px';
-    });
+  });
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = (userInput.scrollHeight) + 'px';
+  });
 }
 
-// Browser support checks
-function checkBrowserSupport() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        console.warn('Speech recognition not supported');
-        voiceBtn.style.display = 'none';
-    }
-    if (!('speechSynthesis' in window)) {
-        console.warn('Speech synthesis not supported');
-    }
+function setLanguage(lang) {
+  state.lang = ['en','es','ca'].includes(lang) ? lang : 'en';
+  // placeholder + elementos con data-*
+  userInput.placeholder = I18N[state.lang].placeholder;
+  document.querySelectorAll('[data-' + state.lang + ']').forEach(el => {
+    el.textContent = el.getAttribute('data-' + state.lang);
+  });
+  // reconocimiento
+  if (recognition) recognition.lang = getLangCode(state.lang);
 }
 
-// Speech recognition
+// ---------- Reconocimiento de voz ----------
 function setupSpeechRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = getLangCode(currentLanguage);
-
-        recognition.onstart = () => {
-            isListening = true;
-            voiceBtn.classList.add('active');
-            voiceIndicator.classList.add('active');
-        };
-        recognition.onend = () => {
-            isListening = false;
-            voiceBtn.classList.remove('active');
-            voiceIndicator.classList.remove('active');
-        };
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            userInput.value = transcript;
-            handleSendMessage();
-        };
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            isListening = false;
-            voiceBtn.classList.remove('active');
-            voiceIndicator.classList.remove('active');
-        };
-    }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { voiceBtn.style.display = 'none'; return; }
+  recognition = new SR();
+  recognition.continuous = false; recognition.interimResults = false;
+  recognition.lang = getLangCode(state.lang);
+  recognition.onstart = () => { isListening = true; voiceBtn.classList.add('active'); voiceIndicator.classList.add('active'); };
+  recognition.onend   = () => { isListening = false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
+  recognition.onresult= (e) => { userInput.value = e.results[0][0].transcript; handleSendMessage(); };
+  recognition.onerror = () => { isListening = false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
 }
 
 function toggleVoiceInput() {
-    if (!recognition) return;
-    if (isListening) recognition.stop();
-    else recognition.start();
+  if (!recognition) return;
+  if (isListening) recognition.stop(); else recognition.start();
 }
 
-// Handle sending message
+// ---------- Chat ----------
 function handleSendMessage() {
-    const message = userInput.value.trim();
-    if (message === '') return;
-    addMessageToChat(message, 'user');
-    userInput.value = '';
-    userInput.style.height = 'auto';
-    processUserMessage(message);
+  const message = userInput.value.trim();
+  if (!message) return;
+  addMessageToChat(message, 'user');
+  userInput.value = ''; userInput.style.height = 'auto';
+  setTimeout(() => handleUserMessage(message), 250);
 }
 
-// Chat UI
-function addMessageToChat(message, sender) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message', sender + '-message');
-    const messageText = document.createElement('p');
-    messageText.textContent = message;
-    messageElement.appendChild(messageText);
-    chatMessages.appendChild(messageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    setTimeout(() => {
-        messageElement.style.opacity = '1';
-        messageElement.style.transform = 'translateY(0)';
-    }, 10);
+function addMessageToChat(text, sender) {
+  const el = document.createElement('div');
+  el.classList.add('message', `${sender}-message`);
+  const p = document.createElement('p');
+  p.textContent = text;
+  el.appendChild(p);
+  chatMessages.appendChild(el);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 10);
 }
 
-// Process input
-function processUserMessage(message) {
-    setTimeout(() => {
-        const response = generateBotResponse(message);
-        addMessageToChat(response, 'bot');
+// ---------- NLU muy simple (keywords por idioma) ----------
+const KEYWORDS = {
+  en: {
+    greet: ["hello","hi","hey"],
+    menu: ["menu","dish","dishes","what do you have","recommend"],
+    recommend: ["recommend","suggest","what to eat"],
+    reserve: ["reservation","book","reserve","booking"],
+    diet: ["diet","allerg","vegan","vegetarian","gluten","dairy","nuts","shellfish","egg"],
+    hours: ["hours","open","time","schedule"],
+    location: ["location","where","address"],
+    history: ["history","myth","story","tradition"],
+    help: ["help","what can you do"]
+  },
+  es: {
+    greet: ["hola","buenas","hey"],
+    menu: ["menú","carta","platos","qué tienen","recomendación"],
+    recommend: ["recomienda","recomendación","qué comer","sugerencia"],
+    reserve: ["reserva","reservar","booking"],
+    diet: ["dieta","alerg","vegano","vegetariano","gluten","lácteos","frutos secos","marisco","huevo","celiaco","intolerancia"],
+    hours: ["horario","abren","hora","apertura","cierre"],
+    location: ["ubicación","dónde","dirección"],
+    history: ["historia","mito","tradición","cuento"],
+    help: ["ayuda","qué puedes hacer"]
+  },
+  ca: {
+    greet: ["hola","bones","ei"],
+    menu: ["menú","carta","plats","què teniu","recomanació"],
+    recommend: ["recomana","recomanació","què menjar","suggeriment"],
+    reserve: ["reserva","reservar","booking"],
+    diet: ["dieta","al·lèrg","vegà","vegetarià","gluten","làctics","fruits secs","marisc","ou","celíac","intolerància"],
+    hours: ["horari","obriu","hora","obertura","tancament"],
+    location: ["ubicació","on","adreça"],
+    history: ["història","mite","tradició","conte"],
+    help: ["ajuda","què pots fer"]
+  }
+};
 
-        // Si es reserva → mostrar formulario
-        if (response.toLowerCase().includes('reservation') || response.toLowerCase().includes('reserva')) {
-            showReservationForm();
-        }
-
-        if (!isMobileDevice()) {
-            speakText(response);
-        }
-    }, 1000);
+function detectIntent(msg, lang) {
+  const m = msg.toLowerCase();
+  const K = KEYWORDS[lang] || KEYWORDS.en;
+  const has = arr => arr.some(w => m.includes(w));
+  if (has(K.reserve))   return 'reservation';
+  if (has(K.history))   return 'history';
+  if (has(K.diet))      return 'diet';
+  if (has(K.recommend)) return 'recommend';
+  if (has(K.menu))      return 'menu';
+  if (has(K.hours))     return 'hours';
+  if (has(K.location))  return 'locations';
+  if (has(K.help))      return 'help';
+  if (has(K.greet))     return 'greeting';
+  return 'fallback';
 }
 
-// Bot responses
-function generateBotResponse(message) {
-    message = message.toLowerCase();
-    const responses = {
-        en: {
-            reservation: "I'd be happy to help you make a reservation. Please fill in your details below:",
-            default: "Thank you for your message. How else may I assist you today?"
-        },
-        es: {
-            reservation: "Encantado de ayudarte con tu reserva. Por favor completa tus datos aquí:",
-            default: "Gracias por tu mensaje. ¿En qué más puedo ayudarte hoy?"
-        },
-        ca: {
-            reservation: "Encantat d'ajudar-te amb la teva reserva. Si us plau, completa les teves dades:",
-            default: "Gràcies pel teu missatge. En què més puc ajudar-te avui?"
-        }
-    };
-    const lang = responses[currentLanguage] || responses.en;
+function handleUserMessage(message) {
+  const lang = state.lang;
+  const intent = detectIntent(message, lang);
+  state.lastIntent = intent;
 
-    if (message.includes('reservation') || message.includes('reserva')) return lang.reservation;
-    return lang.default;
-}
-
-// Text-to-speech
-function speakText(text) {
-    if (!speechSynthesis) return;
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = getLangCode(currentLanguage);
-    const voices = speechSynthesis.getVoices();
-    const langCode = getLangCode(currentLanguage).substring(0, 2);
-    const voice = voices.find(v => v.lang.startsWith(langCode) && v.name.includes('Female'));
-    if (voice) utterance.voice = voice;
-    speechSynthesis.speak(utterance);
-}
-
-// Language handling
-function changeLanguage(lang) {
-    currentLanguage = lang;
-    document.querySelectorAll('[data-' + lang + ']').forEach(el => {
-        el.textContent = el.getAttribute('data-' + lang);
-    });
-    userInput.placeholder = userInput.getAttribute('data-' + lang);
-    if (recognition) recognition.lang = getLangCode(lang);
-}
-function getLangCode(lang) {
-    const langCodes = { 'en': 'en-US', 'es': 'es-ES', 'ca': 'ca-ES' };
-    return langCodes[lang] || 'en-US';
-}
-function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-// Init
-document.addEventListener('DOMContentLoaded', initApp);
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        if (speechSynthesis) speechSynthesis.pause();
-    } else {
-        if (speechSynthesis) speechSynthesis.resume();
-    }
-});
-
-// ====== RESERVATION FORM ======
-// ====== RESERVATION FORM ======
-function showReservationForm() {
-    const formWrapper = document.createElement('div');
-    formWrapper.classList.add('message', 'bot-message');
-
-    formWrapper.innerHTML = `
-      <form id="reservation-form" class="reservation-form">
-        <label>
-          <span data-en="Name:" data-es="Nombre:" data-ca="Nom:">Name:</span><br>
-          <input type="text" name="name" required placeholder="Alex García">
-        </label><br>
-
-        <label>
-          <span data-en="Email:" data-es="Correo:" data-ca="Correu:">Email:</span><br>
-          <input type="email" name="email" placeholder="you@example.com">
-        </label><br>
-
-        <label>
-          <span data-en="Phone:" data-es="Teléfono:" data-ca="Telèfon:">Phone:</span><br>
-          <input type="tel" name="phone" placeholder="+34 600 000 000">
-        </label><br>
-
-        <label>
-          <span data-en="Date & Time:" data-es="Fecha y hora:" data-ca="Data i hora:">Date & Time:</span><br>
-          <input type="datetime-local" name="dateTime" required>
-        </label><br>
-
-        <label>
-          <span data-en="Party Size:" data-es="Número de comensales:" data-ca="Nombre de comensals:">Party Size:</span><br>
-          <input type="number" name="partySize" min="1" max="20" value="2">
-        </label><br>
-
-        <label>
-          <span data-en="Notes:" data-es="Notas:" data-ca="Notes:">Notes:</span><br>
-          <textarea name="notes" placeholder="Allergies, preferences..."></textarea>
-        </label><br>
-
-        <button type="submit" 
-          data-en="Confirm Reservation" 
-          data-es="Confirmar Reserva" 
-          data-ca="Confirmar Reserva">
-          Confirm Reservation
-        </button>
-      </form>
-    `;
-
-    chatMessages.appendChild(formWrapper);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    const form = formWrapper.querySelector('#reservation-form');
-    const dateInput = form.querySelector('input[name="dateTime"]');
-
-    // min = ahora (redondeado a 5 min)
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    const round5 = new Date(Math.ceil(now.getTime() / (5*60*1000)) * (5*60*1000));
-    dateInput.min = round5.toISOString().slice(0,16);
-
-    // Aplica el idioma actual
-    changeLanguage(currentLanguage);
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-
-        const data = Object.fromEntries(new FormData(form).entries());
-        data.id = 'res_' + Date.now();
-
-        try {
-            const local = new Date(data.dateTime);
-            if (isNaN(local.getTime())) throw new Error('Invalid date');
-            data.dateTime = new Date(local.getTime() - local.getTimezoneOffset() * 60000).toISOString();
-        } catch (_) {
-            addMessageToChat("⚠️ Invalid date/time.", 'bot');
-            submitBtn.disabled = false;
-            return;
-        }
-
-        try {
-            const result = await submitReservation(data);
-            addMessageToChat("✅ Reservation confirmed! ID: " + result.reservation.id, 'bot');
-            formWrapper.remove();
-        } catch (err) {
-            console.warn('Offline, saving reservation locally:', err.message);
-            await queueReservation(data);
-            addMessageToChat("📌 You're offline. Reservation saved and will sync when online.", 'bot');
-            formWrapper.remove();
-        } finally {
-            submitBtn.disabled = false;
-        }
-    });
-}
-
-
-// ====== RESERVATION HELPERS ======
-async function submitReservation(reservation) {
-    const endpoint = '/.netlify/functions/reservations';
-    const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reservation)
-    });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || 'Reservation failed');
-    return data;
-}
-
-async function queueReservation(reservation) {
-    const db = await openReservationDB();
-    const tx = db.transaction(['reservations'], 'readwrite');
-    tx.objectStore('reservations').put(reservation);
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        const reg = await navigator.serviceWorker.ready;
-        await reg.sync.register('reservation-sync');
-    }
-}
-
-function openReservationDB() {
-    return new Promise((resolve, reject) => {
-        const req = indexedDB.open('xativabot-db', 1);
-        req.onupgradeneeded = (ev) => {
-            const db = ev.target.result;
-            if (!db.objectStoreNames.contains('reservations')) {
-                db.createObjectStore('reservations', { keyPath: 'id' });
-            }
-        };
-        req.onsuccess = (ev) => resolve(ev.target.result);
-        req.onerror = (ev) => reject(ev.target.error);
-    });
-}
+  switch (intent) {
+    case 'greeting':
