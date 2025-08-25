@@ -1,0 +1,22 @@
+{
+  "facts": [
+    {
+      "topic": "paella",
+      "en": "“Paella” likely comes from the pan itself; Sunday lunch tradition is older than most recipes.",
+      "es": "“Paella” probablemente viene del nombre de la sartén; la tradición de comerla en domingo es antiquísima.",
+      "ca": "“Paella” probablement prové del nom de la paella; el costum de menjar-la en diumenge és antiquíssim."
+    },
+    {
+      "topic": "fideua",
+      "en": "Fideuà was invented at sea when the rice ran out; pasta replaced it.",
+      "es": "La fideuà nació en el mar cuando se acabó el arroz; se usó pasta en su lugar.",
+      "ca": "La fideuà va nàixer a la mar quan es va acabar l’arròs; es va usar pasta."
+    },
+    {
+      "topic": "all-i-pebre",
+      "en": "Eel fishing in Albufera shaped the recipe over centuries.",
+      "es": "La pesca de anguila en l’Albufera moldeó la receta durante siglos.",
+      "ca": "La pesca d’anguila a l’Albufera va modelar la recepta al llarg de segles."
+    }
+  ]
+}
