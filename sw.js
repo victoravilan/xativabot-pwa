@@ -108,4 +108,27 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(req).then(m => m || fetch(req).catch(() => m))
   );
+
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/install.js',        // ← añade
+  '/qr.html',           // ← añade
+  '/manifest.json',
+  '/images/xativa-logo.png',
+  '/images/alexbot-chef.png',
+  '/images/icon-192x192.png',
+  '/images/icon-512x512.png',
+  '/images/icon-192x192-maskable.png', // si los tienes
+  '/images/icon-512x512-maskable.png',
+  '/images/apple-touch-icon-180.png',
+  '/images/reserve-icon.png',
+  '/images/menu-icon.png',
+  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap'
+];
+// Nota: la librería de QR (CDN) es cross-origin; el SW no la podrá precachear.
+// Si quieres, puedes descargarla localmente (por ejemplo en /vendor/qrcode.min.js) y añadirla aquí.
+
 });
