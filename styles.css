@@ -188,3 +188,13 @@ body{
   background-color: var(--primary-color);
   color: var(--light-text);
 }
+/* Botón de desbloqueo de voz dentro del chat */
+.voice-unlock .chip {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+  font-weight: 600;
+}
+.voice-unlock .chip:hover {
+  transform: translateY(-1px);
+  opacity: .95;
+}
