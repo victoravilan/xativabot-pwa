@@ -10,27 +10,27 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon 192x192 XativaBot2.png",
+      "src": "/images/icon-192x192.png",
       "sizes": "192x192",
-      "type": "icons/png",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192-xativaBot.png",
+      "src": "/images/icon-192x192-maskable.png",
       "sizes": "192x192",
-      "type": "icons/png",
+      "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/images/icon-512x512.png",
       "sizes": "512x512",
-      "type": "icons/png",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512-maskable.png",
+      "src": "/images/icon-512x512-maskable.png",
       "sizes": "512x512",
-      "type": "icons/png",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
