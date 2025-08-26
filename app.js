@@ -124,6 +124,9 @@ async function initApp(){
   if (regionSelect) regionSelect.value = savedRegion;
 
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
+
+  // MOSTRAR FAB 🔊 EN MÓVIL HASTA DESBLOQUEAR VOZ
+  if (isMobileDevice()) createVoiceFAB();
 }
 
 // ===== Data & Memory =====
@@ -161,14 +164,28 @@ function setupEventListeners(){
 
 // ===== Compat =====
 function checkBrowserSupport(){
-  if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){ console.warn('Speech recognition not supported'); voiceBtn.style.display='none'; }
+  if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){
+    console.warn('Speech recognition not supported');
+    if (voiceBtn) voiceBtn.style.display='none';
+  }
   if(!('speechSynthesis'in window)) console.warn('Speech synthesis not supported');
 }
 
 // ===== STT =====
 function setupSpeechRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return;
+  if(!SR){
+    addMessageToChat(
+      currentLanguage==='es'
+        ? '🎙️ El reconocimiento de voz no está disponible en este modo. Usa el micrófono del navegador o escribe.'
+        : currentLanguage==='ca'
+        ? '🎙️ El reconeixement de veu no està disponible en aquest mode. Usa el micròfon del navegador o escriu.'
+        : '🎙️ Voice recognition is not available in this mode. Use the browser mic button or type.',
+      'bot'
+    );
+    if (voiceBtn) voiceBtn.style.display='none';
+    return;
+  }
   recognition = new SR();
   recognition.continuous=false; recognition.interimResults=false;
   recognition.lang=getLangCode(currentLanguage);
@@ -368,6 +385,46 @@ function showVoiceUnlockPrompt(){
   wrap.appendChild(btn);
   chatMessages.appendChild(wrap);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// FAB flotante para activar voz (inyecta estilo mínimamente)
+function createVoiceFAB(){
+  if (document.getElementById('voice-fab')) return;
+
+  // Estilos mínimos del FAB (para no tocar tu CSS ahora)
+  const styleId = 'voice-fab-style';
+  if (!document.getElementById(styleId)){
+    const s = document.createElement('style');
+    s.id = styleId;
+    s.textContent = `
+      #voice-fab{
+        position: fixed;
+        right: 16px;
+        bottom: 88px;
+        width: 54px; height: 54px;
+        border-radius: 50%;
+        border: none; cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0,0,0,.2);
+        background: var(--primary-color, #8B0000);
+        color: #fff; font-size: 22px; line-height: 54px;
+        z-index: 1000;
+      }
+      #voice-fab:active{ transform: translateY(1px); }
+    `;
+    document.head.appendChild(s);
+  }
+
+  const fab = document.createElement('button');
+  fab.id = 'voice-fab';
+  fab.title = I18N[currentLanguage].voice_enable || 'Activar voz';
+  fab.textContent = '🔊';
+  fab.addEventListener('click', () => {
+    userInteracted = true;
+    tryUnlockTTS();
+    if (lastSpokenText) speakText(lastSpokenText);
+    fab.remove(); // ya no hace falta tras desbloquear
+  });
+  document.body.appendChild(fab);
 }
 
 // ===== Idioma/Helpers =====
