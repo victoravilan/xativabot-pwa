@@ -1,124 +1,117 @@
 // netlify/functions/knowledge.js
-export default async (req) => {
-  const { searchParams } = new URL(req.url);
-  const ingredient = (searchParams.get('ingredient') || '').trim();
-  const lang = (searchParams.get('lang') || 'es').toLowerCase();
+// Obtiene un resumen breve del ingrediente desde Wikipedia (idioma solicitado) y
+// añade nutrición básica (si está en nuestra tabla). Sin claves, CORS friendly.
 
-  if (!ingredient) {
-    return json(400, { error: 'Missing ?ingredient' });
-  }
-
-  // 1) Nutrición (USDA FDC)
-  const FDC_KEY = process.env.FDC_API_KEY || '';
-  let nutrition = null, fdcSource = null;
-  if (FDC_KEY) {
-    try {
-      const q = encodeURIComponent(ingredient);
-      const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${q}&pageSize=1&api_key=${FDC_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const food = data?.foods?.[0];
-      if (food?.foodNutrients) {
-        // Buscar nutrientes clave
-        const pick = (name) =>
-          food.foodNutrients.find(n =>
-            (n?.nutrientName || '').toLowerCase().includes(name)
-          )?.value;
-        nutrition = {
-          per_100g: true,
-          energy_kcal: pick('energy') || pick('calories') || null,
-          protein_g: pick('protein') || null,
-          fat_g: pick('fat') || null,
-          carbs_g: pick('carbohydrate') || null,
-          fiber_g: pick('fiber') || null,
-        };
-        fdcSource = { fdcId: food.fdcId, description: food.description };
-      }
-    } catch (e) { /* silencioso */ }
-  }
-
-  // 2) Alérgenos (UE/USA)
-  const EU_14 = [
-    'gluten','crustaceans','eggs','fish','peanuts','soybeans','milk','nuts',
-    'celery','mustard','sesame','sulphur dioxide and sulphites','lupin','molluscs'
-  ];
-  const US_9 = [
-    'milk','eggs','fish','crustacean shellfish','tree nuts','peanuts','wheat','soybeans','sesame'
-  ];
-  // Heurística simple: si el ingrediente es claramente un mayor alérgeno
-  const lower = ingredient.toLowerCase();
-  const isEU = EU_14.some(k => lower.includes(k.split(' ')[0]));
-  const isUS = US_9.some(k => lower.includes(k.split(' ')[0]));
-  const allergens = {
-    eu_major_allergen: isEU ? true : false,
-    us_major_allergen: isUS ? true : false,
-    notes: []
-  };
-  if (lower.includes('almond') || lower.includes('almendra') || lower.includes('ametlla')) {
-    allergens.eu_major_allergen = true; allergens.us_major_allergen = true; allergens.notes.push('Tree nuts');
-  }
-  if (lower.includes('peanut') || lower.includes('cacahuete') || lower.includes('cacauet')) {
-    allergens.eu_major_allergen = true; allergens.us_major_allergen = true; allergens.notes.push('Peanut');
-  }
-  if (lower.includes('wheat') || lower.includes('trigo') || lower.includes('blat')) {
-    allergens.eu_major_allergen = true; allergens.us_major_allergen = true; allergens.notes.push('Gluten/wheat');
-  }
-  if (lower.includes('sesame') || lower.includes('sésamo') || lower.includes('sèsam')) {
-    allergens.eu_major_allergen = true; allergens.us_major_allergen = true; allergens.notes.push('Sesame');
-  }
-
-  // 3) Retiradas USA (openFDA)
-  let recalls_us = [];
-  try {
-    const term = encodeURIComponent(ingredient);
-    const url = `https://api.fda.gov/food/enforcement.json?search=product_description:${term}&limit=3`;
-    const res = await fetch(url);
-    const data = await res.json();
-    recalls_us = (data?.results || []).map(r => ({
-      recall_number: r.recall_number,
-      reason: r.reason_for_recall,
-      status: r.status,
-      classification: r.classification,
-      report_date: r.report_date,
-      state: r.state,
-      product_description: r.product_description
-    }));
-  } catch(e) { /* puede no haber matches */ }
-
-  // 4) Búsqueda RASFF (UE)
-  const rasff_search_url = `https://webgate.ec.europa.eu/rasff-window/screen/search?search=${encodeURIComponent(ingredient)}`;
-
-  // 5) Redacción “erudita” (breve, multi-idioma)
-  const texts = {
-    es: (name) => `**${capitalize(name)}**: ingrediente ampliamente utilizado. Composición típica por 100 g (si procede): ${(nutrition && nutrition.energy_kcal) ? `${Math.round(nutrition.energy_kcal)} kcal` : '—'}. ${allergenLine('es')}`,
-    en: (name) => `**${capitalize(name)}**: widely used ingredient. Typical composition per 100 g (when available): ${(nutrition && nutrition.energy_kcal) ? `${Math.round(nutrition.energy_kcal)} kcal` : '—'}. ${allergenLine('en')}`,
-    ca: (name) => `**${capitalize(name)}**: ingredient àmpliament utilitzat. Composició típica per 100 g (si escau): ${(nutrition && nutrition.energy_kcal) ? `${Math.round(nutrition.energy_kcal)} kcal` : '—'}. ${allergenLine('ca')}`
-  };
-  function allergenLine(l){
-    const yesEU = allergens.eu_major_allergen ? 'sí' : 'no';
-    const yesUS = allergens.us_major_allergen ? 'sí' : 'no';
-    if (l==='en') return `Major allergen (EU/US)? EU: ${allergens.eu_major_allergen?'yes':'no'} / US: ${allergens.us_major_allergen?'yes':'no'}.`;
-    if (l==='ca') return `Al·lergen major (UE/EUA)? UE: ${yesEU} / EUA: ${yesUS}.`;
-    return `¿Alérgeno mayor (UE/EE. UU.)? UE: ${yesEU} / EE. UU.: ${yesUS}.`;
-  }
-
-  const summary = texts[lang] ? texts[lang](ingredient) : texts.es(ingredient);
-
-  return json(200, {
-    ok: true,
-    ingredient,
-    summary,
-    nutrition,
-    allergens,
-    recalls_us,
-    rasff_search_url,
-    sources: {
-      fdc: fdcSource,
-      openfda: 'food/enforcement',
-      regs: { eu_1169_2011: true, us_falcpf_faster: true }
-    }
-  });
+const NUTRITION = {
+  // valores aprox. por 100 g (referencia general)
+  arroz:            { energy_kcal: 130, protein_g: 2.7, fat_g: 0.3, carbs_g: 28 }, // cocido
+  "arroz blanco":   { energy_kcal: 130, protein_g: 2.7, fat_g: 0.3, carbs_g: 28 },
+  "olive oil":      { energy_kcal: 884, protein_g: 0,   fat_g: 100, carbs_g: 0 },
+  "aceite de oliva":{ energy_kcal: 884, protein_g: 0,   fat_g: 100, carbs_g: 0 },
+  tomate:           { energy_kcal: 18,  protein_g: 0.9, fat_g: 0.2, carbs_g: 3.9 },
+  "tomato":         { energy_kcal: 18,  protein_g: 0.9, fat_g: 0.2, carbs_g: 3.9 },
+  ajo:              { energy_kcal: 149, protein_g: 6.4, fat_g: 0.5, carbs_g: 33 },
+  "garlic":         { energy_kcal: 149, protein_g: 6.4, fat_g: 0.5, carbs_g: 33 },
+  cebolla:          { energy_kcal: 40,  protein_g: 1.1, fat_g: 0.1, carbs_g: 9.3 },
+  "onion":          { energy_kcal: 40,  protein_g: 1.1, fat_g: 0.1, carbs_g: 9.3 },
+  "pimienta negra": { energy_kcal: 251, protein_g: 10,  fat_g: 3.3, carbs_g: 64 },
+  "black pepper":   { energy_kcal: 251, protein_g: 10,  fat_g: 3.3, carbs_g: 64 },
+  "cúrcuma":        { energy_kcal: 312, protein_g: 9.7, fat_g: 3.3, carbs_g: 67 },
+  "turmeric":       { energy_kcal: 312, protein_g: 9.7, fat_g: 3.3, carbs_g: 67 },
+  canela:           { energy_kcal: 247, protein_g: 4,   fat_g: 1.2, carbs_g: 81 },
+  cinnamon:         { energy_kcal: 247, protein_g: 4,   fat_g: 1.2, carbs_g: 81 },
+  comino:           { energy_kcal: 375, protein_g: 17.8,fat_g: 22,  carbs_g: 44 },
+  cumin:            { energy_kcal: 375, protein_g: 17.8,fat_g: 22,  carbs_g: 44 },
+  "azafrán":        { energy_kcal: 310, protein_g: 11,  fat_g: 6,   carbs_g: 65 },
+  saffron:          { energy_kcal: 310, protein_g: 11,  fat_g: 6,   carbs_g: 65 },
+  sal:              { energy_kcal: 0,   protein_g: 0,   fat_g: 0,   carbs_g: 0 },
+  salt:             { energy_kcal: 0,   protein_g: 0,   fat_g: 0,   carbs_g: 0 }
 };
 
-function json(status, body){ return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' }}) }
-function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1) }
+export default async (req) => {
+  try {
+    const { searchParams } = new URL(req.url);
+    const lang = (searchParams.get('lang') || 'es').toLowerCase();
+    let term = (searchParams.get('ingredient') || '').trim();
+    if (!term) return json(400, { error: 'Missing ingredient' });
+
+    // Normaliza plurales comunes
+    const norm = normalize(term, lang);
+
+    // 1) Intento Wikipedia en el idioma elegido
+    let summary = await wikiSummary(norm.query, lang);
+
+    // 2) Fallbacks: si no hay en ese idioma, prueba en EN, luego ES
+    if (!summary) summary = await wikiSummary(norm.query, 'en');
+    if (!summary && lang !== 'es') summary = await wikiSummary(norm.query, 'es');
+
+    // 3) Fallback final si sigue vacío
+    if (!summary) {
+      summary = genericSummary(norm.query, lang);
+    }
+
+    // 4) Nutrición aproximada (si tenemos mapeo)
+    const key = (NUTRITION[norm.key] ? norm.key
+               : NUTRITION[norm.query] ? norm.query
+               : Object.keys(NUTRITION).find(k => k.toLowerCase() === norm.query.toLowerCase()));
+    const nutrition = key ? NUTRITION[key] : null;
+
+    return json(200, { summary, nutrition });
+  } catch (e) {
+    return json(500, { error: 'knowledge error', detail: String(e) });
+  }
+};
+
+function json(status, body){
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8' }
+  });
+}
+
+function normalize(term, lang){
+  const t = term.toLowerCase().trim();
+  const plurals = {
+    es: { "especias": "especia", "ingredientes": "ingrediente" },
+    en: { "spices": "spice", "ingredients": "ingredient" },
+    ca: { "espècies": "espècia", "ingredients": "ingredient" }
+  }[lang] || {};
+  const repl = plurals[t] || t;
+
+  // claves preferidas para nutrición
+  const keyMap = {
+    es: { "arroz": "arroz", "arroz blanco":"arroz blanco", "aceite de oliva":"aceite de oliva", "tomate":"tomate", "ajo":"ajo", "cebolla":"cebolla", "pimienta negra":"pimienta negra", "cúrcuma":"cúrcuma", "canela":"canela", "comino":"comino", "azafrán":"azafrán", "sal":"sal" },
+    en: { "rice":"arroz", "white rice":"arroz blanco", "olive oil":"olive oil", "tomato":"tomato", "garlic":"garlic", "onion":"onion", "black pepper":"black pepper", "turmeric":"turmeric", "cinnamon":"cinnamon", "cumin":"cumin", "saffron":"saffron", "salt":"salt" },
+    ca: { "arròs":"arroz", "oli d'oliva":"aceite de oliva", "tomaca":"tomate", "tomate":"tomate", "all":"ajo", "ceba":"cebolla", "pebre negre":"pimienta negra", "cúrcuma":"cúrcuma", "canel·la":"canela", "comí":"comino", "safrà":"azafrán", "sal":"sal" }
+  }[lang] || {};
+  const key = keyMap[repl] || repl;
+
+  // Título “bonito” para Wikipedia (mayúscula inicial)
+  const query = repl.replace(/\s+/g,' ').trim().replace(/^./, c => c.toUpperCase());
+  return { key, query };
+}
+
+async function wikiSummary(title, lang){
+  try{
+    const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const res = await fetch(url, { headers: { 'accept':'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // preferimos 'extract' breve
+    let text = data.extract || '';
+    if (!text) return null;
+    // Limpieza mínima
+    text = text.replace(/\s+/g,' ').trim();
+    // Evita encabezados muy técnicos para el usuario
+    return text;
+  }catch{ return null; }
+}
+
+function genericSummary(term, lang){
+  const base = {
+    es: t => `Sobre “${t}”: es un ingrediente/alimento habitual en cocina. ¿Quieres enfoque culinario (usos, técnicas, maridajes) o nutricional (macro/micronutrientes y precauciones)?`,
+    en: t => `About “${t}”: a common culinary ingredient/food. Would you like a culinary angle (uses, techniques, pairings) or nutritional (macro/micronutrients, cautions)?`,
+    ca: t => `Sobre “${t}”: és un ingredient/aliment comú en cuina. Vols enfocament culinari (usos, tècniques, maridatges) o nutricional (macro/micronutrients i precaucions)?`
+  };
+  return (base[lang]||base.es)(term);
+}
