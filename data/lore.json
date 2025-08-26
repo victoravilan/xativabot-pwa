@@ -2,21 +2,21 @@
   "facts": [
     {
       "topic": "paella",
-      "en": "“Paella” likely comes from the pan itself; Sunday lunch tradition is older than most recipes.",
-      "es": "“Paella” probablemente viene del nombre de la sartén; la tradición de comerla en domingo es antiquísima.",
-      "ca": "“Paella” probablement prové del nom de la paella; el costum de menjar-la en diumenge és antiquíssim."
+      "es": "La paella valenciana nace en la huerta y la Albufera de Valencia, como plato de campo de los siglos XVIII–XIX. Se cocina en paellera (recipiente ancho y poco profundo) sobre fuego vivo; el grano queda suelto y el socarrat —la capa tostada en el fondo— es codiciado. La receta tradicional no lleva marisco: usa arroz de grano medio (variedades Sénia, Bahía, Bomba), pollo, conejo, tomate, garrofó (alubia grande), ferradura (judía plana), aceite de oliva, agua, sal, pimentón, azafrán o colorante y, a veces, romero. La clave es el control del caldo y del fuego: primero sofreír, luego hervir y finalmente secar, sin remover, hasta oír el ligero crepitar del socarrat.",
+      "en": "Valencian paella emerged around the farmlands and the Albufera lagoon (18th–19th c.). It is cooked in a wide shallow pan over lively heat; grains stay separate and the socarrat—the toasted bottom layer—is prized. The canonical version contains no seafood: medium-grain rice (Sénia, Bahía, Bomba), chicken, rabbit, tomato, garrofó (large butter bean), green flat beans, olive oil, water, salt, paprika, saffron or coloring, and sometimes rosemary. Technique hinges on broth control and heat: sauté, simmer, then dry without stirring until a gentle crackle signals the socarrat.",
+      "ca": "La paella valenciana naix a l’horta i a l’Albufera (segles XVIII–XIX). Es cou en paella ampla i baixa a foc viu; el gra queda solt i el socarrat —la capa torrada del fons— és un tresor. La versió canònica no porta marisc: arròs de gra mitjà (Sénia, Bahía, Bomba), pollastre, conill, tomaca, garrofó, tavella (bajoqueta plana), oli d’oliva, aigua, sal, pebre roig, safrà o colorant i, de vegades, romaní. La tècnica depén del control del brou i del foc: sofregir, bullir i finalment assecar sense remenar fins sentir el crepitar del socarrat."
     },
     {
       "topic": "fideua",
-      "en": "Fideuà was invented at sea when the rice ran out; pasta replaced it.",
-      "es": "La fideuà nació en el mar cuando se acabó el arroz; se usó pasta en su lugar.",
-      "ca": "La fideuà va nàixer a la mar quan es va acabar l’arròs; es va usar pasta."
+      "es": "La fideuà surge en la costa de Gandía a inicios del siglo XX: pescadores que, sin arroz, improvisaron con fideo. Hoy se elabora con fideo grueso (núm. 3 o similar), caldo potente de pescado/galeras, sepia o calamar, gambas y/o cigalas, pimentón y, opcionalmente, un toque de azafrán. Se dora el fideo en paellera para potenciar aromas y se termina al horno o a fuego vivo hasta quedar seco y con puntilla. Tradicionalmente se acompaña con alioli.",
+      "en": "Fideuà was born on the Gandia coast in the early 20th century when fishermen, short of rice, used pasta instead. Thick noodles (no. 3), a robust fish–shellfish stock, cuttlefish or squid, prawns or Norway lobsters, paprika and a hint of saffron are common. Noodles are toasted in the paella pan, then finished in the oven or over strong heat until dry with a crisp edge. Served traditionally with allioli.",
+      "ca": "La fideuà naix a la costa de Gandia a inicis del segle XX: mariners que, sense arròs, optaren per fideus. S’empra fideu gruixut (núm. 3), brou potent de peix/galeres, sípia o calamar, gambes o llagostins, pebre roig i, si es vol, un toc de safrà. Es torra el fideu a la paella i es culmina al forn o a foc viu fins quedar sec i amb punteta. Tradicionalment s’acompanya amb allioli."
     },
     {
       "topic": "all-i-pebre",
-      "en": "Eel fishing in Albufera shaped the recipe over centuries.",
-      "es": "La pesca de anguila en l’Albufera moldeó la receta durante siglos.",
-      "ca": "La pesca d’anguila a l’Albufera va modelar la recepta al llarg de segles."
+      "es": "El all i pebre es un guiso emblemático de l’Albufera: anguila en salsa de ajo y pimentón (el ‘pebre’ alude al picante), con aceite de oliva y caldo ligado; suele llevar patata desde el siglo XX. Se sofríe ajo, se aromatiza con pimentón y guindilla, se moja con caldo, se cuece la anguila en trozos y se liga la salsa con el propio colágeno del pescado y el almidón de la patata, hasta textura sedosa y brillo profundo.",
+      "en": "All i pebre is an Albufera classic: eel stewed in a garlic–paprika and chili sauce, with olive oil and a slightly thickened broth; potato is a 20th-century addition. Garlic is sautéed, paprika and chili bloom, stock is added, eel chunks simmer, and the sauce is bound by fish collagen and potato starch to a silky, glossy finish.",
+      "ca": "L’all i pebre és un guisat emblemàtic de l’Albufera: anguila en salsa d’all, pebre roig i picant, amb oli d’oliva i brou lleugerament lligat; la creïlla és un afegit del segle XX. Sofregim all, fem florir el pebre roig i la nyora o bitxo, mullem amb brou, couem l’anguila a trossos i lliguem la salsa amb el col·lagen del peix i el midó de la creïlla fins a una textura sedosa i lluentor fonda."
     }
   ]
 }
