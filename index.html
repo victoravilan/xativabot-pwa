@@ -19,6 +19,15 @@
 <!-- Sugerencia: forzar recarga del manifest (evita SW cache del antiguo) -->
 <link rel="manifest" href="/manifest.json?v=2">
 
+<!-- cerca del header o donde quieras -->
+<button id="install-btn" style="display:none" onclick="installApp()" class="chip">
+  📲 Instalar aplicación
+</button>
+
+<!-- al final del body -->
+<script src="/install.js"></script>
+
+
 </head>
 <body>
     <div class="app-container">
