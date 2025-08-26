@@ -1,4 +1,4 @@
-/** XativaBot – App (voz optimizada + i18n + culinario + reservas + región + fixes móvil) */
+/** XativaBot – App (voz + i18n + culinario + reservas + región + knowledge enriquecido) */
 
 // DOM
 const chatMessages = document.getElementById('chat-messages');
@@ -7,7 +7,7 @@ const sendBtn = document.getElementById('send-btn');
 const voiceBtn = document.getElementById('voice-input-btn');
 const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
-const regionSelect = document.getElementById('region-select'); // puede no existir según tu index.html
+const regionSelect = document.getElementById('region-select');
 const suggestionChips = document.querySelectorAll('.chip');
 
 // Estado
@@ -19,8 +19,8 @@ let isListening = false;
 // Voz
 let voicesReady = false;
 let availableVoices = [];
-let userInteracted = false; // habilita TTS tras primer gesto del usuario
-let ttsUnlocked = false;    // “desbloqueo” explícito iOS/Android
+let userInteracted = false;
+let ttsUnlocked = false;
 
 // Datos
 let MENU = { dishes: [] };
@@ -72,52 +72,23 @@ const I18N = {
       and:"i"}
 };
 
-// ===== Palabras clave (ampliadas) =====
+// ===== Palabras clave =====
 const KEYWORDS = {
-  en:{
-    greet:["hello","hi","hey"],
-    menu:["menu","card","dishes","food"],
-    rec:["recommend","suggest","what should i eat"],
-    allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
-    lore:["history","myth","tradition","story","origin"],
-    reserve:["reserve","reservation","book"],
-    ingredient:[
-      "what is","benefits of","season of","history of",
-      "tell me about","spice","spices","ingredient","ingredients","rice","saffron","pepper","turmeric","cinnamon","cumin","clove","nutmeg","bay leaf","vanilla","salt","olive oil","garlic","onion","tomato"
-    ],
-    season:["in season","seasonal","season"],
-    history:["history","origin","myth"]
-  },
-  es:{
-    greet:["hola","buenas"],
-    menu:["menú","carta","platos","comida"],
-    rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
-    allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
-    lore:["historia","mito","tradición","origen","leyenda"],
-    reserve:["reserva","reservar","booking"],
-    ingredient:[
-      "que es","qué es","beneficios de","temporada de","historia de",
-      "háblame de","hablame de","sobre","ingrediente","ingredientes",
-      "especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azucar","azúcar"
-    ],
-    season:["de temporada","temporada"],
-    history:["historia","origen","mito","leyenda"]
-  },
-  ca:{
-    greet:["hola","bones"],
-    menu:["menú","carta","plats","menjar"],
-    rec:["recomana","recomanació","què menge","que menjar"],
-    allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
-    lore:["història","mite","tradició","origen","llegenda"],
-    reserve:["reserva","reservar"],
-    ingredient:[
-      "què és","beneficis de","temporada de","història de",
-      "parla'm de","sobre","ingredient","ingredients",
-      "espècia","espècies","arròs","safrà","pebre","cúrcuma","canel·la","comí","clau","nou moscada","llorer","vainilla","sal","oli d'oliva","all","ceba","tomaca","tomate","pebre roig"
-    ],
-    season:["de temporada","temporada"],
-    history:["història","origen","mite","llegenda"]
-  }
+  en:{greet:["hello","hi","hey"],menu:["menu","card","dishes","food"],rec:["recommend","suggest","what should i eat"],
+      allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
+      lore:["history","myth","tradition","story","origin"],reserve:["reserve","reservation","book"],
+      ingredient:["what is","benefits of","season of","history of","tell me about","spice","spices","ingredient","ingredients","rice","saffron","pepper","turmeric","cinnamon","cumin","clove","nutmeg","bay leaf","vanilla","salt","olive oil","garlic","onion","tomato"],
+      season:["in season","seasonal","season"],history:["history","origin","myth"]},
+  es:{greet:["hola","buenas"],menu:["menú","carta","platos","comida"],rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
+      allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
+      lore:["historia","mito","tradición","origen","leyenda"],reserve:["reserva","reservar","booking"],
+      ingredient:["que es","qué es","beneficios de","temporada de","historia de","háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azucar","azúcar"],
+      season:["de temporada","temporada"],history:["historia","origen","mito","leyenda"]},
+  ca:{greet:["hola","bones"],menu:["menú","carta","plats","menjar"],rec:["recomana","recomanació","què menge","que menjar"],
+      allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
+      lore:["història","mite","tradició","origen","llegenda"],reserve:["reserva","reservar"],
+      ingredient:["què és","beneficis de","temporada de","història de","parla'm de","sobre","ingredient","ingredients","espècia","espècies","arròs","safrà","pebre","cúrcuma","canel·la","comí","clau","nou moscada","llorer","vainilla","sal","oli d'oliva","all","ceba","tomaca","tomate","pebre roig"],
+      season:["de temporada","temporada"],history:["història","origen","mite","llegenda"]}
 };
 
 // ===== INIT =====
@@ -126,15 +97,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (speechSynthesisObj) speechSynthesisObj.pause(); }
   else { if (speechSynthesisObj) speechSynthesisObj.resume(); }
 });
-
-// Marca interacción del usuario (habilita TTS en móvil y hace “unlock”)
 ['click','keydown','touchstart'].forEach(evt => {
-  document.addEventListener(evt, () => {
-    if (!userInteracted) {
-      userInteracted = true;
-      tryUnlockTTS();
-    }
-  }, { once: true, passive: true });
+  document.addEventListener(evt, () => { if (!userInteracted){ userInteracted = true; tryUnlockTTS(); } }, { once: true, passive: true });
 });
 
 async function initApp(){
@@ -145,30 +109,24 @@ async function initApp(){
   await ensureVoicesReady();
   loadData();
 
-  // Región guardada (si existe)
   const savedRegion = localStorage.getItem('xativabot-region') || '';
   if (regionSelect) regionSelect.value = savedRegion;
 
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 }
 
-// ===== Datos =====
+// ===== Data & Memory =====
 async function loadData(){
   try{
-    const [menuRes,loreRes] = await Promise.all([
-      fetch('/data/menu.json'),
-      fetch('/data/lore.json')
-    ]);
+    const [menuRes,loreRes] = await Promise.all([ fetch('/data/menu.json'), fetch('/data/lore.json') ]);
     MENU = await menuRes.json();
     LORE = await loreRes.json();
   }catch(e){ console.warn('Data offline (SW cache will serve later).', e); }
 }
-
-// ===== Memoria =====
 function loadMemory(){ try{ const raw=localStorage.getItem('xativabot-user'); if(raw) USER=JSON.parse(raw);}catch{} }
 function saveMemory(){ try{ localStorage.setItem('xativabot-user', JSON.stringify(USER)); }catch{} }
 
-// ===== Eventos UI =====
+// ===== UI events =====
 function setupEventListeners(){
   sendBtn.addEventListener('click', handleSendMessage);
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
@@ -196,7 +154,7 @@ function checkBrowserSupport(){
   if(!('speechSynthesis'in window)) console.warn('Speech synthesis not supported');
 }
 
-// ===== STT (voz a texto) =====
+// ===== STT =====
 function setupSpeechRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return;
@@ -229,11 +187,7 @@ function addMessageToChat(message,sender){
 function processUserMessage(raw){
   const msg = raw.toLowerCase();
   const K = KEYWORDS[currentLanguage];
-
-  // Heurística fuerte: si parece consulta de ingrediente, dispara directo
-  if (isIngredientQuery(msg)) {
-    return handleIngredient(raw);
-  }
+  if (isIngredientQuery(msg)) return handleIngredient(raw);
 
   let intent='unknown';
   if(K.reserve.some(k=>msg.includes(k))) intent='reserve';
@@ -264,8 +218,6 @@ function processUserMessage(raw){
     }
   },200);
 }
-
-// Detección laxa de “ingredient queries”
 function isIngredientQuery(msg){
   const phrases = {
     es: ["háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azucar","azúcar"],
@@ -275,15 +227,11 @@ function isIngredientQuery(msg){
   return phrases.some(ph => msg.includes(ph));
 }
 
-function reply(text){
-  addMessageToChat(text,'bot');
-  if (shouldSpeak()) speakText(text);
-}
-function shouldSpeak(){
-  return (userInteracted && ttsUnlocked) || (!isMobileDevice());
-}
+// ===== Respuestas base =====
+function reply(text){ addMessageToChat(text,'bot'); if (shouldSpeak()) speakText(text); }
+function shouldSpeak(){ return (userInteracted && ttsUnlocked) || (!isMobileDevice()); }
 
-// ===== Culinario =====
+// ===== Culinario (menu/recs/lore) =====
 function replyMenu(){
   if(!MENU.dishes.length){ reply("La carta se está cargando, inténtalo de nuevo…"); return; }
   const intro = I18N[currentLanguage].menu_intro;
@@ -323,68 +271,42 @@ function parseAndSaveAllergies(text){
     es:{gluten:'gluten', marisco:'shellfish', pescado:'fish', huevo:'egg', leche:'milk', vegano:'vegan', vegetariano:'vegetarian'},
     ca:{gluten:'gluten', marisc:'shellfish', peix:'fish', ou:'egg', llet:'milk', vegà:'vegan', vegetarià:'vegetarian'}
   }[currentLanguage];
-
   const found=[];
-  for(const [k,v] of Object.entries(map)){
-    const rx=new RegExp(`\\b${k}\\b`,'i'); if(rx.test(text)) found.push(v);
-  }
+  for(const [k,v] of Object.entries(map)){ const rx=new RegExp(`\\b${k}\\b`,'i'); if(rx.test(text)) found.push(v); }
   if(/\b(no.*alerg|sin.*alerg|no.*allerg)/i.test(text)){ USER.allergies=[]; }
   else{ USER.allergies = Array.from(new Set([...USER.allergies, ...found])); }
-
   if(found.includes('vegan') && !USER.preferences.includes('vegan')) USER.preferences.push('vegan');
   if(found.includes('vegetarian') && !USER.preferences.includes('vegetarian')) USER.preferences.push('vegetarian');
   if(found.includes('gluten') && !USER.preferences.includes('gluten-free')) USER.preferences.push('gluten-free');
   saveMemory();
 }
 
-// ===== TTS (texto a voz) =====
+// ===== TTS =====
 function tryUnlockTTS(){
   if (!speechSynthesisObj || ttsUnlocked) return;
-  // micro-utterance silenciosa para “desbloquear” iOS/Android
   const u = new SpeechSynthesisUtterance(' ');
-  u.volume = 0;
-  u.rate = 1;
-  u.lang = getLangCode(currentLanguage);
-  try {
-    speechSynthesisObj.speak(u);
-    // cancelar en microtask para no oír nada
-    setTimeout(()=>{ try{ speechSynthesisObj.cancel(); }catch{}; ttsUnlocked = true; }, 0);
-  } catch(e) {
-    console.warn('TTS unlock failed', e);
-  }
+  u.volume = 0; u.rate = 1; u.lang = getLangCode(currentLanguage);
+  try { speechSynthesisObj.speak(u); setTimeout(()=>{ try{ speechSynthesisObj.cancel(); }catch{}; ttsUnlocked = true; }, 0); }
+  catch(e){ console.warn('TTS unlock failed', e); }
 }
-
 function ensureVoicesReady(){
   return new Promise((resolve)=>{
     if (!speechSynthesisObj) return resolve();
-    const load = () => {
-      availableVoices = speechSynthesisObj.getVoices();
-      if (availableVoices && availableVoices.length){
-        voicesReady = true;
-        resolve();
-      }
-    };
+    const load = () => { availableVoices = speechSynthesisObj.getVoices(); if (availableVoices && availableVoices.length){ voicesReady = true; resolve(); } };
     load();
     if (!voicesReady){
       speechSynthesisObj.onvoiceschanged = () => { load(); if (voicesReady) resolve(); };
-      setTimeout(load, 250);
-      setTimeout(load, 1000);
+      setTimeout(load, 250); setTimeout(load, 1000);
     }
   });
 }
 function pickVoiceFor(lang){
   if (!availableVoices || !availableVoices.length) return null;
-  const wanted = lang.toLowerCase();
-  const primary = wanted.slice(0,2);
-  let v = availableVoices.find(v => v.lang && v.lang.toLowerCase() === wanted);
-  if (v) return v;
-  v = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(primary));
-  if (v) return v;
+  const wanted = lang.toLowerCase(); const primary = wanted.slice(0,2);
+  let v = availableVoices.find(v => v.lang && v.lang.toLowerCase() === wanted); if (v) return v;
+  v = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(primary)); if (v) return v;
   const fallbacks = primary === 'ca' ? ['es','en'] : primary === 'es' ? ['en'] : ['es'];
-  for (const fb of fallbacks){
-    const m = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(fb));
-    if (m) return m;
-  }
+  for (const fb of fallbacks){ const m = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(fb)); if (m) return m; }
   return availableVoices[0] || null;
 }
 async function speakText(text){
@@ -394,13 +316,12 @@ async function speakText(text){
   const utter = new SpeechSynthesisUtterance(text);
   const langCode = getLangCode(currentLanguage);
   const voice = pickVoiceFor(langCode);
-  if (voice){ utter.voice = voice; utter.lang = (voice.lang || langCode); }
-  else { utter.lang = langCode; }
+  if (voice){ utter.voice = voice; utter.lang = (voice.lang || langCode); } else { utter.lang = langCode; }
   utter.rate = 1.0; utter.pitch = 1.0; utter.volume = 1.0;
   setTimeout(() => { try { speechSynthesisObj.speak(utter); } catch (e) { console.warn('TTS speak failed:', e); } }, 0);
 }
 
-// ===== Idioma =====
+// ===== Idioma/Helpers =====
 function changeLanguage(lang){
   currentLanguage = lang;
   document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
@@ -411,7 +332,7 @@ function changeLanguage(lang){
 function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
 
-// ===== Reserva =====
+// ===== Reservas =====
 function showReservationForm(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
   wrap.innerHTML=`
@@ -458,8 +379,6 @@ function showReservationForm(){
     }finally{ btn.disabled=false; }
   });
 }
-
-// ===== Helpers reserva (Netlify Function) =====
 async function submitReservation(reservation){
   const resp=await fetch('/.netlify/functions/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)});
   const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
@@ -477,7 +396,7 @@ function openReservationDB(){
   });
 }
 
-// ======== INTELIGENCIA conectada (ingredientes / temporada) ========
+// ======== INGREDIENTES: llamada + formateo enriquecido ========
 async function handleIngredient(raw) {
   const name = extractIngredient(raw) || raw;
   try {
@@ -487,28 +406,66 @@ async function handleIngredient(raw) {
     if (!res.ok) throw new Error(data.error || 'knowledge failed');
 
     const parts = [];
-    parts.push(data.summary);
+
+    // Titular opcional breve
+    // parts.push(titleFor(name));
+
+    // Resumen
+    if (data.summary) parts.push(data.summary);
+
+    // Técnicas
+    if (Array.isArray(data.techniques) && data.techniques.length) {
+      parts.push(sectionLabel('tech'));
+      parts.push(data.techniques.map(s => `• ${s}`).join('\n'));
+    }
+
+    // Maridajes
+    if (Array.isArray(data.pairings) && data.pairings.length) {
+      parts.push(sectionLabel('pair'));
+      parts.push(data.pairings.map(s => `• ${s}`).join('\n'));
+    }
+
+    // Nutrición
     if (data.nutrition) {
       const n = data.nutrition;
-      parts.push(`${t('nutr')} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,'g prot')} · ${fmt(n.fat_g,'g grasa')} · ${fmt(n.carbs_g,'g hidratos')}`);
+      parts.push(`${sectionLabel('nutr')} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,labelUnit('prot'))} · ${fmt(n.fat_g,labelUnit('fat'))} · ${fmt(n.carbs_g,labelUnit('carb'))}`);
     }
+
+    // Precauciones
+    if (data.cautions) {
+      parts.push(`${sectionLabel('caut')} ${data.cautions}`);
+    }
+
     reply(parts.join('\n'));
   } catch(e) {
-    reply(t('fallback_info'));
+    reply(fallbackInfo());
   }
 
   function fmt(v,suf){ return (v!=null)? `${Math.round(v*10)/10} ${suf}` : '—'; }
-  function t(key){
-    const dict = {
-      es: { nutr: "Nutrición aprox./100 g:", fallback_info: "Te cuento lo esencial y evito afirmaciones dudosas. ¿Quieres que lo investigue con más detalle?" },
-      en: { nutr: "Approx nutrition /100 g:", fallback_info: "Here’s the core info, avoiding dubious claims. Want a deeper dive?" },
-      ca: { nutr: "Nutrició aprox./100 g:", fallback_info: "Et conte l’essencial i evite afirmacions dubtoses. Vols que ho investigue més?" }
-    };
-    return (dict[currentLanguage]||dict.es)[key];
+  function sectionLabel(key){
+    const d = {
+      es:{ tech:"Técnicas clave:", pair:"Maridajes:", nutr:"Nutrición aprox./100 g:", caut:"Precauciones:" },
+      en:{ tech:"Key techniques:",  pair:"Pairings:",  nutr:"Approx nutrition /100 g:", caut:"Cautions:" },
+      ca:{ tech:"Tècniques clau:", pair:"Maridatges:", nutr:"Nutrició aprox./100 g:",  caut:"Precaucions:" }
+    }; return (d[currentLanguage]||d.es)[key];
+  }
+  function labelUnit(what){
+    const d = {
+      es:{ prot:"g prot", fat:"g grasa", carb:"g hidratos" },
+      en:{ prot:"g protein", fat:"g fat", carb:"g carbs" },
+      ca:{ prot:"g prot", fat:"g greix", carb:"g hidrats" }
+    }; return (d[currentLanguage]||d.es)[what];
+  }
+  function fallbackInfo(){
+    const d = {
+      es:"Te doy lo esencial y evito afirmaciones dudosas. ¿Quieres enfoque culinario (usos y técnicas) o nutricional (macro/micro y precauciones)?",
+      en:"Here’s the core info, avoiding dubious claims. Want culinary (uses & techniques) or nutritional (macro/micro & cautions)?",
+      ca:"Et done l’essencial i evite afirmacions dubtoses. Vols enfocament culinari (usos i tècniques) o nutricional (macro/micro i precaucions)?"
+    }; return d[currentLanguage]||d.es;
   }
 }
 
-async function handleSeason(raw){
+async function handleSeason(_raw){
   const month = new Date().getMonth()+1;
   const region = (regionSelect && regionSelect.value) ? regionSelect.value : (localStorage.getItem('xativabot-region') || '');
   try{
@@ -535,7 +492,7 @@ async function handleSeason(raw){
 
 function extractIngredient(text){
   const words = text.toLowerCase().replace(/[¡!.,;:?]/g,'').split(/\s+/);
-  const stop = new Set(['que','qué','es','de','la','el','los','las','the','what','is','beneficios','temporada','historia','origen','sobre','parla\'m']);
+  const stop = new Set(['que','qué','es','de','la','el','los','las','the','what','is','beneficios','temporada','historia','origen','sobre',"parla'm"]);
   const candidates = words.filter(w => w.length>2 && !stop.has(w));
   return candidates[candidates.length-1];
 }
