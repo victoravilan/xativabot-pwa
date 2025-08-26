@@ -70,17 +70,41 @@ const I18N = {
       and:"i"}
 };
 
-// Palabras clave
+// ===== Palabras clave (UNIFICADAS) =====
 const KEYWORDS = {
-  en:{greet:["hello","hi","hey"],menu:["menu","card","dishes","food"],rec:["recommend","suggest","what should i eat"],
-      allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
-      lore:["history","myth","tradition","story","origin"],reserve:["reserve","reservation","book"]},
-  es:{greet:["hola","buenas"],menu:["menú","carta","platos","comida"],rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
-      allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
-      lore:["historia","mito","tradición","origen","leyenda"],reserve:["reserva","reservar","booking"]},
-  ca:{greet:["hola","bones"],menu:["menú","carta","plats","menjar"],rec:["recomana","recomanació","què menge","que menjar"],
-      allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
-      lore:["història","mite","tradició","origen","llegenda"],reserve:["reserva","reservar"]}
+  en:{
+    greet:["hello","hi","hey"],
+    menu:["menu","card","dishes","food"],
+    rec:["recommend","suggest","what should i eat"],
+    allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
+    lore:["history","myth","tradition","story","origin"],
+    reserve:["reserve","reservation","book"],
+    ingredient:["what is","benefits of","season of","history of"],
+    season:["in season","seasonal","season"],
+    history:["history","origin","myth"]
+  },
+  es:{
+    greet:["hola","buenas"],
+    menu:["menú","carta","platos","comida"],
+    rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
+    allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
+    lore:["historia","mito","tradición","origen","leyenda"],
+    reserve:["reserva","reservar","booking"],
+    ingredient:["que es","qué es","beneficios de","temporada de","historia de"],
+    season:["de temporada","temporada"],
+    history:["historia","origen","mito","leyenda"]
+  },
+  ca:{
+    greet:["hola","bones"],
+    menu:["menú","carta","plats","menjar"],
+    rec:["recomana","recomanació","què menge","que menjar"],
+    allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
+    lore:["història","mite","tradició","origen","llegenda"],
+    reserve:["reserva","reservar"],
+    ingredient:["què és","beneficis de","temporada de","història de"],
+    season:["de temporada","temporada"],
+    history:["història","origen","mite","llegenda"]
+  }
 };
 
 // ===== INIT =====
@@ -180,6 +204,9 @@ function processUserMessage(raw){
   else if(K.rec.some(k=>msg.includes(k))) intent='recommend';
   else if(K.menu.some(k=>msg.includes(k))) intent='menu';
   else if(K.greet.some(k=>msg.includes(k))) intent='greet';
+  else if (K.ingredient.some(k => msg.includes(k))) intent = 'ingredient';
+  else if (K.season?.some(k => msg.includes(k))) intent = 'season';
+  else if (K.history?.some(k => msg.includes(k))) intent = 'history';
 
   setTimeout(()=>{
     switch(intent){
@@ -192,6 +219,9 @@ function processUserMessage(raw){
       case 'allergy': parseAndSaveAllergies(raw); reply(I18N[currentLanguage].allergies_saved); break;
       case 'lore': replyLore(); break;
       case 'reserve': reply(I18N[currentLanguage].reservation_prompt); showReservationForm(); break;
+      case 'ingredient': handleIngredient(raw); break;
+      case 'season': handleSeason(raw); break;
+      case 'history': replyLore(); break;
       default: reply(I18N[currentLanguage].unknown);
     }
   },300);
@@ -426,4 +456,86 @@ function openReservationDB(){
     req.onupgradeneeded=(ev)=>{ const db=ev.target.result; if(!db.objectStoreNames.contains('reservations')) db.createObjectStore('reservations',{keyPath:'id'}); };
     req.onsuccess=(ev)=>resolve(ev.target.result); req.onerror=(ev)=>reject(ev.target.error);
   });
+}
+
+// ======== INTELIGENCIA conectada (ingredientes / temporada) ========
+
+async function handleIngredient(raw) {
+  const name = extractIngredient(raw) || raw;  // heurística simple
+  try {
+    const url = `/.netlify/functions/knowledge?ingredient=${encodeURIComponent(name)}&lang=${currentLanguage}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'knowledge failed');
+
+    const parts = [];
+    parts.push(data.summary);
+    if (data.nutrition) {
+      const n = data.nutrition;
+      parts.push(
+        `${t('nutr')} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,'g prot')} · ${fmt(n.fat_g,'g grasa')} · ${fmt(n.carbs_g,'g hidratos')}`
+      );
+    }
+    if (data.recalls_us?.length) {
+      parts.push(t('recalls_hint'));
+    }
+    reply(parts.join('\n'));
+
+  } catch(e) {
+    reply(t('fallback_info'));
+  }
+
+  function fmt(v,suf){ return (v!=null)? `${Math.round(v*10)/10} ${suf}` : '—'; }
+  function t(key){
+    const dict = {
+      es: {
+        nutr: "Nutrición aprox./100 g:",
+        recalls_hint: "He revisado retiradas recientes en USA: nada crítico salvo coincidencias puntuales.",
+        fallback_info: "Te cuento lo esencial y evito afirmaciones dudosas. ¿Quieres que lo investigue con más detalle?"
+      },
+      en: {
+        nutr: "Approx nutrition /100 g:",
+        recalls_hint: "Checked recent US recalls: nothing critical except occasional matches.",
+        fallback_info: "Here’s the core info, avoiding dubious claims. Want a deeper dive?"
+      },
+      ca: {
+        nutr: "Nutrició aprox./100 g:",
+        recalls_hint: "He comprovat retirades recents als EUA: res crític excepte coincidències puntuals.",
+        fallback_info: "Et conte l’essencial i evite afirmacions dubtoses. Vols que ho investigue més?"
+      }
+    };
+    return (dict[currentLanguage]||dict.es)[key];
+  }
+}
+
+async function handleSeason(raw){
+  const month = new Date().getMonth()+1;
+  try{
+    const url = `/.netlify/functions/season?country=ES&month=${month}&lang=${currentLanguage}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error||'season failed');
+    const list = [
+      data.title,
+      `${label('fruit')}: ${data.fruit.join(', ') || '—'}`,
+      `${label('veg')}: ${data.vegetables.join(', ') || '—'}`
+    ];
+    reply(list.join('\n'));
+  }catch(e){ reply(label('err')); }
+
+  function label(k){
+    const d = {
+      es:{fruit:'Frutas',veg:'Verduras',err:'No pude acceder a la estacionalidad ahora.'},
+      en:{fruit:'Fruits',veg:'Vegetables',err:'Couldn’t access seasonality right now.'},
+      ca:{fruit:'Fruites',veg:'Hortalisses',err:'No he pogut accedir a la temporalitat ara.'}
+    }; return (d[currentLanguage]||d.es)[k];
+  }
+}
+
+function extractIngredient(text){
+  // heurística: toma la última palabra “fuerte” del usuario
+  const words = text.toLowerCase().replace(/[¡!.,;:?]/g,'').split(/\s+/);
+  const stop = new Set(['que','qué','es','de','la','el','los','las','the','what','is','beneficios','temporada','historia','origen']);
+  const candidates = words.filter(w => w.length>2 && !stop.has(w));
+  return candidates[candidates.length-1];
 }
