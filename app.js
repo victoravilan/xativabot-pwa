@@ -1,4 +1,4 @@
-/** XativaBot – App (voz optimizada + i18n + culinario + reservas) */
+/** XativaBot – App (voz optimizada + i18n + culinario + reservas + región) */
 
 // DOM
 const chatMessages = document.getElementById('chat-messages');
@@ -7,6 +7,7 @@ const sendBtn = document.getElementById('send-btn');
 const voiceBtn = document.getElementById('voice-input-btn');
 const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
+const regionSelect = document.getElementById('region-select'); // NUEVO
 const suggestionChips = document.querySelectorAll('.chip');
 
 // Estado
@@ -127,6 +128,10 @@ async function initApp(){
   await ensureVoicesReady(); // <- clave para TTS estable
   loadData();
 
+  // Cargar región guardada (si existe)
+  const savedRegion = localStorage.getItem('xativabot-region') || '';
+  if (regionSelect) regionSelect.value = savedRegion;
+
   // Bienvenida solo en texto (evita bloqueo por autoplay)
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 }
@@ -153,6 +158,19 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
+  if (regionSelect) {
+    regionSelect.addEventListener('change', (e) => {
+      const code = e.target.value || '';
+      localStorage.setItem('xativabot-region', code);
+      // Feedback suave
+      const mapMsg = {
+        es: code ? `Región establecida: ${e.target.options[e.target.selectedIndex].text}` : 'Usando España (nacional).',
+        en: code ? `Region set: ${e.target.options[e.target.selectedIndex].text}` : 'Using Spain (national).',
+        ca: code ? `Regió establida: ${e.target.options[e.target.selectedIndex].text}` : 'Usant Espanya (nacional).'
+      };
+      reply(mapMsg[currentLanguage] || mapMsg.es);
+    });
+  }
   suggestionChips.forEach(chip=>{ chip.addEventListener('click',()=>{ userInput.value=chip.textContent; handleSendMessage(); }); });
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
@@ -232,7 +250,6 @@ function reply(text){
   if (shouldSpeak()) speakText(text);
 }
 function shouldSpeak(){
-  // Habla si el usuario ya interactuó (OK en móviles) o si no es móvil (desktop suele permitir)
   return userInteracted || !isMobileDevice();
 }
 
@@ -259,7 +276,7 @@ function replyLore(){
 }
 function recommendDishes(n=3){
   const avoid=new Set(USER.allergies.map(a=>a.toLowerCase()));
-  const prefs=new Set(USER.preferences.map(p=>p.toLowerCase())); // vegan, vegetarian, gluten-free
+  const prefs=new Set(USER.preferences.map(p=>p.toLowerCase()));
   const ok = MENU.dishes.filter(d=>{
     if(d.allergens.some(a=>avoid.has(a))) return false;
     if(prefs.size){
@@ -291,8 +308,6 @@ function parseAndSaveAllergies(text){
 }
 
 // ===== TTS (texto a voz) – robusto =====
-
-// Espera a que las voces estén disponibles
 function ensureVoicesReady(){
   return new Promise((resolve)=>{
     if (!speechSynthesisObj) return resolve();
@@ -303,92 +318,50 @@ function ensureVoicesReady(){
         resolve();
       }
     };
-    // Algunos navegadores ya las tienen
     load();
     if (!voicesReady){
-      // Chrome/Safari las despachan asíncronamente
       speechSynthesisObj.onvoiceschanged = () => { load(); if (voicesReady) resolve(); };
-      // “nudge” en algunos motores
       setTimeout(load, 250);
       setTimeout(load, 1000);
     }
   });
 }
-
-// Selección de voz por idioma con fallback
 function pickVoiceFor(lang){
   if (!availableVoices || !availableVoices.length) return null;
-
-  const wanted = lang.toLowerCase();              // p.ej. 'es-es' / 'ca-es'
-  const primary = wanted.slice(0,2);              // 'es' / 'ca' / 'en'
-
-  // 1) Coincidencia exacta
+  const wanted = lang.toLowerCase();
+  const primary = wanted.slice(0,2);
   let v = availableVoices.find(v => v.lang && v.lang.toLowerCase() === wanted);
   if (v) return v;
-
-  // 2) Coincidencia por código primario
   v = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(primary));
   if (v) return v;
-
-  // 3) Fallback razonable
   const fallbacks = primary === 'ca' ? ['es','en'] : primary === 'es' ? ['en'] : ['es'];
   for (const fb of fallbacks){
     const m = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(fb));
     if (m) return m;
   }
-
-  // 4) Lo que haya
   return availableVoices[0] || null;
 }
-
 async function speakText(text){
   if (!speechSynthesisObj) return;
-
-  // Asegura voces listas
   await ensureVoicesReady();
-
-  // Cancela lo que esté sonando
   try { speechSynthesisObj.cancel(); } catch {}
-
   const utter = new SpeechSynthesisUtterance(text);
-
-  // Voz + idioma
-  const langCode = getLangCode(currentLanguage); // 'es-ES' / 'ca-ES' / 'en-US'
+  const langCode = getLangCode(currentLanguage);
   const voice = pickVoiceFor(langCode);
-  if (voice){
-    utter.voice = voice;
-    // Usa el lang de la voz para maximizar compatibilidad cross-browser
-    utter.lang = (voice.lang || langCode);
-  } else {
-    utter.lang = langCode;
-  }
-
-  // Ajustes suaves (opcionales)
-  utter.rate = 1.0;
-  utter.pitch = 1.0;
-  utter.volume = 1.0;
-
-  // Algunos motores requieren speak en microtask
-  setTimeout(() => {
-    try { speechSynthesisObj.speak(utter); } catch (e) { console.warn('TTS speak failed:', e); }
-  }, 0);
+  if (voice){ utter.voice = voice; utter.lang = (voice.lang || langCode); }
+  else { utter.lang = langCode; }
+  utter.rate = 1.0; utter.pitch = 1.0; utter.volume = 1.0;
+  setTimeout(() => { try { speechSynthesisObj.speak(utter); } catch (e) { console.warn('TTS speak failed:', e); } }, 0);
 }
 
 // ===== Idioma =====
 function changeLanguage(lang){
   currentLanguage = lang;
-
-  // UI traducible
   document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
   userInput.placeholder = userInput.getAttribute('data-'+lang) || userInput.placeholder;
-
-  // STT al idioma
   if (recognition) recognition.lang = getLangCode(lang);
-
-  // Mensaje + voz si ya hay interacción
   reply(I18N[currentLanguage].ask_allergies);
 }
-
 function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
 
@@ -459,9 +432,8 @@ function openReservationDB(){
 }
 
 // ======== INTELIGENCIA conectada (ingredientes / temporada) ========
-
 async function handleIngredient(raw) {
-  const name = extractIngredient(raw) || raw;  // heurística simple
+  const name = extractIngredient(raw) || raw;
   try {
     const url = `/.netlify/functions/knowledge?ingredient=${encodeURIComponent(name)}&lang=${currentLanguage}`;
     const res = await fetch(url);
@@ -472,15 +444,12 @@ async function handleIngredient(raw) {
     parts.push(data.summary);
     if (data.nutrition) {
       const n = data.nutrition;
-      parts.push(
-        `${t('nutr')} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,'g prot')} · ${fmt(n.fat_g,'g grasa')} · ${fmt(n.carbs_g,'g hidratos')}`
-      );
+      parts.push(`${t('nutr')} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,'g prot')} · ${fmt(n.fat_g,'g grasa')} · ${fmt(n.carbs_g,'g hidratos')}`);
     }
     if (data.recalls_us?.length) {
       parts.push(t('recalls_hint'));
     }
     reply(parts.join('\n'));
-
   } catch(e) {
     reply(t('fallback_info'));
   }
@@ -488,21 +457,9 @@ async function handleIngredient(raw) {
   function fmt(v,suf){ return (v!=null)? `${Math.round(v*10)/10} ${suf}` : '—'; }
   function t(key){
     const dict = {
-      es: {
-        nutr: "Nutrición aprox./100 g:",
-        recalls_hint: "He revisado retiradas recientes en USA: nada crítico salvo coincidencias puntuales.",
-        fallback_info: "Te cuento lo esencial y evito afirmaciones dudosas. ¿Quieres que lo investigue con más detalle?"
-      },
-      en: {
-        nutr: "Approx nutrition /100 g:",
-        recalls_hint: "Checked recent US recalls: nothing critical except occasional matches.",
-        fallback_info: "Here’s the core info, avoiding dubious claims. Want a deeper dive?"
-      },
-      ca: {
-        nutr: "Nutrició aprox./100 g:",
-        recalls_hint: "He comprovat retirades recents als EUA: res crític excepte coincidències puntuals.",
-        fallback_info: "Et conte l’essencial i evite afirmacions dubtoses. Vols que ho investigue més?"
-      }
+      es: { nutr: "Nutrición aprox./100 g:", recalls_hint: "He revisado retiradas recientes en USA: nada crítico salvo coincidencias puntuales.", fallback_info: "Te cuento lo esencial y evito afirmaciones dudosas. ¿Quieres que lo investigue con más detalle?" },
+      en: { nutr: "Approx nutrition /100 g:", recalls_hint: "Checked recent US recalls: nothing critical except occasional matches.", fallback_info: "Here’s the core info, avoiding dubious claims. Want a deeper dive?" },
+      ca: { nutr: "Nutrició aprox./100 g:", recalls_hint: "He comprovat retirades recents als EUA: res crític excepte coincidències puntuals.", fallback_info: "Et conte l’essencial i evite afirmacions dubtoses. Vols que ho investigue més?" }
     };
     return (dict[currentLanguage]||dict.es)[key];
   }
@@ -510,8 +467,9 @@ async function handleIngredient(raw) {
 
 async function handleSeason(raw){
   const month = new Date().getMonth()+1;
+  const region = (regionSelect && regionSelect.value) ? regionSelect.value : (localStorage.getItem('xativabot-region') || '');
   try{
-    const url = `/.netlify/functions/season?country=ES&month=${month}&lang=${currentLanguage}`;
+    const url = `/.netlify/functions/season?country=ES${region ? `&region=${encodeURIComponent(region)}` : ''}&month=${month}&lang=${currentLanguage}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error||'season failed');
@@ -533,7 +491,6 @@ async function handleSeason(raw){
 }
 
 function extractIngredient(text){
-  // heurística: toma la última palabra “fuerte” del usuario
   const words = text.toLowerCase().replace(/[¡!.,;:?]/g,'').split(/\s+/);
   const stop = new Set(['que','qué','es','de','la','el','los','las','the','what','is','beneficios','temporada','historia','origen']);
   const candidates = words.filter(w => w.length>2 && !stop.has(w));

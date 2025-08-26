@@ -169,3 +169,22 @@ body{
   .reservation-form input:focus,.reservation-form textarea:focus{border-color:#d24;box-shadow:0 0 0 3px rgba(210,34,68,.2);background:#0b0b0b}
   .reservation-form button[type="submit"]{justify-self:end}
 }
+/* === Region selector (mismo estilo que language-selector) === */
+.region-selector select {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--light-text);
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.region-selector select:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.region-selector select option {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+}
