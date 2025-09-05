@@ -1,96 +1,90 @@
-/**
- * Netlify Function: reservations
- * CORS + validación + envío opcional por SendGrid
- */
-
-const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:8888', 'http://localhost:5173'];
-
+// netlify/functions/reservations.js
 exports.handler = async (event) => {
-  const origin = event.headers.origin || '';
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
 
-  const isAllowed = (allowedOrigins.length ? allowedOrigins : DEFAULT_ALLOWED_ORIGINS).includes(origin);
+  try {
+    const {
+      id, name, email, phone, dateTime, dateTimeISO, partySize,
+      dishes, allergies, notes, uiLanguage, region
+    } = JSON.parse(event.body || '{}');
 
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': isAllowed ? origin : '*',
-    'Vary': 'Origin',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400'
-  };
+    if (!name || !(dateTime || dateTimeISO)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields (name, dateTime)' }) };
+    }
 
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: corsHeaders, body: '' };
-  if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' }, corsHeaders);
+    // Normaliza fecha a string legible
+    const whenLocal = dateTime || new Date(dateTimeISO).toLocaleString('es-ES', { hour12:false });
 
-  let data;
-  try { data = JSON.parse(event.body || '{}'); }
-  catch { return json(400, { error: 'Invalid JSON body' }, corsHeaders); }
+    // 1) Aquí podrías guardar en BBDD/Sheet si quieres (omitido en este ejemplo)
 
-  const errors = [];
-  const { name, phone, email, dateTime, partySize, notes } = data;
+    // 2) Notificación al móvil del gestor (Twilio)
+    const {
+      TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN,
+      TWILIO_FROM,
+      TWILIO_TO,
+      TWILIO_CHANNEL // 'whatsapp' opcional
+    } = process.env;
 
-  if (!name || String(name).trim().length < 2) errors.push('name is required (min 2 chars).');
-  if (!phone && !email) errors.push('At least one of phone or email is required.');
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) errors.push('email is invalid.');
-  if (phone && !/^[\d+\s().-]{6,}$/.test(String(phone))) errors.push('phone looks invalid.');
+    if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM && TWILIO_TO) {
+      const bodyLines = [
+        '🧾 Nueva reserva Xativa',
+        `• Nombre: ${name}`,
+        `• Tel/Email: ${phone || '-'} / ${email || '-'}`,
+        `• Fecha/hora: ${whenLocal}`,
+        `• Comensales: ${partySize || '-'}`,
+        `• Platos: ${dishes || '-'}`,
+        `• Alergias: ${allergies || '-'}`,
+        `• Notas: ${notes || '-'}`,
+        `• Idioma UI: ${uiLanguage || '-'}` + (region ? ` • Región: ${region}` : '')
+      ];
+      const msg = bodyLines.join('\n');
 
-  const dt = new Date(dateTime);
-  if (!dateTime || isNaN(dt.getTime())) errors.push('dateTime is required (ISO 8601).');
-  else if (dt.getTime() < (Date.now() + 60 * 1000)) errors.push('dateTime must be in the future.');
+      const isWA = (TWILIO_CHANNEL || '').toLowerCase() === 'whatsapp';
+      const to = isWA ? (TWILIO_TO.startsWith('whatsapp:') ? TWILIO_TO : `whatsapp:${TWILIO_TO}`) : TWILIO_TO;
+      const from = isWA ? (TWILIO_FROM.startsWith('whatsapp:') ? TWILIO_FROM : `whatsapp:${TWILIO_FROM}`) : TWILIO_FROM;
 
-  const size = parseInt(partySize, 10);
-  if (!Number.isInteger(size) || size < 1 || size > 20) errors.push('partySize must be an integer between 1 and 20.');
+      // Llamada simple a la API REST de Twilio (sin SDK)
+      const creds = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+      const form = new URLSearchParams({ To: to, From: from, Body: msg });
 
-  if (errors.length) return json(400, { error: 'Validation failed', details: errors }, corsHeaders);
+      const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${creds}`,
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: form.toString()
+      });
 
-  const reservation = {
-    id: cryptoRandomId(),
-    name: String(name).trim(),
-    phone: phone ? String(phone).trim() : null,
-    email: email ? String(email).trim() : null,
-    dateTime: new Date(dt).toISOString(),
-    partySize: size,
-    notes: notes ? String(notes).trim() : ''
-  };
+      if (!resp.ok) {
+        const errTxt = await resp.text();
+        console.error('Twilio error:', resp.status, errTxt);
+      }
+    } else {
+      console.warn('Twilio env vars missing; SMS/WA not sent.');
+    }
 
-  try { await maybeSendEmail(reservation); } catch(e){ console.error('Email error:', e); }
-
-  return json(201, { ok: true, reservation }, corsHeaders);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: true,
+        reservation: {
+          id,
+          name,
+          email,
+          phone,
+          dateTime: whenLocal,
+          partySize,
+          dishes, allergies, notes,
+          uiLanguage, region
+        }
+      })
+    };
+  } catch (e) {
+    console.error('reservations error', e);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server error' }) };
+  }
 };
-
-function json(statusCode, body, headers = {}) {
-  return { statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers }, body: JSON.stringify(body) };
-}
-function cryptoRandomId(){ return 'res_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
-
-async function maybeSendEmail(reservation){
-  const key = process.env.SENDGRID_API_KEY;
-  const to = process.env.RESERVATION_TO_EMAIL;
-  const from = process.env.RESERVATION_FROM_EMAIL || to;
-  if (!key || !to) return;
-
-  const subject = `Nueva reserva: ${reservation.name} (${reservation.partySize}) – ${new Date(reservation.dateTime).toLocaleString()}`;
-  const text =
-`Reserva:
-- Nombre: ${reservation.name}
-- Email: ${reservation.email || '—'}
-- Teléfono: ${reservation.phone || '—'}
-- Fecha/Hora: ${reservation.dateTime}
-- Personas: ${reservation.partySize}
-- Notas: ${reservation.notes || '—'}
-- ID: ${reservation.id}
-`;
-
-  await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      personalizations:[{ to:[{ email: to }] }],
-      from:{ email: from, name: 'XativaBot' },
-      subject, content:[{ type:'text/plain', value: text }]
-    })
-  }).then(r=>{ if(!r.ok) throw new Error(`SendGrid ${r.status}`); });
-}
