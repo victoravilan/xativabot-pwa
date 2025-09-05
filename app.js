@@ -1,4 +1,4 @@
-/** XativaBot – App (voz + i18n + culinario + reservas + región + voice unlock UX) */
+/** XativaBot – App (voz + i18n + culinario + reservas + región) */
 
 // DOM
 const chatMessages = document.getElementById('chat-messages');
@@ -10,6 +10,10 @@ const languageSelect = document.getElementById('language-select');
 const regionSelect = document.getElementById('region-select'); // puede no existir
 const suggestionChips = document.querySelectorAll('.chip');
 
+// CONFIG (opcional): enlace WhatsApp directo como fallback manual tras reservar.
+// Formato internacional sin signos: "34XXXXXXXXX"
+const MANAGER_WHATSAPP = ""; // ej: "34600111222" si quieres mostrar botón “Notificar por WhatsApp”
+
 // Estado
 let currentLanguage = 'es';
 let recognition = null;
@@ -19,9 +23,9 @@ let isListening = false;
 // Voz
 let voicesReady = false;
 let availableVoices = [];
-let userInteracted = false; // cualquier gesto válido ya cuenta
-let ttsUnlocked = false;    // “desbloqueo” explícito (iOS/Android)
-let lastSpokenText = '';    // para reintentar tras desbloqueo
+let userInteracted = false;
+let ttsUnlocked = false;
+let lastSpokenText = '';
 
 // Datos
 let MENU = { dishes: [] };
@@ -45,7 +49,10 @@ const I18N = {
       say_more:"Tell me more—what are you craving today?",
       unknown:"Thanks for your message. How else may I assist you today?",
       and:"and",
-      voice_enable:"Tap to enable voice"},
+      voice_enable:"Tap to enable voice",
+      res_thanks:"✅ Reservation received.",
+      res_offline:"📌 You're offline. Reservation saved and will sync when online.",
+      res_whatsapp:"Notify via WhatsApp"},
   es:{welcome:"¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?",
       ask_allergies:"¿Tienes alguna alergia o restricción? (p. ej.: gluten, marisco, huevo, leche, pescado, vegano, vegetariano)",
       menu_intro:"Estos son algunos destacados de nuestra carta:",
@@ -59,7 +66,10 @@ const I18N = {
       say_more:"Cuéntame más—¿qué te apetece hoy?",
       unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
       and:"y",
-      voice_enable:"Toca para activar la voz"},
+      voice_enable:"Toca para activar la voz",
+      res_thanks:"✅ Reserva recibida.",
+      res_offline:"📌 Estás sin conexión. La reserva se guardó y se enviará al volver.",
+      res_whatsapp:"Notificar por WhatsApp"},
   ca:{welcome:"Benvingut als Restaurants Xativa! Sóc l’AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?",
       ask_allergies:"Tens cap al·lèrgia o restricció? (p. ex.: gluten, marisc, ou, llet, peix, vegà, vegetarià)",
       menu_intro:"Aquests són alguns destacats de la carta:",
@@ -73,10 +83,13 @@ const I18N = {
       say_more:"Explica’m més—què et ve de gust avui?",
       unknown:"Gràcies pel teu missatge. En què més puc ajudar-te?",
       and:"i",
-      voice_enable:"Toca per activar la veu"}
+      voice_enable:"Toca per activar la veu",
+      res_thanks:"✅ Reserva rebuda.",
+      res_offline:"📌 Estàs fora de línia. La reserva s’enviarà en tornar.",
+      res_whatsapp:"Notificar per WhatsApp"}
 };
 
-// ===== KEYWORDS (idéntico a tu versión enriquecida) =====
+// ===== KEYWORDS =====
 const KEYWORDS = {
   en:{greet:["hello","hi","hey"],menu:["menu","card","dishes","food"],rec:["recommend","suggest","what should i eat"],
       allergy:["allergy","allergies","gluten","shellfish","fish","egg","milk","vegan","vegetarian"],
@@ -86,7 +99,7 @@ const KEYWORDS = {
   es:{greet:["hola","buenas"],menu:["menú","carta","platos","comida"],rec:["recomienda","recomiéndame","sugerencia","qué como","que comer"],
       allergy:["alergia","alergias","gluten","marisco","pescado","huevo","leche","vegano","vegetariano"],
       lore:["historia","mito","tradición","origen","leyenda"],reserve:["reserva","reservar","booking"],
-      ingredient:["que es","qué es","beneficios de","temporada de","historia de","háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azucar","azúcar"],
+      ingredient:["que es","qué es","beneficios de","temporada de","historia de","háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azúcar","azucar"],
       season:["de temporada","temporada"],history:["historia","origen","mito","leyenda"]},
   ca:{greet:["hola","bones"],menu:["menú","carta","plats","menjar"],rec:["recomana","recomanació","què menge","que menjar"],
       allergy:["al·lèrgia","gluten","marisc","peix","ou","llet","vegà","vegetarià"],
@@ -102,13 +115,10 @@ document.addEventListener('visibilitychange', () => {
   else { if (speechSynthesisObj) speechSynthesisObj.resume(); }
 });
 
-// Marca interacción del usuario (más eventos para móviles/PWA)
+// Gesto del usuario (para TTS en móviles)
 ['click','keydown','touchstart','touchend','pointerdown','focusin'].forEach(evt => {
   document.addEventListener(evt, () => {
-    if (!userInteracted) {
-      userInteracted = true;
-      tryUnlockTTS(); // intenta desbloquear en el mismo gesto
-    }
+    if (!userInteracted) { userInteracted = true; tryUnlockTTS(); }
   }, { passive: true });
 });
 
@@ -125,7 +135,6 @@ async function initApp(){
 
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 
-  // MOSTRAR FAB 🔊 EN MÓVIL HASTA DESBLOQUEAR VOZ
   if (isMobileDevice()) createVoiceFAB();
 }
 
@@ -144,20 +153,18 @@ function saveMemory(){ try{ localStorage.setItem('xativabot-user', JSON.stringif
 function setupEventListeners(){
   sendBtn.addEventListener('click', handleSendMessage);
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
-  voiceBtn.addEventListener('click', toggleVoiceInput);
+  voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
-  if (regionSelect) {
-    regionSelect.addEventListener('change', (e) => {
-      const code = e.target.value || '';
-      localStorage.setItem('xativabot-region', code);
-      const mapMsg = {
-        es: code ? `Región establecida: ${e.target.options[e.target.selectedIndex].text}` : 'Usando España (nacional).',
-        en: code ? `Region set: ${e.target.options[e.target.selectedIndex].text}` : 'Using Spain (national).',
-        ca: code ? `Regió establida: ${e.target.options[e.target.selectedIndex].text}` : 'Usant Espanya (nacional).'
-      };
-      reply(mapMsg[currentLanguage] || mapMsg.es);
-    });
-  }
+  regionSelect?.addEventListener('change', (e) => {
+    const code = e.target.value || '';
+    localStorage.setItem('xativabot-region', code);
+    const mapMsg = {
+      es: code ? `Región establecida: ${e.target.options[e.target.selectedIndex].text}` : 'Usando España (nacional).',
+      en: code ? `Region set: ${e.target.options[e.target.selectedIndex].text}` : 'Using Spain (national).',
+      ca: code ? `Regió establida: ${e.target.options[e.target.selectedIndex].text}` : 'Usant Espanya (nacional).'
+    };
+    reply(mapMsg[currentLanguage] || mapMsg.es);
+  });
   suggestionChips.forEach(chip=>{ chip.addEventListener('click',()=>{ userInput.value=chip.textContent; handleSendMessage(); }); });
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
@@ -166,7 +173,7 @@ function setupEventListeners(){
 function checkBrowserSupport(){
   if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){
     console.warn('Speech recognition not supported');
-    if (voiceBtn) voiceBtn.style.display='none';
+    voiceBtn && (voiceBtn.style.display='none');
   }
   if(!('speechSynthesis'in window)) console.warn('Speech synthesis not supported');
 }
@@ -183,16 +190,16 @@ function setupSpeechRecognition(){
         : '🎙️ Voice recognition is not available in this mode. Use the browser mic button or type.',
       'bot'
     );
-    if (voiceBtn) voiceBtn.style.display='none';
+    voiceBtn && (voiceBtn.style.display='none');
     return;
   }
   recognition = new SR();
   recognition.continuous=false; recognition.interimResults=false;
   recognition.lang=getLangCode(currentLanguage);
-  recognition.onstart=()=>{ isListening=true; voiceBtn.classList.add('active'); voiceIndicator.classList.add('active'); };
-  recognition.onend=()=>{ isListening=false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
+  recognition.onstart=()=>{ isListening=true; voiceBtn?.classList.add('active'); voiceIndicator?.classList.add('active'); };
+  recognition.onend=()=>{ isListening=false; voiceBtn?.classList.remove('active'); voiceIndicator?.classList.remove('active'); };
   recognition.onresult=(e)=>{ const transcript = e.results[0][0].transcript; userInput.value=transcript; handleSendMessage(); };
-  recognition.onerror=(e)=>{ console.error('STT error:', e.error); isListening=false; voiceBtn.classList.remove('active'); voiceIndicator.classList.remove('active'); };
+  recognition.onerror=(e)=>{ console.error('STT error:', e.error); isListening=false; voiceBtn?.classList.remove('active'); voiceIndicator?.classList.remove('active'); };
 }
 function toggleVoiceInput(){ if(!recognition) return; isListening? recognition.stop(): recognition.start(); }
 
@@ -248,7 +255,7 @@ function processUserMessage(raw){
 }
 function isIngredientQuery(msg){
   const phrases = {
-    es: ["háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azucar","azúcar"],
+    es: ["háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite","aceite de oliva","ajo","cebolla","tomate","pimentón","azúcar"],
     en: ["tell me about","spice","spices","ingredient","ingredients","rice","saffron","pepper","turmeric","cinnamon","cumin","clove","nutmeg","bay leaf","vanilla","salt","olive oil","garlic","onion","tomato"],
     ca: ["parla'm de","sobre","ingredient","ingredients","espècia","espècies","arròs","safrà","pebre","cúrcuma","canel·la","comí","clau","nou moscada","llorer","vainilla","sal","oli d'oliva","all","ceba","tomaca","tomate","pebre roig"]
   }[currentLanguage] || [];
@@ -259,19 +266,12 @@ function isIngredientQuery(msg){
 function reply(text){
   lastSpokenText = text;
   addMessageToChat(text,'bot');
-  // Si puede hablar, habla; si no, ofrece desbloqueo
-  if (shouldSpeak()) {
-    speakText(text);
-  } else if (isMobileDevice()) {
-    showVoiceUnlockPrompt(); // botón para habilitar voz y reproducir esta respuesta
-  }
+  if (shouldSpeak()) speakText(text);
+  else if (isMobileDevice()) showVoiceUnlockPrompt();
 }
-function shouldSpeak(){
-  // Desktop: habla siempre. Móvil: basta con GESTO previo (sin exigir banderas internas).
-  return !isMobileDevice() || userInteracted;
-}
+function shouldSpeak(){ return !isMobileDevice() || userInteracted; }
 
-// ===== Culinario (menú/recs/lore) =====
+// ===== Culinario =====
 function replyMenu(){
   if(!MENU.dishes.length){ reply("La carta se está cargando, inténtalo de nuevo…"); return; }
   const intro = I18N[currentLanguage].menu_intro;
@@ -324,35 +324,26 @@ function parseAndSaveAllergies(text){
 // ===== TTS =====
 function tryUnlockTTS(){
   if (!speechSynthesisObj || ttsUnlocked) return;
-  // utterance mínimo en el MISMO gesto
-  try {
-    const u = new SpeechSynthesisUtterance(' ');
-    u.volume = 0; u.rate = 1; u.lang = getLangCode(currentLanguage);
-    speechSynthesisObj.speak(u);
-    setTimeout(()=>{ try{ speechSynthesisObj.cancel(); }catch{}; ttsUnlocked = true; }, 0);
-  } catch(e) {
-    console.warn('TTS unlock failed', e);
-  }
+  try { const u=new SpeechSynthesisUtterance(' '); u.volume=0; u.rate=1; u.lang=getLangCode(currentLanguage);
+    speechSynthesisObj.speak(u); setTimeout(()=>{ try{ speechSynthesisObj.cancel(); }catch{}; ttsUnlocked=true; },0);
+  } catch(e){ console.warn('TTS unlock failed', e); }
 }
 function ensureVoicesReady(){
   return new Promise((resolve)=>{
     if (!speechSynthesisObj) return resolve();
-    const load = () => { availableVoices = speechSynthesisObj.getVoices(); if (availableVoices && availableVoices.length){ voicesReady = true; resolve(); } };
+    const load=()=>{ availableVoices=speechSynthesisObj.getVoices(); if(availableVoices?.length){ voicesReady=true; resolve(); } };
     load();
-    if (!voicesReady){
-      speechSynthesisObj.onvoiceschanged = () => { load(); if (voicesReady) resolve(); };
-      setTimeout(load, 250); setTimeout(load, 1000);
-    }
+    if(!voicesReady){ speechSynthesisObj.onvoiceschanged=()=>{ load(); if(voicesReady) resolve(); }; setTimeout(load,250); setTimeout(load,1000); }
   });
 }
 function pickVoiceFor(lang){
-  if (!availableVoices || !availableVoices.length) return null;
-  const wanted = lang.toLowerCase(); const primary = wanted.slice(0,2);
-  let v = availableVoices.find(v => v.lang && v.lang.toLowerCase() === wanted); if (v) return v;
-  v = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(primary)); if (v) return v;
-  const fallbacks = primary === 'ca' ? ['es','en'] : primary === 'es' ? ['en'] : ['es'];
-  for (const fb of fallbacks){ const m = availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(fb)); if (m) return m; }
-  return availableVoices[0] || null;
+  if (!availableVoices?.length) return null;
+  const wanted=lang.toLowerCase(), primary=wanted.slice(0,2);
+  let v=availableVoices.find(v=>v.lang?.toLowerCase()===wanted) || availableVoices.find(v=>v.lang?.toLowerCase().startsWith(primary));
+  if (v) return v;
+  const fallbacks = primary==='ca'?['es','en']: primary==='es'?['en']:['es'];
+  for(const fb of fallbacks){ const m=availableVoices.find(v=>v.lang?.toLowerCase().startsWith(fb)); if(m) return m; }
+  return availableVoices[0]||null;
 }
 async function speakText(text){
   if (!speechSynthesisObj) return;
@@ -361,69 +352,28 @@ async function speakText(text){
   const utter = new SpeechSynthesisUtterance(text);
   const langCode = getLangCode(currentLanguage);
   const voice = pickVoiceFor(langCode);
-  if (voice){ utter.voice = voice; utter.lang = (voice.lang || langCode); } else { utter.lang = langCode; }
-  utter.rate = 1.0; utter.pitch = 1.0; utter.volume = 1.0;
-  setTimeout(() => { try { speechSynthesisObj.speak(utter); } catch (e) { console.warn('TTS speak failed:', e); } }, 0);
+  if (voice){ utter.voice=voice; utter.lang=(voice.lang||langCode); } else { utter.lang=langCode; }
+  utter.rate=1.0; utter.pitch=1.0; utter.volume=1.0;
+  setTimeout(()=>{ try{ speechSynthesisObj.speak(utter);}catch(e){ console.warn('TTS speak failed:',e);} },0);
 }
-
-// Si el TTS está bloqueado, añade una burbuja con botón para activarlo
 function showVoiceUnlockPrompt(){
-  // Evita duplicados
   if (document.querySelector('.voice-unlock')) return;
-  const wrap = document.createElement('div');
-  wrap.className = 'message bot-message voice-unlock';
-  const btn = document.createElement('button');
-  btn.className = 'chip';
-  btn.textContent = `🔊 ${I18N[currentLanguage].voice_enable}`;
-  btn.addEventListener('click', () => {
-    userInteracted = true;
-    tryUnlockTTS();
-    // si teníamos algo que decir, dilo
-    if (lastSpokenText) speakText(lastSpokenText);
-    wrap.remove();
-  });
-  wrap.appendChild(btn);
-  chatMessages.appendChild(wrap);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  const wrap=document.createElement('div'); wrap.className='message bot-message voice-unlock';
+  const btn=document.createElement('button'); btn.className='chip'; btn.textContent=`🔊 ${I18N[currentLanguage].voice_enable}`;
+  btn.addEventListener('click',()=>{ userInteracted=true; tryUnlockTTS(); if(lastSpokenText) speakText(lastSpokenText); wrap.remove(); });
+  wrap.appendChild(btn); chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
 }
-
-// FAB flotante para activar voz (inyecta estilo mínimamente)
 function createVoiceFAB(){
   if (document.getElementById('voice-fab')) return;
-
-  // Estilos mínimos del FAB (para no tocar tu CSS ahora)
-  const styleId = 'voice-fab-style';
+  const styleId='voice-fab-style';
   if (!document.getElementById(styleId)){
-    const s = document.createElement('style');
-    s.id = styleId;
-    s.textContent = `
-      #voice-fab{
-        position: fixed;
-        right: 16px;
-        bottom: 88px;
-        width: 54px; height: 54px;
-        border-radius: 50%;
-        border: none; cursor: pointer;
-        box-shadow: 0 8px 20px rgba(0,0,0,.2);
-        background: var(--primary-color, #8B0000);
-        color: #fff; font-size: 22px; line-height: 54px;
-        z-index: 1000;
-      }
-      #voice-fab:active{ transform: translateY(1px); }
-    `;
-    document.head.appendChild(s);
+    const s=document.createElement('style'); s.id=styleId; s.textContent=`
+      #voice-fab{position:fixed; right:16px; bottom:88px; width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,.2); background:var(--primary-color, #8B0000); color:#fff; font-size:22px; line-height:54px; z-index:1000;}
+      #voice-fab:active{ transform: translateY(1px); }`; document.head.appendChild(s);
   }
-
-  const fab = document.createElement('button');
-  fab.id = 'voice-fab';
-  fab.title = I18N[currentLanguage].voice_enable || 'Activar voz';
-  fab.textContent = '🔊';
-  fab.addEventListener('click', () => {
-    userInteracted = true;
-    tryUnlockTTS();
-    if (lastSpokenText) speakText(lastSpokenText);
-    fab.remove(); // ya no hace falta tras desbloquear
-  });
+  const fab=document.createElement('button'); fab.id='voice-fab'; fab.title=I18N[currentLanguage].voice_enable||'Activar voz'; fab.textContent='🔊';
+  fab.addEventListener('click',()=>{ userInteracted=true; tryUnlockTTS(); if(lastSpokenText) speakText(lastSpokenText); fab.remove(); });
   document.body.appendChild(fab);
 }
 
@@ -438,55 +388,116 @@ function changeLanguage(lang){
 function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
 
-// ===== Reservas (sin cambios funcionales) =====
+// ===== Reserva =====
+
+// Helpers de fecha local → string "YYYY-MM-DDTHH:MM"
+function pad2(n){ return n<10? '0'+n : ''+n; }
+function formatLocalForInput(dt){
+  return dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate()) + 'T' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());
+}
+function roundToNextStep(dt, minutesStep=30){
+  const ms = minutesStep*60*1000;
+  return new Date(Math.ceil(dt.getTime()/ms)*ms);
+}
+
 function showReservationForm(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
+
+  // Fecha mínima y valor por defecto (próxima media hora en LOCAL)
+  const now = new Date();
+  const def = roundToNextStep(now, 30);
+  const minStr = formatLocalForInput(now);
+  const defStr = formatLocalForInput(def);
+
+  const prefillAllergies = (USER.allergies||[]).join(', ');
+
   wrap.innerHTML=`
     <form id="reservation-form" class="reservation-form">
       <label><span data-en="Name:" data-es="Nombre:" data-ca="Nom:">Nombre:</span><br>
         <input type="text" name="name" required placeholder="Alex García"></label><br>
+
       <label><span data-en="Email:" data-es="Correo:" data-ca="Correu:">Correo:</span><br>
         <input type="email" name="email" placeholder="you@example.com"></label><br>
+
       <label><span data-en="Phone:" data-es="Teléfono:" data-ca="Telèfon:">Teléfono:</span><br>
         <input type="tel" name="phone" placeholder="+34 600 000 000"></label><br>
+
       <label><span data-en="Date & Time:" data-es="Fecha y hora:" data-ca="Data i hora:">Fecha y hora:</span><br>
-        <input type="datetime-local" name="dateTime" required></label><br>
+        <input type="datetime-local" name="dateTime" required min="${minStr}" value="${defStr}"></label><br>
+
       <label><span data-en="Party Size:" data-es="Número de comensales:" data-ca="Nombre de comensals:">Número de comensales:</span><br>
         <input type="number" name="partySize" min="1" max="20" value="2"></label><br>
+
+      <label><span data-en="Preferred dishes:" data-es="Platos deseados:" data-ca="Plats desitjats:">Platos deseados:</span><br>
+        <input type="text" name="dishes" placeholder="Paella valenciana, Fideuà..."></label><br>
+
+      <label><span data-en="Allergies:" data-es="Alergias:" data-ca="Al·lèrgies:">Alergias:</span><br>
+        <input type="text" name="allergies" placeholder="gluten, marisco..." value="${prefillAllergies}"></label><br>
+
       <label><span data-en="Notes:" data-es="Notas:" data-ca="Notes:">Notas:</span><br>
-        <textarea name="notes" placeholder="Alergias, preferencias..."></textarea></label><br>
+        <textarea name="notes" placeholder="Preferencias extra, celebración, etc."></textarea></label><br>
+
       <button type="submit" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva">Confirmar Reserva</button>
     </form>`;
+
   chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
-
-  const form=wrap.querySelector('#reservation-form');
-  const dateInput=form.querySelector('input[name="dateTime"]');
-  const now=new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
-  const round5=new Date(Math.ceil(now.getTime()/(5*60*1000))*(5*60*1000));
-  dateInput.min=round5.toISOString().slice(0,16);
-
   changeLanguage(currentLanguage);
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
-    const data=Object.fromEntries(new FormData(form).entries()); data.id='res_'+Date.now();
-    try{ const local=new Date(data.dateTime); if(isNaN(local.getTime())) throw new Error('Invalid date');
-      data.dateTime=new Date(local.getTime()-local.getTimezoneOffset()*60000).toISOString();
-    }catch(_){ addMessageToChat("⚠️ Invalid date/time.", 'bot'); btn.disabled=false; return; }
+  const form=wrap.querySelector('#reservation-form');
 
-    try{ const r=await submitReservation(data);
-      addMessageToChat("✅ Reservation confirmed! ID: "+r.reservation.id,'bot');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+    const data=Object.fromEntries(new FormData(form).entries());
+    data.id='res_'+Date.now();
+    data.uiLanguage=currentLanguage;
+    data.region = regionSelect?.value || localStorage.getItem('xativabot-region') || '';
+    // Normaliza fecha: input local -> ISO UTC
+    try{
+      const local=new Date(data.dateTime);
+      if(isNaN(local.getTime())) throw new Error('Invalid date');
+      data.dateTimeISO=new Date(local.getTime()-local.getTimezoneOffset()*60000).toISOString();
+    }catch(_){
+      addMessageToChat("⚠️ Fecha/hora inválida.", 'bot'); btn.disabled=false; return;
+    }
+
+    try{
+      const r=await submitReservation(data);
+      addMessageToChat(`${I18N[currentLanguage].res_thanks} ID: ${r.reservation.id}`, 'bot');
+
+      // Fallback manual WhatsApp (opcional)
+      if (MANAGER_WHATSAPP){
+        const text = encodeURIComponent(
+`Nueva reserva
+Nombre: ${data.name}
+Tel: ${data.phone||'-'} - Email: ${data.email||'-'}
+Fecha/hora: ${data.dateTime}
+Comensales: ${data.partySize}
+Platos: ${data.dishes||'-'}
+Alergias: ${data.allergies|| (USER.allergies||[]).join(', ') || '-'}
+Notas: ${data.notes||'-'}`
+        );
+        const wa = `https://wa.me/${MANAGER_WHATSAPP}?text=${text}`;
+        const w = document.createElement('div');
+        w.className='message bot-message';
+        w.innerHTML = `<a class="chip" href="${wa}" target="_blank" rel="noopener">🟢 ${I18N[currentLanguage].res_whatsapp}</a>`;
+        chatMessages.appendChild(w); chatMessages.scrollTop=chatMessages.scrollHeight;
+      }
+
       wrap.remove();
     }catch(err){
-      console.warn('Offline, queue reservation:', err.message);
+      console.warn('Offline/Server error, queue reservation:', err.message);
       await queueReservation(data);
-      addMessageToChat("📌 You're offline. Reservation saved and will sync when online.", 'bot');
+      addMessageToChat(I18N[currentLanguage].res_offline, 'bot');
       wrap.remove();
     }finally{ btn.disabled=false; }
   });
 }
+
 async function submitReservation(reservation){
-  const resp=await fetch('/.netlify/functions/reservations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)});
+  const resp=await fetch('/.netlify/functions/reservations',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)
+  });
   const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
 }
 async function queueReservation(reservation){
@@ -497,12 +508,12 @@ async function queueReservation(reservation){
 function openReservationDB(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open('xativabot-db',1);
-    req.onupgradeneeded=(ev)=>{ const db=ev.target.result; if(!db.objectStoreNames.contains('reservations')) db.createObjectStore('reservations',{keyPath:'id'}); };
+    req.onupgradeneeded=(ev)=>{ const db=ev.target.result; if(!db.objectStoreNames.contains('reservations')) db.createobjectStore('reservations',{keyPath:'id'}); };
     req.onsuccess=(ev)=>resolve(ev.target.result); req.onerror=(ev)=>reject(ev.target.error);
   });
 }
 
-// ===== Season/Ingredient (tu lógica actual) =====
+// ===== Season/Ingredient (igual que antes) =====
 async function handleSeason(_raw){
   const month = new Date().getMonth()+1;
   const region = (regionSelect && regionSelect.value) ? regionSelect.value : (localStorage.getItem('xativabot-region') || '');
@@ -518,7 +529,6 @@ async function handleSeason(_raw){
     ];
     reply(list.join('\n'));
   }catch(e){ reply(label('err')); }
-
   function label(k){
     const d = {
       es:{fruit:'Frutas',veg:'Verduras',err:'No pude acceder a la estacionalidad ahora.'},
