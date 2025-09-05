@@ -11,8 +11,8 @@ const regionSelect = document.getElementById('region-select'); // puede no exist
 const suggestionChips = document.querySelectorAll('.chip');
 
 // CONFIG (opcional): enlace WhatsApp directo como fallback manual tras reservar.
-// Formato internacional sin signos: "34661882732"
-const MANAGER_WHATSAPP = ""; // ej: "34622167728" si quieres mostrar botón “Notificar por WhatsApp”
+// Formato internacional sin signos: "0034661882732"
+const MANAGER_WHATSAPP = ""; // ej: "0034622167728" si quieres mostrar botón “Notificar por WhatsApp”
 
 // Estado
 let currentLanguage = 'es';
