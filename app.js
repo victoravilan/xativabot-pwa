@@ -1,4 +1,4 @@
-/** XativaBot – App (diálogo de alergias primero + recomendaciones; salud; voz estable; i18n) */
+/** XativaBot – App (alergias con diálogo + recomendaciones; salud; temporadas ES; voz estable; i18n) */
 
 // ===== DOM =====
 const chatMessages   = document.getElementById('chat-messages');
@@ -22,6 +22,7 @@ let ttsUnlocked = false;
 
 let MENU = { dishes: [] };
 let LORE = { facts: [] };
+let SEASON = { meta:{country:"ES",months:[]}, produce: [] };
 
 let USER = {
   allergies: [],
@@ -30,7 +31,7 @@ let USER = {
   preferredRestaurant: null // 'les_corts' | 'gracia' | 'sant_antoni'
 };
 
-// Diálogo controlado (evita “guardar” antes de escuchar)
+// Diálogo controlado
 let DIALOG = { awaiting: null }; // 'allergy' | null
 
 // ===== i18n UI =====
@@ -62,7 +63,10 @@ const I18N = {
     diet_saved_none:"Perfect, no restrictions — my favourite kind of challenge. Let’s find you something delicious…",
     diet_humor_ping:"Allergies noted. I’ll steer the paella like a pro.",
     health_preface:"Quick culinary-nutrition brief:",
-    health_disclaimer:"This is general information, not medical advice."
+    health_disclaimer:"This is general information, not medical advice.",
+    season_now:"In season now:",
+    season_of:"Season for",
+    month_names:["January","February","March","April","May","June","July","August","September","October","November","December"]
   },
   es:{
     welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu cómplice culinario. Pregúntame por ingredientes, técnicas, tradiciones… o haz una reserva.",
@@ -91,7 +95,10 @@ const I18N = {
     diet_saved_none:"Perfecto, sin restricciones — me encantan los retos sabrosos. Vamos con unas sugerencias…",
     diet_humor_ping:"Alergias registradas. Llevaré la paella con mano experta.",
     health_preface:"Apunte culinario-nutricional:",
-    health_disclaimer:"Información general; no sustituye consejo médico."
+    health_disclaimer:"Información general; no sustituye consejo médico.",
+    season_now:"Ahora en temporada:",
+    season_of:"Temporada de",
+    month_names:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
   },
   ca:{
     welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu còmplice culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
@@ -120,7 +127,10 @@ const I18N = {
     diet_saved_none:"Perfecte, sense restriccions — m’encanten els reptes saborosos. Anem amb suggeriments…",
     diet_humor_ping:"Al·lèrgies registrades. Portaré la paella amb mà mestra.",
     health_preface:"Apunt culinari-nutricional:",
-    health_disclaimer:"Informació general; no substitueix consell mèdic."
+    health_disclaimer:"Informació general; no substitueix consell mèdic.",
+    season_now:"Ara en temporada:",
+    season_of:"Temporada de",
+    month_names:["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"]
   }
 };
 
@@ -135,7 +145,8 @@ const KEYWORDS = {
     reserve:["reserva","reservar","booking","mesa","mesa para"],
     restaurant:["les corts","corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
     ingredient:["háblame de","hablame de","qué es","que es","beneficios de","temporada de","historia de","sobre","especia","especias","ingrediente","ingredientes"],
-    health:["colesterol","triglicéridos","azúcar","diabetes","hipertensión","sodio","salud","cardio"]
+    health:["colesterol","triglicéridos","azúcar","diabetes","hipertensión","sodio","salud","cardio"],
+    seasonWords:["temporada","de temporada","está de temporada","que hay de temporada","qué hay de temporada"]
   },
   en:{
     greet:["hello","hi","hey"],
@@ -146,7 +157,8 @@ const KEYWORDS = {
     reserve:["reserve","reservation","book","table"],
     restaurant:["les corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d'en vidalet","vidalet"],
     ingredient:["tell me about","what is","benefits of","season of","history of","about","spice","spices","ingredient","ingredients"],
-    health:["cholesterol","triglycerides","sugar","diabetes","hypertension","sodium","health","cardio"]
+    health:["cholesterol","triglycerides","sugar","diabetes","hypertension","sodium","health","cardio"],
+    seasonWords:["seasonal","in season","what’s in season","whats in season","what is in season","season now"]
   },
   ca:{
     greet:["hola","bones"],
@@ -157,7 +169,8 @@ const KEYWORDS = {
     reserve:["reserva","reservar","taula"],
     restaurant:["les corts","gràcia","gracia","sant antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
     ingredient:["parla'm de","què és","que es","beneficis de","temporada de","història de","sobre","espècia","espècies","ingredient","ingredients"],
-    health:["colesterol","triglicèrids","sucre","diabetis","hipertensió","sodi","salut","cardio"]
+    health:["colesterol","triglicèrids","sucre","diabetis","hipertensió","sodi","salut","cardio"],
+    seasonWords:["de temporada","està de temporada","què hi ha de temporada","temporada ara"]
   }
 };
 
@@ -185,19 +198,21 @@ async function initApp(){
   setupSpeechRecognition();
   checkBrowserSupport();
   await ensureVoicesReady();
-  loadData();
+  await loadData();
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 }
 
 // ===== Data / Memory =====
 async function loadData(){
   try{
-    const [menuRes,loreRes] = await Promise.all([
+    const [menuRes,loreRes,seasonRes] = await Promise.all([
       fetch('/data/menu.json'),
-      fetch('/data/lore.json')
+      fetch('/data/lore.json'),
+      fetch('/data/season_es.json')
     ]);
-    MENU = await menuRes.json();
-    LORE = await loreRes.json();
+    MENU   = await menuRes.json();
+    LORE   = await loreRes.json();
+    SEASON = await seasonRes.json();
   }catch(e){ console.warn('Data offline:', e); }
 }
 function loadMemory(){ try{ const raw=localStorage.getItem('xativabot-user'); if(raw) USER=JSON.parse(raw);}catch{} }
@@ -209,8 +224,6 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
-
-  // CHIPS con intención (si no hay data-intent, inferimos)
   suggestionChips.forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
@@ -218,10 +231,8 @@ function setupEventListeners(){
       else { userInput.value = chip.textContent; handleSendMessage(); }
     });
   });
-
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
-
 function inferIntentFromChipText(txt){
   const t = (txt||'').toLowerCase();
   const sets = {
@@ -264,7 +275,7 @@ function handleSendMessage(){
   const message = userInput.value.trim();
   if(message==='') return;
 
-  // Si estamos esperando alergias, priorizar ese flujo
+  // Si estamos en diálogo de alergias, procesar primero
   if (DIALOG.awaiting === 'allergy') {
     addMessageToChat(message,'user');
     handleAllergyAnswer(message);
@@ -297,16 +308,27 @@ function detectIntent(raw){
   const maybeRest = parseRestaurant(msg);
   if (maybeRest){ USER.preferredRestaurant = maybeRest; saveMemory(); }
 
+  // Ingredientes (expresiones)
   const pat = {
     es: /\b(háblame de|hablame de|qué es|que es|beneficios de|temporada de|historia de|sobre)\s+(.{2,})/i,
     en: /\b(tell me about|what is|benefits of|season of|history of|about)\s+(.{2,})/i,
     ca: /\b(parla'm de|què és|que es|beneficis de|temporada de|història de|sobre)\s+(.{2,})/i
   }[currentLanguage];
-
   const m = msg.match(pat);
   if (m && m[2]) { result.intent = 'ingredient'; result.topic = cleanTopic(m[2]); return result; }
 
+  // Salud
   if (K.health.some(k=>msg.includes(k))) { result.intent='health'; result.topic = guessTopicFromFreeText(msg) || 'cholesterol'; return result; }
+
+  // Temporadas: si menciona palabra de temporada o un mes
+  if (K.seasonWords.some(k=>msg.includes(k)) || hasMonthName(msg, currentLanguage)) {
+    result.intent = 'season';
+    result.month = extractMonthFromText(msg, currentLanguage) || (new Date().getMonth()+1);
+    result.topic = extractIngredientFromSeasonQuery(msg); // p.ej. "temporada de fresas"
+    return result;
+  }
+
+  // Resto
   if (K.reserve.some(k=>msg.includes(k))) { result.intent='reserve'; return result; }
   if (K.lore.some(k=>msg.includes(k)))    { result.intent='lore'; return result; }
   if (K.allergy.some(k=>msg.includes(k))) { result.intent='allergy'; return result; }
@@ -314,6 +336,7 @@ function detectIntent(raw){
   if (K.menu.some(k=>msg.includes(k)))    { result.intent='menu'; return result; }
   if (K.greet.some(k=>msg.includes(k)))   { result.intent='greet'; return result; }
 
+  // Último intento: tópico culinario libre
   const guess = guessTopicFromFreeText(msg);
   if (guess) { result.intent='ingredient'; result.topic=guess; return result; }
 
@@ -323,9 +346,9 @@ function detectIntent(raw){
 function cleanTopic(s){ return (s||'').replace(/[?!.:,;()"]/g,' ').replace(/\s{2,}/g,' ').trim(); }
 function guessTopicFromFreeText(msg){
   const stop = {
-    es: ['hola','quiero','necesito','cuéntame','habla','sobre','de','del','la','el','los','las','un','una','y','o','para','como','qué','que','es','historia','beneficios','temporada','salud','cardio'],
-    en: ['hello','i','want','need','tell','me','about','of','the','a','and','or','for','how','what','is','history','benefits','season','health','cardio'],
-    ca: ['hola','vull','necessite','explica\'m','parla','sobre','de','del','la','el','els','les','un','una','i','o','per','com','què','que','és','història','beneficis','temporada','salut','cardio']
+    es: ['hola','quiero','necesito','cuéntame','habla','sobre','de','del','la','el','los','las','un','una','y','o','para','como','qué','que','es','historia','beneficios','temporada','salud','cardio','en','que','qué','hay'],
+    en: ['hello','i','want','need','tell','me','about','of','the','a','and','or','for','how','what','is','history','benefits','season','health','cardio','in','what','is','there'],
+    ca: ['hola','vull','necessite','explica\'m','parla','sobre','de','del','la','el','els','les','un','una','i','o','per','com','què','que','és','història','beneficis','temporada','salut','cardio','en','què','hi','ha']
   }[currentLanguage];
   const tokens = msg.split(/\s+/).filter(w => w && !stop.includes(w));
   return tokens.slice(-3).join(' ').trim() || null;
@@ -346,12 +369,13 @@ function dispatchIntent(intent, payload={}){
       if(!USER.allergies.length && !USER.preferences.length) startAllergyDialog();
       else replyRecommendations();
       break;
-    case 'allergy': startAllergyDialog(); break; // ← PREGUNTA PRIMERO
+    case 'allergy': startAllergyDialog(); break;
     case 'lore': replyLore(); break;
     case 'reserve': ensureRestaurantThenForm(); break;
     case 'locations': replyLocations(); break;
     case 'ingredient': handleIngredient(payload.topic || payload.message || ''); break;
     case 'health': handleHealthQuery(payload.topic || ''); break;
+    case 'season': handleSeasonQuery(payload); break;
     default: reply(I18N[currentLanguage].unknown);
   }
 }
@@ -429,28 +453,22 @@ function startAllergyDialog(){
   reply(I18N[currentLanguage].ask_allergies_specific);
   showDietaryWizard(); // chips de ayuda (NO guarda hasta confirmar)
 }
-
 function handleAllergyAnswer(message){
-  // El usuario respondió por texto; ahora sí guardamos y recomendamos
   const found = parseAndSaveAllergies(message, {returnFound:true});
   if (found && (found.allergies.length || found.preferences.length)) {
-    const list = [...found.preferences, ...found.allergies].join(', ');
     reply(I18N[currentLanguage].saved_prefs + " " + (I18N[currentLanguage].diet_humor_ping || ""));
     replyRecommendations();
   } else {
-    // Si no detectamos nada, mantenemos el diálogo y orientamos
     reply(currentLanguage==='es'
-      ? "No he detectado ninguna alergia en tu mensaje. Puedes escribir “sin gluten”, “vegano”, “sin marisco”… o usar los botones de arriba y confirmar."
+      ? "No he detectado ninguna alergia en tu mensaje. Escribe “sin gluten”, “vegano”, “sin marisco”… o usa los botones y confirma."
       : currentLanguage==='ca'
-        ? "No he detectat cap al·lèrgia al teu missatge. Pots escriure “sense gluten”, “vegà”, “sense marisc”… o usar els botons de dalt i confirmar."
-        : "I didn’t detect any allergy in your message. You can type “gluten-free”, “vegan”, “no shellfish”… or use the buttons above and confirm.");
+        ? "No he detectat cap al·lèrgia. Escriu “sense gluten”, “vegà”, “sense marisc”… o usa els botons i confirma."
+        : "I didn’t detect any allergy. Type “gluten-free”, “vegan”, “no shellfish”… or use the buttons and confirm.");
   }
   DIALOG.awaiting = null;
 }
-
 function showDietaryWizard(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
-
   const labels = {
     es: { cta:I18N.es.diet_cta, confirm:I18N.es.diet_confirm_btn, none:I18N.es.diet_none_btn,
           chips:['Sin gluten','Vegano','Vegetariano','Sin lactosa','Sin marisco','Sin frutos secos'] },
@@ -459,7 +477,6 @@ function showDietaryWizard(){
     ca: { cta:I18N.ca.diet_cta, confirm:I18N.ca.diet_confirm_btn, none:I18N.ca.diet_none_btn,
           chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs'] }
   }[currentLanguage];
-
   wrap.innerHTML = `
     <div class="dietary-wizard">
       <p>${labels.cta}</p>
@@ -472,9 +489,7 @@ function showDietaryWizard(){
       </div>
     </div>
   `;
-
   chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
-
   const selected = new Set();
   wrap.querySelectorAll('.diet-chip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -483,45 +498,29 @@ function showDietaryWizard(){
       if (on) selected.add(key); else selected.delete(key);
     });
   });
-
   wrap.querySelector('.diet-none').addEventListener('click', ()=>{
-    USER.preferences = [];
-    USER.allergies = [];
-    saveMemory();
-    reply(I18N[currentLanguage].diet_saved_none);
-    replyRecommendations();
-    DIALOG.awaiting = null;
-    wrap.remove();
+    USER.preferences = []; USER.allergies = []; saveMemory();
+    reply(I18N[currentLanguage].diet_saved_none); replyRecommendations(); DIALOG.awaiting = null; wrap.remove();
   });
-
   wrap.querySelector('.diet-confirm').addEventListener('click', ()=>{
     const map = ['gluten-free','vegan','vegetarian','milk','shellfish','nuts'];
     const prefsAdd=[], allergiesAdd=[];
-    selected.forEach(idx=>{
-      const tag = map[idx];
-      if (tag==='gluten-free' || tag==='vegan' || tag==='vegetarian') prefsAdd.push(tag);
-      else allergiesAdd.push(tag);
-    });
+    selected.forEach(idx=>{ const tag = map[idx]; (tag==='gluten-free'||tag==='vegan'||tag==='vegetarian')? prefsAdd.push(tag): allergiesAdd.push(tag); });
     USER.preferences = Array.from(new Set([...(USER.preferences||[]), ...prefsAdd]));
     USER.allergies   = Array.from(new Set([...(USER.allergies||[]),   ...allergiesAdd]));
     saveMemory();
-
     const list = [...prefsAdd, ...allergiesAdd].join(', ') || (currentLanguage==='es'?'(sin cambios)':'(no changes)');
-    reply(I18N[currentLanguage].diet_saved_fun(list));
-    replyRecommendations();
-    DIALOG.awaiting = null;
-    wrap.remove();
+    reply(I18N[currentLanguage].diet_saved_fun(list)); replyRecommendations(); DIALOG.awaiting = null; wrap.remove();
   });
 }
 
-// ===== Parser de alergias (texto libre) =====
+// ===== Parser de alergias =====
 function parseAndSaveAllergies(text, opts={}){
   const map = {
     en:{gluten:'gluten', shellfish:'shellfish', fish:'fish', egg:'egg', milk:'milk', vegan:'vegan', vegetarian:'vegetarian', lactose:'milk', nuts:'nuts'},
     es:{gluten:'gluten', marisco:'shellfish', pescado:'fish', huevo:'egg', leche:'milk', vegano:'vegan', vegetariano:'vegetarian', lactosa:'milk', frutos:'nuts', frutos_secos:'nuts', frutossecos:'nuts', nueces:'nuts', almendras:'nuts', avellanas:'nuts'},
     ca:{gluten:'gluten', marisc:'shellfish', peix:'fish', ou:'egg', llet:'milk', vegà:'vegan', vegetarià:'vegetarian', lactosa:'milk', fruits:'nuts', fruits_secs:'nuts', fruitssecs:'nuts', nous:'nuts', ametlles:'nuts', avellanes:'nuts'}
   }[currentLanguage];
-
   const foundAllergies=[], foundPrefs=[];
   for(const [k,v] of Object.entries(map)){
     const rx=new RegExp(`\\b${k}\\b`,'i');
@@ -535,12 +534,11 @@ function parseAndSaveAllergies(text, opts={}){
   else{ USER.allergies = Array.from(new Set([...(USER.allergies||[]), ...foundAllergies])); }
   foundPrefs.forEach(p=>{ if(!USER.preferences.includes(p)) USER.preferences.push(p); });
   saveMemory();
-
   if (opts.returnFound) return { allergies: foundAllergies, preferences: foundPrefs };
   return null;
 }
 
-// ===== Conocimiento online (culinario y salud) =====
+// ===== Conocimiento online =====
 async function handleIngredient(topicRaw){
   const lang = currentLanguage;
   const topic = cleanTopic(topicRaw || '');
@@ -554,7 +552,6 @@ async function handleIngredient(topicRaw){
     }
   }catch(e){ console.warn('Knowledge fetch failed:', e); }
 
-  // Fallback local simple
   const localKeyMap = {
     es:{ "arroz":"arroz","azafrán":"azafrán","aceite de oliva":"aceite de oliva" },
     en:{ "rice":"arroz","saffron":"azafrán","olive oil":"aceite de oliva" },
@@ -567,6 +564,10 @@ async function handleIngredient(topicRaw){
   const parts = [];
   if (local?.summary) parts.push(local.summary);
   if (knowledgeText) parts.push(knowledgeText);
+
+  // Añade temporada si aplica
+  const seasonInfo = seasonForIngredient(topic, lang);
+  if (seasonInfo) parts.push(seasonInfo);
 
   if (!parts.length){
     reply(lang==='es' ? "Puedo hablar de especias, técnicas e ingredientes (cúrcuma, comino, canela, laurel, vainilla, arroz, azafrán…). ¿Cuál te interesa?"
@@ -595,18 +596,100 @@ async function handleHealthQuery(topicRaw){
       if (data?.ok && data.text) text = data.text;
     }
   }catch(e){ console.warn('Health fetch failed:', e); }
-
   if (!text){
     text = (lang==='es')
-      ? "Puedo orientarte sobre colesterol, presión arterial, azúcares, sodio… Pregúntame por ejemplo: “alimentos que bajan el colesterol” o “¿aceite de oliva y corazón?”"
+      ? "Puedo orientarte sobre colesterol, presión arterial, azúcares, sodio… Pregunta: “alimentos que bajan el colesterol” o “¿aceite de oliva y corazón?”"
       : (lang==='ca')
-        ? "Puc orientar-te sobre colesterol, pressió arterial, sucres, sodi… Demana’m: “aliments que baixen el colesterol” o “oli d’oliva i cor”"
+        ? "Puc orientar-te sobre colesterol, pressió arterial, sucres, sodi… Prova: “aliments que baixen el colesterol” o “oli d’oliva i cor”"
         : "I can help with cholesterol, blood pressure, sugars, sodium… Try “foods that lower cholesterol” or “olive oil and heart”.";
   }
   reply(`${I18N[lang].health_preface}\n${text}\n\n${I18N[lang].health_disclaimer}`);
 }
 
-// ===== Reserva (email por función) =====
+// ===== Temporadas =====
+function handleSeasonQuery(payload){
+  // Si pregunta por ingrediente: “temporada de fresas”
+  if (payload.topic) {
+    const info = seasonForIngredient(payload.topic, currentLanguage);
+    if (info) reply(info);
+    else reply(currentLanguage==='es' ? "No tengo la temporada de ese producto todavía." :
+         currentLanguage==='ca' ? "Encara no tinc la temporada d’aquest producte." :
+                                  "I don’t have that item’s season yet.");
+    return;
+  }
+  // Si pregunta “qué hay de temporada (en mes)”
+  const month = payload.month || (new Date().getMonth()+1);
+  const list = listSeasonForMonth(month);
+  if (!list.length){
+    reply(currentLanguage==='es' ? "No tengo datos de temporada para ese mes." :
+         currentLanguage==='ca' ? "No tinc dades de temporada per a eixe mes." :
+                                  "No season data for that month.");
+    return;
+  }
+  const monthName = I18N[currentLanguage].month_names[month-1];
+  const header = currentLanguage==='es' ? `${I18N.es.season_now} (${monthName}):`
+              : currentLanguage==='ca' ? `${I18N.ca.season_now} (${monthName}):`
+                                       : `${I18N.en.season_now} (${monthName}):`;
+  const lines = list.slice(0,24).map(p => `• ${p.name[currentLanguage] || p.name.es}${p.kind==='veg'?' 🥦':' 🍓'}`);
+  reply(`${header}\n${lines.join('\n')}${list.length>24?'\n…':''}`);
+}
+
+function seasonForIngredient(topic, lang){
+  if (!SEASON?.produce?.length) return null;
+  const t = topic.toLowerCase();
+  const item = SEASON.produce.find(p=>{
+    const n = p.name;
+    return (n.es && t.includes(n.es.toLowerCase())) ||
+           (n.en && t.includes(n.en.toLowerCase())) ||
+           (n.ca && t.includes(n.ca.toLowerCase()));
+  });
+  if (!item) return null;
+  const months = (item.months||[]).sort((a,b)=>a-b).map(m => I18N[lang].month_names[m-1]).join(', ');
+  const head = lang==='es' ? `${I18N.es.season_of} ${item.name[lang]||item.name.es}:`
+           : lang==='ca' ? `${I18N.ca.season_of} ${item.name[lang]||item.name.es}:`
+                         : `${I18N.en.season_of} ${item.name[lang]||item.name.es}:`;
+  return `${head} ${months || '—'}`;
+}
+
+function listSeasonForMonth(month){
+  if (!SEASON?.produce?.length) return [];
+  return SEASON.produce.filter(p => p.months.includes(month));
+}
+
+function hasMonthName(text, lang){
+  const months = {
+    es:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","setiembre","octubre","noviembre","diciembre"],
+    en:["january","february","march","april","may","june","july","august","september","october","november","december"],
+    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"]
+  }[lang] || [];
+  const s = text.toLowerCase();
+  return months.some(m => s.includes(m));
+}
+function extractMonthFromText(text, lang){
+  const months = {
+    es:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","setiembre","octubre","noviembre","diciembre"],
+    en:["january","february","march","april","may","june","july","august","september","october","november","december"],
+    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"]
+  }[lang] || [];
+  const s = text.toLowerCase();
+  for (let i=0;i<months.length;i++){
+    if (s.includes(months[i])) {
+      // mapear 'setiembre' a 9 también
+      if (lang==='es' && months[i]==='setiembre') return 9;
+      return i+1;
+    }
+  }
+  return null;
+}
+function extractIngredientFromSeasonQuery(text){
+  // Intenta capturar "temporada de X" / "season of X"
+  const rx = /(?:temporada de|season of|de temporada de|temporada\s+del?|temporada\s+de la)\s+([a-záéíóúüñç'\s]+)/i;
+  const m = text.match(rx);
+  if (m && m[1]) return m[1].trim();
+  return null;
+}
+
+// ===== Reserva (email/función) =====
 function ensureRestaurantThenForm(){
   if (!USER.preferredRestaurant){
     reply(I18N[currentLanguage].pick_restaurant);
