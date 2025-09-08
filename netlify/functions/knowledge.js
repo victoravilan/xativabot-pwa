@@ -1,6 +1,5 @@
 // netlify/functions/knowledge.js
-// Devuelve texto “erudito” para ingredientes/técnicas/historia desde Wikipedia REST.
-// Flujo: summary directo -> si no hay, search/title -> summary del primer resultado.
+// Busca conocimiento culinario y de salud (Wikipedia REST) con fallback curado para “colesterol”.
 
 const ALLOWED = new Set(['es','en','ca']);
 
@@ -9,21 +8,26 @@ export const handler = async (event) => {
     const params = event.queryStringParameters || {};
     const topicRaw = String(params.topic || '').trim();
     let lang = String(params.lang || 'es').toLowerCase();
+    const kind = String(params.kind || '').toLowerCase(); // 'health' opcional
     if (!ALLOWED.has(lang)) lang = 'es';
     if (!topicRaw) return json(400, { ok:false, error:'Missing topic' });
 
-    const titleGuess = normalizeTitle(topicRaw, lang);
+    const topicNorm = normalizeTitle(topicRaw, lang);
 
-    // 1) Intento directo
-    let primary = await fetchSummary(lang, titleGuess);
+    // Fallback curado para colesterol (ES/EN/CA)
+    const curated = curatedHealth(topicNorm, lang);
+    if (curated) return json(200, { ok:true, lang, title: topicNorm, text: curated });
 
-    // 2) Si no hay extract, buscamos
+    // 1) Intento directo summary
+    let primary = await fetchSummary(lang, topicNorm);
+
+    // 2) Si no hay extract, buscar título
     if (!primary?.extract) {
       const found = await searchTitle(lang, topicRaw);
       if (found?.title) primary = await fetchSummary(lang, found.title);
     }
 
-    // 3) Fallback a EN
+    // 3) Fallback a EN si sigue vacío
     if (!primary?.extract) {
       const titleEn = normalizeTitle(topicRaw, 'en');
       primary = await fetchSummary('en', titleEn) || await fetchSummary('en', (await searchTitle('en', topicRaw))?.title || titleEn);
@@ -55,22 +59,10 @@ function json(statusCode, body){
 function normalizeTitle(q, lang){
   const s = q.toLowerCase().trim();
   const map = {
-    es: {
-      'arroz':'Arroz','azafran':'Azafrán','azafrán':'Azafrán','aceite de oliva':'Aceite de oliva',
-      'ajo':'Ajo','tomate':'Tomate','pimenton':'Pimentón','pimentón':'Pimentón',
-      'fideua':'Fideuá','fideuà':'Fideuá','paella':'Paella','all i pebre':'All i pebre',
-      'cúrcuma':'Cúrcuma','curcuma':'Cúrcuma','comino':'Comino','canela':'Canela','clavo':'Clavo de olor',
-      'nuez moscada':'Nuez moscada','laurel':'Laurus nobilis','vainilla':'Vainilla'
-    },
-    en: {
-      'rice':'Rice','saffron':'Saffron','olive oil':'Olive oil','garlic':'Garlic','tomato':'Tomato','paprika':'Paprika',
-      'paella':'Paella','fideua':'Fideuà','all i pebre':'All i pebre','turmeric':'Turmeric','cumin':'Cumin',
-      'cinnamon':'Cinnamon','clove':'Clove','nutmeg':'Nutmeg','bay leaf':'Bay leaf','vanilla':'Vanilla'
-    },
-    ca: {
-      'arròs':'Arròs','safrà':'Safrà',"oli d'oliva":"Oli d'oliva","all":"All","tomàquet":"Tomàquet","pebre roig":"Pebre roig",
-      'fideuà':'Fideuà','paella':'Paella','all i pebre':'All i pebre'
-    }
+    es: { 'arroz':'Arroz','azafran':'Azafrán','azafrán':'Azafrán','aceite de oliva':'Aceite de oliva','ajo':'Ajo','tomate':'Tomate','pimenton':'Pimentón','pimentón':'Pimentón',
+          'fideua':'Fideuá','fideuà':'Fideuá','paella':'Paella','all i pebre':'All i pebre','colesterol':'Colesterol' },
+    en: { 'rice':'Rice','saffron':'Saffron','olive oil':'Olive oil','garlic':'Garlic','tomato':'Tomato','paprika':'Paprika','paella':'Paella','fideua':'Fideuà','all i pebre':'All i pebre','cholesterol':'Cholesterol' },
+    ca: { 'arròs':'Arròs','safrà':'Safrà',"oli d'oliva":"Oli d'oliva","all":"All","tomàquet":"Tomàquet","pebre roig":"Pebre roig",'fideuà':'Fideuà','paella':'Paella','all i pebre':'All i pebre','colesterol':'Colesterol' }
   }[lang] || {};
   return map[s] || capitalizeFirst(s);
 }
@@ -99,4 +91,35 @@ async function searchTitle(lang, q){
 
 function squeeze(t){
   return String(t).replace(/\s+/g,' ').trim();
+}
+
+// Fallback curado (resumen amigable) para “colesterol”
+function curatedHealth(topic, lang){
+  const t = topic.toLowerCase();
+  const isChol = (t.includes('colesterol') || t.includes('cholesterol'));
+  if (!isChol) return null;
+
+  if (lang==='es') {
+    return [
+      "• **Cómo bajarlo (LDL):** fibra soluble (avena/cebada, legumbres), frutos secos (nueces/almendras), aceite de oliva virgen extra, pescado azul (omega-3), esteroles/estanoles vegetales, patrón tipo Mediterráneo.",
+      "• **Qué limitar/evitar:** grasas trans (bollería industrial), exceso de grasas saturadas (carnes procesadas, ciertos embutidos), ultraprocesados, azúcares en exceso si hay hipertrigliceridemia.",
+      "• **Hábitos:** más verduras y fruta, grano entero, ejercicio regular, no fumar.",
+      "• **Nota:** orientación general; consulta a tu profesional de salud para un plan personalizado."
+    ].join(' ');
+  }
+  if (lang==='ca') {
+    return [
+      "• **Com baixar-lo (LDL):** fibra soluble (civada/ordi, llegums), fruits secs (nous/ametlles), oli d'oliva verge extra, peix blau (omega-3), esterols/estanols vegetals, patró Mediterrani.",
+      "• **Què limitar/evitar:** greixos trans (brioixeria industrial), excés de saturats (carns processades), ultraprocessats, sucres elevats si hi ha hipertrigliceridèmia.",
+      "• **Hàbits:** més verdura i fruita, gra sencer, exercici regular, no fumar.",
+      "• **Nota:** orientació general; consulta el teu professional de salut."
+    ].join(' ');
+  }
+  // en
+  return [
+    "• **Lowering LDL:** soluble fiber (oats/barley, legumes), nuts (walnuts/almonds), extra-virgin olive oil, fatty fish (omega-3), plant sterols/stanols, Mediterranean-style pattern.",
+    "• **Limit/avoid:** trans fats (industrial pastries), excess saturated fats (processed meats), ultra-processed foods, high sugars if hypertriglyceridemia.",
+    "• **Habits:** more veg/fruit, whole grains, regular exercise, no smoking.",
+    "• **Note:** general information; consult your health professional."
+  ].join(' ');
 }
