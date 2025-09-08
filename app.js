@@ -1,4 +1,4 @@
-/** XativaBot – App (culinario ampliado + reservas por restaurante Barcelona + voz + i18n) */
+/** XativaBot – App (voz + i18n + conocimiento online + reserva por sucursal) */
 
 // ===== DOM =====
 const chatMessages = document.getElementById('chat-messages');
@@ -19,7 +19,6 @@ let voicesReady = false;
 let availableVoices = [];
 let userInteracted = false;
 let ttsUnlocked = false;
-let lastSpokenText = '';
 
 let MENU = { dishes: [] };
 let LORE = { facts: [] };
@@ -47,10 +46,8 @@ const I18N = {
     say_more:"What are you in the mood for today?",
     unknown:"Thanks for your message. How else can I help?",
     and:"and",
-    voice_enable:"Tap to enable voice",
     res_thanks:"✅ Reservation received.",
     res_offline:"📌 You’re offline. It will sync when back.",
-    res_whatsapp:"Notify via WhatsApp",
     pick_restaurant:"Please select the restaurant: Les Corts, Gràcia or Sant Antoni."
   },
   es:{
@@ -67,10 +64,8 @@ const I18N = {
     say_more:"¿Qué te apetece hoy?",
     unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
     and:"y",
-    voice_enable:"Toca para activar la voz",
     res_thanks:"✅ Reserva recibida.",
     res_offline:"📌 Estás sin conexión. Se enviará al volver.",
-    res_whatsapp:"Notificar por WhatsApp",
     pick_restaurant:"Selecciona el restaurante: Les Corts, Gràcia o Sant Antoni."
   },
   ca:{
@@ -87,10 +82,8 @@ const I18N = {
     say_more:"Què et ve de gust avui?",
     unknown:"Gràcies pel teu missatge. En què més puc ajudar-te?",
     and:"i",
-    voice_enable:"Toca per activar la veu",
     res_thanks:"✅ Reserva rebuda.",
     res_offline:"📌 Fora de línia. S’enviarà en tornar.",
-    res_whatsapp:"Notificar per WhatsApp",
     pick_restaurant:"Selecciona el restaurant: Les Corts, Gràcia o Sant Antoni."
   }
 };
@@ -129,83 +122,15 @@ const KEYWORDS = {
   }
 };
 
-// ===== Dataset culinario local (extracto ampliable) =====
+// ===== Dataset local mínimo (fallback offline) =====
 const CULINARY = {
   es: {
-    "arroz": {
-      summary: "Base de la paella; variedad bomba o senia absorbe caldo sin romperse. El almidón aporta textura cremosa si se controla el punto.",
-      techniques: ["Sofreír base (sofrito) y nacarar el arroz", "Hervor vivo 8–10 min + fuego medio 8–10 min", "Reposo 3–5 min para asentar granos"],
-      pairings: ["Caldo de pescado o pollo", "Azafrán", "Pimentón", "All i oli", "Verduras de temporada", "Mariscos"],
-      nutrition: { energy_kcal: 346, protein_g: 6.7, fat_g: 0.9, carbs_g: 76 },
-      culture: "En la paella tradicional no se remueve tras añadir el caldo; el ‘socarrat’ es apreciado."
-    },
-    "azafrán": {
-      summary: "Especia de los estigmas del Crocus sativus, aporta aroma floral, notas de heno y color dorado.",
-      techniques: ["Tostar levemente hebras y infusionar en caldo caliente", "Evitar exceso de calor directo para no volatilizar aromas"],
-      pairings: ["Arroz", "Pescados", "Caldo de pollo", "Marisco", "Cítricos suaves"],
-      nutrition: { energy_kcal: 310, protein_g: 11, fat_g: 6, carbs_g: 65 },
-      culture: "En la paella valenciana se usa sutilmente; su uso se documenta desde la Antigüedad en la cuenca mediterránea."
-    },
-    "aceite de oliva": {
-      summary: "Grasa matriz de la cocina mediterránea; AOVE aporta frutado, amargor y picor equilibrados.",
-      techniques: ["Sofritos a baja-media temperatura", "Emulsiones (allioli, mahonesa)", "Acabados en crudo"],
-      pairings: ["Tomate", "Ajo", "Pescado azul", "Hierbas frescas", "Cítricos"],
-      nutrition: { energy_kcal: 884, protein_g: 0, fat_g: 100, carbs_g: 0 },
-      culture: "El perfil varía por variedad (picual, hojiblanca, arbequina); usar AOVE temprano realza amargos frescos."
-    },
-    "ajo": {
-      summary: "Sulfhidratos que, al cortarse, forman alicina: aroma penetrante, dulce cuando se confita.",
-      techniques: ["Lámina fina para dorar", "Confitado en AOVE", "Majado en mortero (allioli)"],
-      pairings: ["Tomate", "Pescados", "Aceite de oliva", "Hierbas mediterráneas"],
-      nutrition: { energy_kcal: 149, protein_g: 6.4, fat_g: 0.5, carbs_g: 33 },
-      culture: "Evitar que se queme (amarga); retirarlo cuando esté rubio para aromatizar el aceite."
-    },
-    "tomate": {
-      summary: "Ácido y umami (glutamato natural). Variedades carnosas para sofritos; pera para salsas.",
-      techniques: ["Escaldar y pelar", "Sofreír largo para concentrar", "Asar y triturar"],
-      pairings: ["Aceite de oliva", "Ajo", "Pimentón", "Arroz", "Pescados blancos"],
-      nutrition: { energy_kcal: 18, protein_g: 0.9, fat_g: 0.2, carbs_g: 3.9 },
-      culture: "Un sofrito bien cocinado es la base de infinidad de arroces y guisos."
-    },
-    "pimentón": {
-      summary: "Dulce o ahumado; da color y dulzor. Tostarlo brevemente para desplegar aroma.",
-      techniques: ["Añadir fuera del fuego y mezclar rápido para que no amargue", "Usar en adobos y sofritos"],
-      pairings: ["Arroz", "Tomate", "Ajo", "Pescado", "Embutidos"],
-      nutrition: { energy_kcal: 282, protein_g: 14, fat_g: 13, carbs_g: 54 },
-      culture: "El pimentón de la Vera aporta ahumado; el murciano es más dulce y limpio."
-    }
-  },
-  en: {
-    "rice": {
-      summary: "Backbone of paella; bomba/senia absorb stock without bursting. Starch gives creaminess if timing is right.",
-      techniques: ["Sauté sofrito, then pearl the rice", "Rolling boil 8–10 min + medium heat 8–10 min", "Rest 3–5 min"],
-      pairings: ["Fish or chicken stock","Saffron","Paprika","Aioli","Seasonal veg","Shellfish"],
-      nutrition: { energy_kcal: 346, protein_g: 6.7, fat_g: 0.9, carbs_g: 76 },
-      culture: "Don’t stir after stock goes in; the prized socarrat forms at the base."
-    },
-    "saffron": {
-      summary: "Stigmas of Crocus sativus; floral, hay-like aroma and golden hue.",
-      techniques: ["Lightly toast strands, infuse in hot stock","Avoid direct high heat"],
-      pairings: ["Rice","Seafood","Light citrus","Chicken stock"],
-      nutrition: { energy_kcal: 310, protein_g: 11, fat_g: 6, carbs_g: 65 },
-      culture: "Used across the Mediterranean since antiquity; in paella, restraint is key."
-    }
-  },
-  ca: {
-    "arròs": {
-      summary: "Eix de la paella; varietats bomba/senia absorbeixen brou sense rebentar.",
-      techniques: ["Sofregit i enrossir el gra","Bull viu 8–10 min + mig 8–10 min","Repòs 3–5 min"],
-      pairings: ["Brou de peix o pollastre","Safrà","Pebre roig","Allioli","Verdures","Marisc"],
-      nutrition: { energy_kcal: 346, protein_g: 6.7, fat_g: 0.9, carbs_g: 76 },
-      culture: "No es remena després del brou; el socarrat és molt apreciat."
-    },
-    "safrà": {
-      summary: "Estigmes de Crocus sativus; aroma floral i color or.",
-      techniques: ["Torrar lleu i infusionar","Evitar calor directa forta"],
-      pairings: ["Arròs","Peix","Brou de pollastre","Cítrics suaus"],
-      nutrition: { energy_kcal: 310, protein_g: 11, fat_g: 6, carbs_g: 65 },
-      culture: "Present a la cuina mediterrània des de l’antiguitat."
-    }
+    "arroz": { summary:"Base de la paella...", techniques:["Sofreír y nacarar","Hervor y reposo"], pairings:["Azafrán","Pimentón"], nutrition:{energy_kcal:346,protein_g:6.7,fat_g:0.9,carbs_g:76}, culture:"Socarrat apreciado." },
+    "azafrán": { summary:"Estigmas del Crocus sativus...", techniques:["Tostar leve","Infusionar"], pairings:["Arroz","Pescado"], nutrition:{energy_kcal:310,protein_g:11,fat_g:6,carbs_g:65}, culture:"Uso mediterráneo ancestral." },
+    "aceite de oliva": { summary:"Grasa matriz mediterránea...", techniques:["Sofritos","Emulsiones"], pairings:["Tomate","Ajo"], nutrition:{energy_kcal:884,protein_g:0,fat_g:100,carbs_g:0}, culture:"Variedades alteran perfil." },
+    "ajo": { summary:"Alicina aromática...", techniques:["Lámina fina","Confitado"], pairings:["Tomate","Pescados"], nutrition:{energy_kcal:149,protein_g:6.4,fat_g:0.5,carbs_g:33}, culture:"Evitar quemado (amarga)." },
+    "tomate": { summary:"Ácido y umami...", techniques:["Escaldar","Sofreír largo"], pairings:["AOVE","Ajo"], nutrition:{energy_kcal:18,protein_g:0.9,fat_g:0.2,carbs_g:3.9}, culture:"Sofrito es base." },
+    "pimentón": { summary:"Dulce/ahumado...", techniques:["Añadir fuera del fuego"], pairings:["Arroz","Ajo"], nutrition:{energy_kcal:282,protein_g:14,fat_g:13,carbs_g:54}, culture:"La Vera vs Murciano." }
   }
 };
 
@@ -333,7 +258,6 @@ function parseRestaurant(msg){
 
 // ===== Respuestas base =====
 function reply(text){
-  lastSpokenText = text;
   addMessageToChat(text,'bot');
   if (!isMobileDevice() || userInteracted) speakText(text);
 }
@@ -391,26 +315,62 @@ function parseAndSaveAllergies(text){
   saveMemory();
 }
 
-// ===== Ingredient Q&A =====
-function handleIngredient(raw){
+// ===== Conocimiento online (Wikipedia REST) =====
+async function handleIngredient(raw){
   const lang = currentLanguage;
   const q = raw.toLowerCase();
-  const key = findCulinaryKey(q, lang);
-  if (!key){ reply(lang==='es' ? "Puedo hablar de arroz, azafrán, aceite de oliva, ajo, tomate, pimentón… ¿cuál te interesa?"
-                   : lang==='ca' ? "Puc parlar d’arròs, safrà, oli d’oliva, all, tomàquet, pebre roig… quin t’interessa?"
-                                  : "I can talk about rice, saffron, olive oil, garlic, tomato, paprika… which one?"); return; }
-  const data = (CULINARY[lang] && CULINARY[lang][key]) || (CULINARY.es && CULINARY.es[key]);
-  if (!data){ reply(lang==='es' ? "Aún no tengo ficha para ese ingrediente. Prueba con arroz, azafrán, aceite de oliva, ajo, tomate o pimentón."
-                    : lang==='ca' ? "Encara no tinc fitxa per a este ingredient. Prova arròs, safrà, oli d'oliva, all, tomàquet o pebre roig."
-                                   : "I don’t have a sheet for that ingredient yet. Try rice, saffron, olive oil, garlic, tomato or paprika."); return; }
+  const topic = extractTopicForKnowledge(q, lang);
+
+  // 1) Intenta traer texto online
+  let knowledgeText = '';
+  try{
+    const url = `/.netlify/functions/knowledge?topic=${encodeURIComponent(topic)}&lang=${encodeURIComponent(lang)}`;
+    const res = await fetch(url);
+    if (res.ok){
+      const data = await res.json();
+      if (data?.ok && data.text) knowledgeText = data.text;
+    }
+  }catch(e){ console.warn('Knowledge fetch failed:', e); }
+
+  // 2) Mezcla con ficha local (fallback)
+  const localKey = findLocalKey(topic, lang);
+  const local = localKey && ((CULINARY[lang] && CULINARY[lang][localKey]) || (CULINARY.es && CULINARY.es[localKey]));
   const parts = [];
-  if (data.summary) parts.push(data.summary);
-  if (data.techniques?.length){ parts.push(sectionLabel('tech',lang)); parts.push(data.techniques.map(s=>`• ${s}`).join('\n')); }
-  if (data.pairings?.length){ parts.push(sectionLabel('pair',lang)); parts.push(data.pairings.map(s=>`• ${s}`).join('\n')); }
-  if (data.nutrition){ const n=data.nutrition; parts.push(`${sectionLabel('nutr',lang)} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,u('prot',lang))} · ${fmt(n.fat_g,u('fat',lang))} · ${fmt(n.carbs_g,u('carb',lang))}`); }
-  if (data.culture) parts.push(`${sectionLabel('cult',lang)} ${data.culture}`);
+
+  if (local?.summary) parts.push(local.summary);
+  if (knowledgeText) parts.push(knowledgeText);
+  if (local?.techniques?.length) parts.push(sectionLabel('tech',lang) + '\n' + local.techniques.map(s=>`• ${s}`).join('\n'));
+  if (local?.pairings?.length) parts.push(sectionLabel('pair',lang) + '\n' + local.pairings.map(s=>`• ${s}`).join('\n'));
+  if (local?.nutrition){
+    const n=local.nutrition;
+    parts.push(`${sectionLabel('nutr',lang)} ${fmt(n.energy_kcal,'kcal')} · ${fmt(n.protein_g,u('prot',lang))} · ${fmt(n.fat_g,u('fat',lang))} · ${fmt(n.carbs_g,u('carb',lang))}`);
+  }
+  if (local?.culture) parts.push(`${sectionLabel('cult',lang)} ${local.culture}`);
+
+  if (!parts.length){
+    reply(lang==='es' ? "Puedo hablar de arroz, azafrán, aceite de oliva, ajo, tomate, pimentón… ¿cuál te interesa?"
+         : lang==='ca' ? "Puc parlar d’arròs, safrà, oli d’oliva, all, tomàquet, pebre roig… quin t’interessa?"
+                       : "I can talk about rice, saffron, olive oil, garlic, tomato, paprika… which one?");
+    return;
+  }
+
   reply(parts.join('\n'));
 
+  function extractTopicForKnowledge(txt, l){
+    // Quita prefijos “háblame de / tell me about / parla'm de ...”
+    const strip = txt.replace(/^(háblame de|hablame de|tell me about|parla'm de|sobre|about)\s+/i,'').trim();
+    return strip || txt;
+  }
+  function findLocalKey(t, l){
+    const map = {
+      es:{ "arroz":"arroz","azafrán":"azafrán","aceite de oliva":"aceite de oliva","ajo":"ajo","tomate":"tomate","pimentón":"pimentón" },
+      en:{ "rice":"arroz","saffron":"azafrán","olive oil":"aceite de oliva","garlic":"ajo","tomato":"tomate","paprika":"pimentón" },
+      ca:{ "arròs":"arroz","safrà":"azafrán","oli d'oliva":"aceite de oliva","all":"ajo","tomàquet":"tomate","pebre roig":"pimentón" }
+    }[l] || {};
+    const keys = Object.keys(map);
+    for (const k of keys){ if (t.includes(k)) return map[k]; }
+    return null;
+  }
   function fmt(v,suf){ return (v!=null)? `${Math.round(v*10)/10} ${suf}` : '—'; }
   function u(what,l){ const d={ es:{prot:'g prot', fat:'g grasa', carb:'g hidratos'}, en:{prot:'g protein', fat:'g fat', carb:'g carbs'}, ca:{prot:'g prot', fat:'g greix', carb:'g hidrats'} }; return (d[l]||d.es)[what]; }
   function sectionLabel(key,l){
@@ -420,22 +380,8 @@ function handleIngredient(raw){
     return (d[l]||d.es)[key];
   }
 }
-function findCulinaryKey(q, lang){
-  const map = {
-    es: { "arroz":"arroz", "azafrán":"azafrán", "aceite de oliva":"aceite de oliva", "aceite":"aceite de oliva", "ajo":"ajo", "tomate":"tomate", "pimentón":"pimentón" },
-    en: { "rice":"rice", "saffron":"saffron", "olive oil":"olive oil", "garlic":"garlic", "tomato":"tomato", "paprika":"paprika" },
-    ca: { "arròs":"arròs", "safrà":"safrà", "oli d'oliva":"oli d'oliva", "all":"all", "tomàquet":"tomàquet", "pebre roig":"pebre roig" }
-  }[lang] || {};
-  const keys = Object.keys(map);
-  for (const k of keys){ if (q.includes(k)) return map[k]; }
-  const fallbacks = lang==='es' ? ["arroz","azafrán","aceite de oliva","ajo","tomate","pimentón"]
-                  : lang==='ca' ? ["arròs","safrà","oli d'oliva","all","tomàquet","pebre roig"]
-                                 : ["rice","saffron","olive oil","garlic","tomato","paprika"];
-  for (const w of fallbacks){ if (q.includes(w)) return w; }
-  return null;
-}
 
-// ===== Reserva (con restaurante Barcelona) =====
+// ===== Reserva (solo email) =====
 function ensureRestaurantThenForm(){
   if (!USER.preferredRestaurant){
     reply(I18N[currentLanguage].pick_restaurant);
