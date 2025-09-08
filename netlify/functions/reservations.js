@@ -25,12 +25,7 @@ export const handler = async (event) => {
       ? new Date(dateTimeISO).toLocaleString('es-ES', { hour12:false })
       : '-');
 
-    // ===== Notificar por Telegram =====
-    const tgResult = await notifyTelegram({
-      name, email, phone, whenLocal, partySize, dishes, allergies, notes, uiLanguage, restaurant
-    });
-
-    // ===== Email a restaurante (SendGrid) =====
+    // Enviar email a la sucursal correspondiente (SendGrid)
     const sgResult = await emailToRestaurant({
       name, email, phone, whenLocal, partySize, dishes, allergies, notes, uiLanguage, restaurant
     });
@@ -44,7 +39,6 @@ export const handler = async (event) => {
           id, name, email, phone, dateTime: whenLocal, partySize,
           dishes, allergies, notes, uiLanguage, restaurant
         },
-        notified: tgResult.ok,
         emailed: sgResult.ok
       })
     };
@@ -60,56 +54,6 @@ function corsHeaders(){
     'Access-Control-Allow-Methods': 'POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   };
-}
-
-// ---- Telegram ----
-async function notifyTelegram(info){
-  try{
-    const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env;
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return { ok:false, error:'Missing Telegram envs' };
-
-    const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const rlabel = restaurantLabel(info.restaurant);
-    const lines = [
-      `<b>🧾 Nueva reserva Xativa</b>`,
-      `• <b>Restaurante:</b> ${esc(rlabel)}`,
-      `• <b>Nombre:</b> ${esc(info.name)}`,
-      `• <b>Tel/Email:</b> ${esc(info.phone||'-')} / ${esc(info.email||'-')}`,
-      `• <b>Fecha/hora:</b> ${esc(info.whenLocal)}`,
-      `• <b>Comensales:</b> ${esc(info.partySize||'-')}`,
-      `• <b>Platos:</b> ${esc(info.dishes||'-')}`,
-      `• <b>Alergias:</b> ${esc(info.allergies||'-')}`,
-      `• <b>Notas:</b> ${esc(info.notes||'-')}`,
-      `• <b>Idioma UI:</b> ${esc(info.uiLanguage||'-')}`
-    ];
-
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method:'POST',
-      headers:{ 'content-type':'application/json;charset=UTF-8' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: lines.join('\n'),
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      })
-    });
-
-    if (!res.ok){
-      console.error('Telegram error', res.status, await res.text());
-      return { ok:false };
-    }
-    return { ok:true };
-  }catch(e){
-    console.error('Telegram exception', e);
-    return { ok:false };
-  }
-}
-
-function restaurantLabel(code){
-  if (code==='les_corts')  return 'Les Corts · Bordeus, 35';
-  if (code==='gracia')     return 'Gràcia · Torrent d’en Vidalet, 26';
-  if (code==='sant_antoni')return 'Sant Antoni · Muntaner, 6';
-  return code;
 }
 
 // ---- Email (SendGrid) ----
@@ -130,7 +74,7 @@ async function emailToRestaurant(info){
 
     const to = info.restaurant==='les_corts'   ? REST_LES_CORTS_EMAIL
             : info.restaurant==='gracia'       ? REST_GRACIA_EMAIL
-            : /*sant_antoni*/                    REST_SANT_ANTONI_EMAIL;
+            : /* sant_antoni */                  REST_SANT_ANTONI_EMAIL;
 
     if (!to){ console.warn('Missing restaurant recipient email'); return { ok:false, warn:'no recipient' }; }
 
@@ -186,6 +130,13 @@ async function emailToRestaurant(info){
     console.error('SendGrid exception', e);
     return { ok:false };
   }
+}
+
+function restaurantLabel(code){
+  if (code==='les_corts')  return 'Les Corts · Bordeus, 35';
+  if (code==='gracia')     return 'Gràcia · Torrent d’en Vidalet, 26';
+  if (code==='sant_antoni')return 'Sant Antoni · Muntaner, 6';
+  return code;
 }
 
 function escapeHTML(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
