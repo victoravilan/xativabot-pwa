@@ -1,4 +1,4 @@
-/** XativaBot – App (voz + i18n + conocimiento online + reserva por sucursal) */
+/** XativaBot – App (chips con intención + voz + i18n + conocimiento online + reserva por sucursal) */
 
 // ===== DOM =====
 const chatMessages = document.getElementById('chat-messages');
@@ -32,59 +32,59 @@ let USER = {
 
 // ===== i18n UI =====
 const I18N = {
-  en:{
-    welcome:"Welcome to Xativa! I'm AlexBot, your culinary assistant. Ask me about ingredients, techniques, traditions—or book a reservation.",
-    ask_allergies:"Any allergies or dietary restrictions?",
-    menu_intro:"Here are a few highlights from our menu:",
-    rec_ready:"Based on your preferences, I recommend:",
-    rec_need_info:"Tell me allergies or diet preferences and I’ll tailor suggestions.",
-    saved_prefs:"Noted. I’ll remember that.",
-    no_match:"I couldn’t find a safe match. Want gluten-free or vegetarian options?",
-    lore_intro:"Did you know?",
-    reservation_prompt:"Great. Choose the restaurant and fill the details:",
-    allergies_saved:"Allergies/preferences saved.",
-    say_more:"What are you in the mood for today?",
-    unknown:"Thanks for your message. How else can I help?",
-    and:"and",
-    res_thanks:"✅ Reservation received.",
-    res_offline:"📌 You’re offline. It will sync when back.",
-    pick_restaurant:"Please select the restaurant: Les Corts, Gràcia or Sant Antoni."
+  en:{welcome:"Welcome to Xativa! I'm AlexBot, your culinary assistant. Ask me about ingredients, techniques, traditions—or book a reservation.",
+      ask_allergies:"Any allergies or dietary restrictions?",
+      menu_intro:"Here are a few highlights from our menu:",
+      rec_ready:"Based on your preferences, I recommend:",
+      rec_need_info:"Tell me allergies or diet preferences and I’ll tailor suggestions.",
+      saved_prefs:"Noted. I’ll remember that.",
+      no_match:"I couldn’t find a safe match. Want gluten-free or vegetarian options?",
+      lore_intro:"Did you know?",
+      reservation_prompt:"Great. Choose the restaurant and fill the details:",
+      allergies_saved:"Allergies/preferences saved.",
+      say_more:"What are you in the mood for today?",
+      unknown:"Thanks for your message. How else can I help?",
+      and:"and",
+      res_thanks:"✅ Reservation received.",
+      res_offline:"📌 You’re offline. It will sync when back.",
+      pick_restaurant:"Please select the restaurant: Les Corts, Gràcia or Sant Antoni.",
+      locations:"We have three locations in Barcelona:"
   },
-  es:{
-    welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu asistente culinario. Pregúntame por ingredientes, técnicas, tradiciones… o realiza una reserva.",
-    ask_allergies:"¿Alguna alergia o restricción?",
-    menu_intro:"Algunos destacados de la carta:",
-    rec_ready:"Según tus preferencias, te recomiendo:",
-    rec_need_info:"Cuéntame alergias o preferencias dietéticas y afino las sugerencias.",
-    saved_prefs:"Anotado. Lo recordaré.",
-    no_match:"No encontré un plato seguro. ¿Quieres ver opciones sin gluten o vegetarianas?",
-    lore_intro:"¿Sabías que…?",
-    reservation_prompt:"Perfecto. Elige restaurante y completa los datos:",
-    allergies_saved:"Alergias/preferencias guardadas.",
-    say_more:"¿Qué te apetece hoy?",
-    unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
-    and:"y",
-    res_thanks:"✅ Reserva recibida.",
-    res_offline:"📌 Estás sin conexión. Se enviará al volver.",
-    pick_restaurant:"Selecciona el restaurante: Les Corts, Gràcia o Sant Antoni."
+  es:{welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu asistente culinario. Pregúntame por ingredientes, técnicas, tradiciones… o realiza una reserva.",
+      ask_allergies:"¿Alguna alergia o restricción?",
+      menu_intro:"Algunos destacados de la carta:",
+      rec_ready:"Según tus preferencias, te recomiendo:",
+      rec_need_info:"Cuéntame alergias o preferencias dietéticas y afino las sugerencias.",
+      saved_prefs:"Anotado. Lo recordaré.",
+      no_match:"No encontré un plato seguro. ¿Quieres ver opciones sin gluten o vegetarianas?",
+      lore_intro:"¿Sabías que…?",
+      reservation_prompt:"Perfecto. Elige restaurante y completa los datos:",
+      allergies_saved:"Alergias/preferencias guardadas.",
+      say_more:"¿Qué te apetece hoy?",
+      unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
+      and:"y",
+      res_thanks:"✅ Reserva recibida.",
+      res_offline:"📌 Estás sin conexión. Se enviará al volver.",
+      pick_restaurant:"Selecciona el restaurante: Les Corts, Gràcia o Sant Antoni.",
+      locations:"Tenemos tres locales en Barcelona:"
   },
-  ca:{
-    welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu assistent culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
-    ask_allergies:"Tens cap al·lèrgia o restricció?",
-    menu_intro:"Alguns destacats de la carta:",
-    rec_ready:"Segons les teves preferències, et recomane:",
-    rec_need_info:"Digue’m al·lèrgies o preferències i afinaré les propostes.",
-    saved_prefs:"Anotat. Ho recordaré.",
-    no_match:"No he trobat cap plat segur. Vols opcions sense gluten o vegetarianes?",
-    lore_intro:"Sabies que…?",
-    reservation_prompt:"Genial. Tria el restaurant i completa les dades:",
-    allergies_saved:"Al·lèrgies/preferències guardades.",
-    say_more:"Què et ve de gust avui?",
-    unknown:"Gràcies pel teu missatge. En què més puc ajudar-te?",
-    and:"i",
-    res_thanks:"✅ Reserva rebuda.",
-    res_offline:"📌 Fora de línia. S’enviarà en tornar.",
-    pick_restaurant:"Selecciona el restaurant: Les Corts, Gràcia o Sant Antoni."
+  ca:{welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu assistent culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
+      ask_allergies:"Tens cap al·lèrgia o restricció?",
+      menu_intro:"Alguns destacats de la carta:",
+      rec_ready:"Segons les teves preferències, et recomane:",
+      rec_need_info:"Digue’m al·lèrgies o preferències i afinaré les propostes.",
+      saved_prefs:"Anotat. Ho recordaré.",
+      no_match:"No he trobat cap plat segur. Vols opcions sense gluten o vegetarianes?",
+      lore_intro:"Sabies que…?",
+      reservation_prompt:"Genial. Tria el restaurant i completa les dades:",
+      allergies_saved:"Al·lèrgies/preferències guardades.",
+      say_more:"Què et ve de gust avui?",
+      unknown:"Gràcies pel teu missatge. En què més puc ajudar-te?",
+      and:"i",
+      res_thanks:"✅ Reserva rebuda.",
+      res_offline:"📌 Fora de línia. S’enviarà en tornar.",
+      pick_restaurant:"Selecciona el restaurant: Les Corts, Gràcia o Sant Antoni.",
+      locations:"Tenim tres locals a Barcelona:"
   }
 };
 
@@ -98,7 +98,7 @@ const KEYWORDS = {
     lore:["historia","mito","tradición","origen","leyenda"],
     reserve:["reserva","reservar","booking","mesa","mesa para"],
     restaurant:["les corts","corts","gracia","gràcia","sant antoni","santantoni","antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
-    ingredient:["háblame de","hablame de","sobre","ingrediente","ingredientes","especia","especias","arroz","azafrán","pimienta","cúrcuma","canela","comino","clavo","nuez moscada","laurel","vainilla","sal","aceite de oliva","ajo","cebolla","tomate","pimentón","azúcar"]
+    ingredient:["háblame de","hablame de","qué es","que es","beneficios de","temporada de","historia de","sobre","especia","especias","ingrediente","ingredientes"]
   },
   en:{
     greet:["hello","hi","hey"],
@@ -108,7 +108,7 @@ const KEYWORDS = {
     lore:["history","myth","tradition","origin","legend"],
     reserve:["reserve","reservation","book","table"],
     restaurant:["les corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d'en vidalet","vidalet"],
-    ingredient:["tell me about","ingredient","ingredients","spice","spices","rice","saffron","pepper","turmeric","cinnamon","cumin","clove","nutmeg","bay leaf","vanilla","salt","olive oil","garlic","onion","tomato","paprika","sugar"]
+    ingredient:["tell me about","what is","benefits of","season of","history of","about","spice","spices","ingredient","ingredients"]
   },
   ca:{
     greet:["hola","bones"],
@@ -118,19 +118,19 @@ const KEYWORDS = {
     lore:["història","mite","tradició","origen","llegenda"],
     reserve:["reserva","reservar","taula"],
     restaurant:["les corts","gràcia","gracia","sant antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
-    ingredient:["parla'm de","sobre","ingredient","ingredients","espècia","espècies","arròs","safrà","pebre","cúrcuma","canel·la","comí","clau","nou moscada","llorer","vainilla","sal","oli d'oliva","all","ceba","tomàquet","pebre roig","paprika","sucre"]
+    ingredient:["parla'm de","què és","que es","beneficis de","temporada de","història de","sobre","espècia","espècies","ingredient","ingredients"]
   }
 };
 
 // ===== Dataset local mínimo (fallback offline) =====
 const CULINARY = {
   es: {
-    "arroz": { summary:"Base de la paella...", techniques:["Sofreír y nacarar","Hervor y reposo"], pairings:["Azafrán","Pimentón"], nutrition:{energy_kcal:346,protein_g:6.7,fat_g:0.9,carbs_g:76}, culture:"Socarrat apreciado." },
-    "azafrán": { summary:"Estigmas del Crocus sativus...", techniques:["Tostar leve","Infusionar"], pairings:["Arroz","Pescado"], nutrition:{energy_kcal:310,protein_g:11,fat_g:6,carbs_g:65}, culture:"Uso mediterráneo ancestral." },
-    "aceite de oliva": { summary:"Grasa matriz mediterránea...", techniques:["Sofritos","Emulsiones"], pairings:["Tomate","Ajo"], nutrition:{energy_kcal:884,protein_g:0,fat_g:100,carbs_g:0}, culture:"Variedades alteran perfil." },
-    "ajo": { summary:"Alicina aromática...", techniques:["Lámina fina","Confitado"], pairings:["Tomate","Pescados"], nutrition:{energy_kcal:149,protein_g:6.4,fat_g:0.5,carbs_g:33}, culture:"Evitar quemado (amarga)." },
-    "tomate": { summary:"Ácido y umami...", techniques:["Escaldar","Sofreír largo"], pairings:["AOVE","Ajo"], nutrition:{energy_kcal:18,protein_g:0.9,fat_g:0.2,carbs_g:3.9}, culture:"Sofrito es base." },
-    "pimentón": { summary:"Dulce/ahumado...", techniques:["Añadir fuera del fuego"], pairings:["Arroz","Ajo"], nutrition:{energy_kcal:282,protein_g:14,fat_g:13,carbs_g:54}, culture:"La Vera vs Murciano." }
+    "arroz": { summary:"Base de la paella; variedades bomba o senia absorben caldo sin romperse.", techniques:["Sofreír y nacarar","Hervor y reposo"], pairings:["Azafrán","Pimentón"], nutrition:{energy_kcal:346,protein_g:6.7,fat_g:0.9,carbs_g:76}, culture:"El ‘socarrat’ es apreciado." },
+    "azafrán": { summary:"Estigmas del Crocus sativus; aroma floral y color dorado.", techniques:["Tostado leve","Infusión"], pairings:["Arroz","Pescado"], nutrition:{energy_kcal:310,protein_g:11,fat_g:6,carbs_g:65}, culture:"Uso mediterráneo ancestral." },
+    "aceite de oliva": { summary:"Grasa matriz mediterránea; AOVE con frutado, amargor y picor.", techniques:["Sofritos","Emulsiones"], pairings:["Tomate","Ajo"], nutrition:{energy_kcal:884,protein_g:0,fat_g:100,carbs_g:0}, culture:"Variedades alteran el perfil." },
+    "ajo": { summary:"Alicina aromática; dulce al confitar.", techniques:["Lámina fina","Confitado"], pairings:["Tomate","Pescados"], nutrition:{energy_kcal:149,protein_g:6.4,fat_g:0.5,carbs_g:33}, culture:"Retirar cuando esté rubio para no amargar." },
+    "tomate": { summary:"Ácido y umami; sofritos largos concentran sabor.", techniques:["Escaldar","Sofreír largo"], pairings:["AOVE","Ajo"], nutrition:{energy_kcal:18,protein_g:0.9,fat_g:0.2,carbs_g:3.9}, culture:"Sofrito base clave." },
+    "pimentón": { summary:"Dulce/ahumado; color y dulzor.", techniques:["Añadir fuera del fuego"], pairings:["Arroz","Ajo"], nutrition:{energy_kcal:282,protein_g:14,fat_g:13,carbs_g:54}, culture:"La Vera (ahumado) vs Murciano (dulce)." }
   }
 };
 
@@ -174,10 +174,39 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
-  suggestionChips.forEach(chip=>{ chip.addEventListener('click',()=>{ userInput.value=chip.textContent; handleSendMessage(); }); });
+
+  // CHIPS con intención (si no hay data-intent, inferimos por el texto mostrado)
+  suggestionChips.forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
+      if (intent) {
+        dispatchIntent(intent);
+      } else {
+        // fallback antiguo
+        userInput.value = chip.textContent;
+        handleSendMessage();
+      }
+    });
+  });
+
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
 
+function inferIntentFromChipText(txt){
+  const t = (txt||'').toLowerCase().trim();
+  const sets = {
+    menu: ['menu','menú','carta','recomendaciones','recomanacions'],
+    allergy: ['diet','dietary','alerg','dietéticas','dietètiques','vegano','vegetariano'],
+    reserve: ['reserve','reservation','reservar','reserva','booking'],
+    locations: ['locations','ubicaciones','ubicacions','direcciones','direccions','address']
+  };
+  for (const [intent, arr] of Object.entries(sets)){
+    if (arr.some(k => t.includes(k))) return intent;
+  }
+  return null;
+}
+
+// ===== Compat =====
 function checkBrowserSupport(){
   if(!('webkitSpeechRecognition'in window) && !('SpeechRecognition'in window)){
     console.warn('Speech recognition not supported');
@@ -217,36 +246,61 @@ function addMessageToChat(message,sender){
 
 // ===== NLU =====
 function processUserMessage(raw){
-  const msg = raw.toLowerCase();
-  const K = KEYWORDS[currentLanguage];
+  const det = detectIntent(raw);
+  dispatchIntent(det.intent, det);
+}
 
+function detectIntent(raw){
+  const msg = (raw||'').toLowerCase();
+  const K = KEYWORDS[currentLanguage];
+  const result = { intent:'unknown', message: raw };
+
+  // Restaurante
   const maybeRest = parseRestaurant(msg);
   if (maybeRest){ USER.preferredRestaurant = maybeRest; saveMemory(); }
 
-  let intent='unknown';
-  if(K.reserve.some(k=>msg.includes(k))) intent='reserve';
-  else if(K.lore.some(k=>msg.includes(k))) intent='lore';
-  else if(K.allergy.some(k=>msg.includes(k))) intent='allergy';
-  else if(K.rec.some(k=>msg.includes(k))) intent='recommend';
-  else if(K.menu.some(k=>msg.includes(k))) intent='menu';
-  else if(K.greet.some(k=>msg.includes(k))) intent='greet';
-  else if(K.ingredient.some(k=>msg.includes(k))) intent='ingredient';
+  // Patrones de ingrediente explícitos
+  const pat = {
+    es: /\b(háblame de|hablame de|qué es|que es|beneficios de|temporada de|historia de|sobre)\s+(.{2,})/i,
+    en: /\b(tell me about|what is|benefits of|season of|history of|about)\s+(.{2,})/i,
+    ca: /\b(parla'm de|què és|que es|beneficis de|temporada de|història de|sobre)\s+(.{2,})/i
+  }[currentLanguage];
 
-  setTimeout(()=>{
-    switch(intent){
-      case 'greet': reply(I18N[currentLanguage].say_more); break;
-      case 'menu': replyMenu(); break;
-      case 'recommend':
-        if(!USER.allergies.length && !USER.preferences.length) reply(I18N[currentLanguage].rec_need_info);
-        else replyRecommendations();
-        break;
-      case 'allergy': parseAndSaveAllergies(raw); reply(I18N[currentLanguage].allergies_saved); break;
-      case 'lore': replyLore(); break;
-      case 'reserve': ensureRestaurantThenForm(); break;
-      case 'ingredient': handleIngredient(raw); break;
-      default: reply(I18N[currentLanguage].unknown);
-    }
-  },120);
+  const m = msg.match(pat);
+  if (m && m[2]) {
+    result.intent = 'ingredient';
+    result.topic = cleanTopic(m[2]);
+    return result;
+  }
+
+  // Intents por keywords
+  if (K.reserve.some(k=>msg.includes(k))) { result.intent='reserve'; return result; }
+  if (K.lore.some(k=>msg.includes(k)))    { result.intent='lore'; return result; }
+  if (K.allergy.some(k=>msg.includes(k))) { result.intent='allergy'; return result; }
+  if (K.rec.some(k=>msg.includes(k)))     { result.intent='recommend'; return result; }
+  if (K.menu.some(k=>msg.includes(k)))    { result.intent='menu'; return result; }
+  if (K.greet.some(k=>msg.includes(k)))   { result.intent='greet'; return result; }
+
+  // Último intento: extraer posible tópico culinario (stopwords -> primer/s último sustantivo aproximado)
+  const guess = guessTopicFromFreeText(msg);
+  if (guess) { result.intent='ingredient'; result.topic=guess; return result; }
+
+  return result;
+}
+
+function cleanTopic(s){
+  return (s||'').replace(/[?!.:,;()"]/g,' ').replace(/\s{2,}/g,' ').trim();
+}
+
+function guessTopicFromFreeText(msg){
+  const stop = {
+    es: ['hola','quiero','necesito','cuéntame','habla','sobre','de','del','la','el','los','las','un','una','y','o','para','como','qué','que','es','historia','beneficios','temporada'],
+    en: ['hello','i','want','need','tell','me','about','of','the','a','and','or','for','how','what','is','history','benefits','season'],
+    ca: ['hola','vull','necessite','explica\'m','parla','sobre','de','del','la','el','els','les','un','una','i','o','per','com','què','que','és','història','beneficis','temporada']
+  }[currentLanguage];
+  const tokens = msg.split(/\s+/).filter(w => w && !stop.includes(w));
+  // Busca última secuencia de 1-3 palabras razonables
+  return tokens.slice(-3).join(' ').trim() || null;
 }
 
 function parseRestaurant(msg){
@@ -254,6 +308,23 @@ function parseRestaurant(msg){
   if (/\b(gràcia|gracia|vidalet)\b/.test(msg)) return 'gracia';
   if (/\b(sant\s*antoni|muntaner|antoni)\b/.test(msg)) return 'sant_antoni';
   return null;
+}
+
+function dispatchIntent(intent, payload={}){
+  switch(intent){
+    case 'greet': reply(I18N[currentLanguage].say_more); break;
+    case 'menu': replyMenu(); break;
+    case 'recommend':
+      if(!USER.allergies.length && !USER.preferences.length) reply(I18N[currentLanguage].rec_need_info);
+      else replyRecommendations();
+      break;
+    case 'allergy': parseAndSaveAllergies(payload.message || ''); reply(I18N[currentLanguage].allergies_saved); break;
+    case 'lore': replyLore(); break;
+    case 'reserve': ensureRestaurantThenForm(); break;
+    case 'locations': replyLocations(); break;
+    case 'ingredient': handleIngredient(payload.topic || payload.message || ''); break;
+    default: reply(I18N[currentLanguage].unknown);
+  }
 }
 
 // ===== Respuestas base =====
@@ -283,6 +354,30 @@ function replyLore(){
   const item = LORE.facts.find(f=>f.topic===t);
   const text = item ? (item[currentLanguage]||item.es) : 'Historias gastronómicas en camino.';
   reply(`${I18N[currentLanguage].lore_intro} ${text}`);
+}
+
+function replyLocations(){
+  const lines = {
+    es: [
+      `${I18N.es.locations}`,
+      `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+      `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+      `• Sant Antoni · C/ Muntaner, 6 · Barcelona`
+    ],
+    en: [
+      `${I18N.en.locations}`,
+      `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+      `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+      `• Sant Antoni · C/ Muntaner, 6 · Barcelona`
+    ],
+    ca: [
+      `${I18N.ca.locations}`,
+      `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+      `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+      `• Sant Antoni · C/ Muntaner, 6 · Barcelona`
+    ]
+  }[currentLanguage];
+  reply(lines.join('\n'));
 }
 
 function recommendDishes(n=3){
@@ -315,13 +410,11 @@ function parseAndSaveAllergies(text){
   saveMemory();
 }
 
-// ===== Conocimiento online (Wikipedia REST) =====
-async function handleIngredient(raw){
+// ===== Conocimiento online (Wikipedia REST + fallback local) =====
+async function handleIngredient(topicRaw){
   const lang = currentLanguage;
-  const q = raw.toLowerCase();
-  const topic = extractTopicForKnowledge(q, lang);
+  const topic = cleanTopic(topicRaw || '');
 
-  // 1) Intenta traer texto online
   let knowledgeText = '';
   try{
     const url = `/.netlify/functions/knowledge?topic=${encodeURIComponent(topic)}&lang=${encodeURIComponent(lang)}`;
@@ -332,11 +425,11 @@ async function handleIngredient(raw){
     }
   }catch(e){ console.warn('Knowledge fetch failed:', e); }
 
-  // 2) Mezcla con ficha local (fallback)
+  // Fallback local si no hay texto online
   const localKey = findLocalKey(topic, lang);
   const local = localKey && ((CULINARY[lang] && CULINARY[lang][localKey]) || (CULINARY.es && CULINARY.es[localKey]));
-  const parts = [];
 
+  const parts = [];
   if (local?.summary) parts.push(local.summary);
   if (knowledgeText) parts.push(knowledgeText);
   if (local?.techniques?.length) parts.push(sectionLabel('tech',lang) + '\n' + local.techniques.map(s=>`• ${s}`).join('\n'));
@@ -348,19 +441,14 @@ async function handleIngredient(raw){
   if (local?.culture) parts.push(`${sectionLabel('cult',lang)} ${local.culture}`);
 
   if (!parts.length){
-    reply(lang==='es' ? "Puedo hablar de arroz, azafrán, aceite de oliva, ajo, tomate, pimentón… ¿cuál te interesa?"
-         : lang==='ca' ? "Puc parlar d’arròs, safrà, oli d’oliva, all, tomàquet, pebre roig… quin t’interessa?"
-                       : "I can talk about rice, saffron, olive oil, garlic, tomato, paprika… which one?");
+    reply(lang==='es' ? "Puedo hablar de especias, técnicas e ingredientes (p.ej., cúrcuma, comino, canela, laurel, vainilla, arroz, azafrán…). ¿Cuál te interesa?"
+         : lang==='ca' ? "Puc parlar d'espècies, tècniques i ingredients (cúrcuma, comí, canyella, llorer, vainilla, arròs, safrà…). Quin t’interessa?"
+                       : "I can talk about spices, techniques and ingredients (turmeric, cumin, cinnamon, bay leaf, vanilla, rice, saffron…). Which one?");
     return;
   }
 
   reply(parts.join('\n'));
 
-  function extractTopicForKnowledge(txt, l){
-    // Quita prefijos “háblame de / tell me about / parla'm de ...”
-    const strip = txt.replace(/^(háblame de|hablame de|tell me about|parla'm de|sobre|about)\s+/i,'').trim();
-    return strip || txt;
-  }
   function findLocalKey(t, l){
     const map = {
       es:{ "arroz":"arroz","azafrán":"azafrán","aceite de oliva":"aceite de oliva","ajo":"ajo","tomate":"tomate","pimentón":"pimentón" },
