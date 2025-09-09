@@ -112,7 +112,7 @@ exports.handler = async (event) => {
     }
 
     const payload = {
-      from: FROM_EMAIL,            // Ej: "Reservas Xàtiva <reservas@tu-dominio.com>"
+      from: FROM_EMAIL,
       to: [to],
       subject,
       html
