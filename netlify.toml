@@ -1,27 +1,11 @@
 [build]
-  command = ""
   publish = "."
+  functions = "netlify/functions"
 
-[functions]
-  directory = "netlify/functions"
-
+# Cabeceras para todas las funciones (útil para preflight)
 [[headers]]
-  for = "/manifest.json"
+  for = "/.netlify/functions/*"
   [headers.values]
-  Content-Type = "application/manifest+json"
-  Cache-Control = "public, max-age=3600"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-  Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/images/*"
-  [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/icons/*"
-  [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
