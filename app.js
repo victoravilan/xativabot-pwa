@@ -320,11 +320,11 @@ function detectIntent(raw){
   // Salud
   if (K.health.some(k=>msg.includes(k))) { result.intent='health'; result.topic = guessTopicFromFreeText(msg) || 'cholesterol'; return result; }
 
-  // Temporadas: si menciona palabra de temporada o un mes
+  // Temporadas
   if (K.seasonWords.some(k=>msg.includes(k)) || hasMonthName(msg, currentLanguage)) {
     result.intent = 'season';
     result.month = extractMonthFromText(msg, currentLanguage) || (new Date().getMonth()+1);
-    result.topic = extractIngredientFromSeasonQuery(msg); // p.ej. "temporada de fresas"
+    result.topic = extractIngredientFromSeasonQuery(msg);
     return result;
   }
 
@@ -674,7 +674,6 @@ function extractMonthFromText(text, lang){
   const s = text.toLowerCase();
   for (let i=0;i<months.length;i++){
     if (s.includes(months[i])) {
-      // mapear 'setiembre' a 9 también
       if (lang==='es' && months[i]==='setiembre') return 9;
       return i+1;
     }
@@ -682,7 +681,6 @@ function extractMonthFromText(text, lang){
   return null;
 }
 function extractIngredientFromSeasonQuery(text){
-  // Intenta capturar "temporada de X" / "season of X"
   const rx = /(?:temporada de|season of|de temporada de|temporada\s+del?|temporada\s+de la)\s+([a-záéíóúüñç'\s]+)/i;
   const m = text.match(rx);
   if (m && m[1]) return m[1].trim();
@@ -775,20 +773,56 @@ function showReservationForm(){
       USER.preferredRestaurant = data.restaurant; saveMemory();
       wrap.remove();
     }catch(err){
-      console.warn('Offline/Server error, queue reservation:', err.message);
-      await queueReservation(data);
-      addMessageToChat(I18N[currentLanguage].res_offline, 'bot');
+      console.warn('Reservation error:', err);
+
+      if (err.isNetwork) {
+        await queueReservation(data);
+        addMessageToChat(I18N[currentLanguage].res_offline, 'bot');
+      } else {
+        let msg = "🚫 No se pudo enviar la reserva.";
+        if (err.status) msg += ` [${err.status}]`;
+        const detail = (err.payload && (err.payload.error || err.payload.detail)) || '';
+        if (detail) msg += ` ${detail}`;
+        if (String(detail).includes('Missing RESEND_API_KEY')) {
+          msg += " · Falta configurar RESEND_API_KEY en Netlify → Site → Settings → Environment variables.";
+        }
+        if (String(detail).includes('Email provider error')) {
+          msg += " · Revisa que el remitente RESERVATIONS_FROM esté verificado en Resend.";
+        }
+        addMessageToChat(msg, 'bot');
+      }
+
       wrap.remove();
-    }finally{ btn.disabled=false; }
+    } finally { btn.disabled=false; }
   });
 }
 
 async function submitReservation(reservation){
-  const resp=await fetch('/.netlify/functions/reservations',{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)
-  });
-  const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
+  let resp;
+  try {
+    resp = await fetch('/.netlify/functions/reservations', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(reservation)
+    });
+  } catch (e) {
+    e.isNetwork = true;
+    throw e;
+  }
+
+  const text = await resp.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch(_){}
+
+  if (!resp.ok) {
+    const err = new Error((data && data.error) || resp.statusText || 'Server error');
+    err.status  = resp.status;
+    err.payload = data || text;
+    throw err;
+  }
+  return data || {};
 }
+
 async function queueReservation(reservation){
   const db=await openReservationDB(); const tx=db.transaction(['reservations'],'readwrite');
   tx.objectStore('reservations').put(reservation);
