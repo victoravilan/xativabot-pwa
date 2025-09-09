@@ -14,7 +14,7 @@ function cors(statusCode, body) {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST,OPTIONS',
+      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     },
     body: body ? JSON.stringify(body) : ''
@@ -24,6 +24,15 @@ function cors(statusCode, body) {
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'OPTIONS') return cors(200);
+
+    // --- HEALTHCHECK (GET) ---
+    if (event.httpMethod === 'GET') {
+      const okResend = !!process.env.RESEND_API_KEY;
+      const fromSet  = !!process.env.RESERVATIONS_FROM;
+      return cors(200, { ok:true, health:true, resendKey: okResend, fromConfigured: fromSet });
+    }
+    // -------------------------
+
     if (event.httpMethod !== 'POST') return cors(405, { ok:false, error:'Method Not Allowed' });
 
     const TEST_MODE       = String(process.env.TEST_MODE || '') === '1';
@@ -41,8 +50,8 @@ exports.handler = async (event) => {
     if (!data.partySize)  errors.push('partySize');
     if (!data.restaurant) errors.push('restaurant');
 
-    const dateISO   = data.dateTimeISO || '';           // recomendado
-    const dateLocal = !dateISO ? (data.dateTime || '') : ''; // aceptado como fallback
+    const dateISO   = data.dateTimeISO || '';
+    const dateLocal = !dateISO ? (data.dateTime || '') : '';
     if (!dateISO && !dateLocal) errors.push('dateTimeISO|dateTime');
 
     if (errors.length) {
@@ -102,7 +111,6 @@ exports.handler = async (event) => {
       return cors(500, { ok:false, error:'Missing RESEND_API_KEY' });
     }
 
-    // Construcción del payload para Resend
     const payload = {
       from: FROM_EMAIL,            // Ej: "Reservas Xàtiva <reservas@tu-dominio.com>"
       to: [to],
@@ -110,9 +118,8 @@ exports.handler = async (event) => {
       html
     };
     if (CC_EMAILS) payload.cc = CC_EMAILS.split(',').map(s=>s.trim()).filter(Boolean);
-    if (email)     payload.reply_to = email;   // que el restaurante pueda contestar al cliente
+    if (email)     payload.reply_to = email;
 
-    // Envío
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
