@@ -1,24 +1,26 @@
 /**
- * XativaBot PWA - Service Worker (robusto y limpio)
+ * XativaBot PWA - Service Worker (v6)
+ * - App Shell fallback para navegaciones HTML (arregla falsos "offline")
  * - Cache versioning + precache seguro
- * - Estrategias por tipo de recurso
- * - Background Sync de reservas → /.netlify/functions/reservations
+ * - Estrategias por tipo
+ * - Background Sync reservas → /.netlify/functions/reservations
  */
 
 const CACHE_PREFIX  = 'xativabot-cache';
-const CACHE_VERSION = 'v5'; // ← súbelo al cambiar este archivo
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE  = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 
 const OFFLINE_URL = '/offline.html';
+const APP_SHELL  = '/index.html';
 
 const PRECACHE_ASSETS = [
-  '/', '/index.html',
+  '/', APP_SHELL,
   '/styles.css', '/app.js',
-  '/install.js',         // si no existe, se ignora
-  '/qr.html',            // si no existe, se ignora
+  '/install.js',     // si no existen, se ignoran
+  '/qr.html',
   '/manifest.json', OFFLINE_URL,
 
-  // Imágenes / iconos (si faltan, no rompe)
+  // Imágenes / iconos (no rompe si faltan)
   '/images/xativa-logo.png',
   '/images/alexbot-chef.png',
   '/images/icon-192x192.png',
@@ -29,24 +31,22 @@ const PRECACHE_ASSETS = [
   '/images/reserve-icon.png',
   '/images/menu-icon.png',
 
-  // Datos culinarios (si usas estos)
+  // Datos culinarios (si los usas)
   '/data/menu.json',
   '/data/lore.json',
   '/data/season_es.json',
 
-  // Google Fonts CSS (el binario se cachea aparte)
+  // Google Fonts CSS
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap'
 ];
 
-// ========= Utilidades =========
-
-// Precarga segura: ignora 404/errores
+// ===== utils =====
 async function addAllSafe(cache, urls) {
   for (const url of urls) {
     try {
       const res = await fetch(url, { cache: 'no-cache' });
       if (res && res.ok) await cache.put(url, res);
-    } catch (_) { /* ignorar */ }
+    } catch (_) {}
   }
 }
 
@@ -55,8 +55,7 @@ const isHTML = (req) => {
   return accept.includes('text/html') || req.mode === 'navigate';
 };
 
-// ========= Install / Activate =========
-
+// ===== install / activate =====
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
@@ -77,16 +76,15 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
-// ========= Fetch strategies =========
-
+// ===== fetch =====
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Solo GET para cachear
+  // Sólo GET cacheable
   if (req.method !== 'GET') return;
 
-  // Google Fonts CSS → network-first con fallback a cache
+  // Google Fonts CSS → network-first
   if (url.origin.includes('fonts.googleapis.com')) {
     event.respondWith(
       caches.open('gf-css').then(async (c) => {
@@ -116,20 +114,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML → network-first con fallback a cache y por último offline.html
+  // Navegaciones HTML → network-first con fallback a App Shell y, por último, offline.html
   if (isHTML(req)) {
-    event.respondWith(
-      fetch(req)
-        .then((r) => {
-          // Actualiza cache en segundo plano
-          caches.open(STATIC_CACHE).then((c) => c.put(req, r.clone()));
-          return r;
-        })
-        .catch(async () => {
-          const cached = await caches.match(req);
-          return cached || caches.match(OFFLINE_URL);
-        })
-    );
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        // Actualiza en segundo plano la URL exacta y el shell
+        caches.open(STATIC_CACHE).then(async (c) => {
+          try { c.put(req, fresh.clone()); } catch {}
+          try {
+            const shell = await c.match(APP_SHELL);
+            if (!shell && url.pathname !== APP_SHELL) {
+              // Guarda shell si aún no está
+              const shellRes = await fetch(APP_SHELL).catch(()=>null);
+              if (shellRes && shellRes.ok) c.put(APP_SHELL, shellRes.clone());
+            }
+          } catch {}
+        });
+        return fresh;
+      } catch (err) {
+        // 1) intenta caché de la URL
+        let cached = await caches.match(req);
+        // 2) si no hay, cae al App Shell
+        if (!cached) cached = await caches.match(APP_SHELL);
+        // 3) si tampoco, cae al offline
+        return cached || caches.match(OFFLINE_URL);
+      }
+    })());
     return;
   }
 
@@ -161,14 +172,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Por defecto → cache, luego red
+  // Por defecto
   event.respondWith(
     caches.match(req).then((m) => m || fetch(req).catch(() => m))
   );
 });
 
-// ========= Background Sync: reservas =========
-
+// ===== Background Sync: reservas → Netlify Function =====
 self.addEventListener('sync', (event) => {
   if (event.tag === 'reservation-sync') {
     event.waitUntil(syncReservations());
@@ -184,7 +194,6 @@ async function syncReservations() {
         const ok = await sendReservation(reservation);
         if (ok) await deleteReservation(db, reservation.id);
       } catch (e) {
-        // Si falla uno, continúa con el resto (no rompemos el loop)
         console.error('Failed to sync one reservation:', e);
       }
     }
@@ -227,7 +236,6 @@ function deleteReservation(db, id) {
   });
 }
 
-// IMPORTANTE: apuntamos a la Function de Netlify
 async function sendReservation(reservation) {
   const resp = await fetch('/.netlify/functions/reservations', {
     method: 'POST',
@@ -242,7 +250,3 @@ async function sendReservation(reservation) {
   const json = await resp.json().catch(() => ({}));
   return !!json?.ok;
 }
-
-// ========= (Opcional) Push Notifications =========
-// self.addEventListener('push', (event) => { /* … */ });
-// self.addEventListener('notificationclick', (event) => { /* … */ });
