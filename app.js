@@ -1,4 +1,4 @@
-/** XativaBot – App (alergias con diálogo + recomendaciones; salud; temporadas ES; voz estable; i18n; juego + promo) */
+/** XativaBot – App (i18n + voz estable + alergias con diálogo + salud/temporadas + juego integrado) */
 
 // ===== DOM =====
 const chatMessages   = document.getElementById('chat-messages');
@@ -8,10 +8,11 @@ const voiceBtn       = document.getElementById('voice-input-btn');
 const voiceIndicator = document.getElementById('voice-indicator');
 const languageSelect = document.getElementById('language-select');
 const suggestionChips= document.querySelectorAll('.chip');
-// Juego (overlay)
-const gameOverlay = document.getElementById('game-overlay');
-const gameIframe  = document.getElementById('game-iframe');
-const gameClose   = document.querySelector('.game-close');
+
+// Panel de juego
+const gamePanel = document.getElementById('game-panel');
+const gameFrame = document.getElementById('game-frame');
+const gameClose = document.getElementById('game-close');
 
 // ===== Estado =====
 let currentLanguage = 'es';
@@ -35,150 +36,143 @@ let USER = {
   preferredRestaurant: null // 'les_corts' | 'gracia' | 'sant_antoni'
 };
 
-// Diálogo controlado
 let DIALOG = { awaiting: null }; // 'allergy' | null
 
 // ===== i18n UI =====
 const I18N = {
-  en:{welcome:"Welcome to Xativa! I'm AlexBot, your culinary sidekick. Ask me about ingredients, techniques, traditions—or book a table.",
-      ask_allergies:"Any allergies or diet preferences?",
-      ask_allergies_specific:"Great—what allergy or diet should I consider? (e.g., gluten, shellfish, milk, vegan, vegetarian)",
-      menu_intro:"Here are a few highlights from our menu:",
-      rec_ready:"Based on your preferences, I recommend:",
-      rec_need_info:"Tell me allergies or diet preferences and I’ll tailor suggestions.",
-      saved_prefs:"Got it — I’ll remember that.",
-      no_match:"I couldn’t find a safe match. Want gluten-free or vegetarian options?",
-      lore_intro:"Did you know?",
-      reservation_prompt:"Great. Choose the restaurant and fill the details:",
-      allergies_saved:"Allergies/preferences saved.",
-      say_more:"What are you in the mood for today?",
-      unknown:"Thanks for your message. How else can I help?",
-      and:"and",
-      res_thanks:"✅ Reservation received.",
-      res_offline:"📌 You’re offline. It will sync when back.",
-      pick_restaurant:"Please select the restaurant: Les Corts, Gràcia or Sant Antoni.",
-      locations:"We have three locations in Barcelona:",
-      diet_intro:"Chef mode on 👨‍🍳 — tell me your needs and I’ll curate the menu:",
-      diet_cta:"Select one or more and confirm:",
-      diet_confirm_btn:"Save & suggest",
-      diet_none_btn:"No restrictions",
-      diet_saved_fun:(list)=>`Noted: ${list}. Let me plate up some ideas…`,
-      diet_saved_none:"Perfect, no restrictions — my favourite kind of challenge. Let’s find you something delicious…",
-      diet_humor_ping:"Allergies noted. I’ll steer the paella like a pro.",
-      health_preface:"Quick culinary-nutrition brief:",
-      health_disclaimer:"This is general information, not medical advice.",
-      season_now:"In season now:",
-      season_of:"Season for",
-      month_names:["January","February","March","April","May","June","July","August","September","October","November","December"],
-      game_open:"Abriendo el juego… encuentra 7 palabras y desbloquea tu sorpresa. ¡Suerte!",
-      game_promo_msg:(code)=>`🎉 ¡Código promocional listo! Usa: ${code} — lo añadiré a tu reserva.`
-  },
-  es:{welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu cómplice culinario. Pregúntame por ingredientes, técnicas, tradiciones… o haz una reserva.",
-      ask_allergies:"¿Tienes alergias o preferencias de dieta?",
-      ask_allergies_specific:"Genial — ¿qué alergia o dieta debo considerar? (p. ej., gluten, marisco, leche, vegano, vegetariano)",
-      menu_intro:"Estos son algunos destacados de la carta:",
-      rec_ready:"Según lo que me cuentas, te recomiendo:",
-      rec_need_info:"Cuéntame alergias o preferencias y afino las sugerencias.",
-      saved_prefs:"¡Anotado! Lo recordaré.",
-      no_match:"No encontré un plato seguro. ¿Te enseño opciones sin gluten o vegetarianas?",
-      lore_intro:"¿Sabías que…?",
-      reservation_prompt:"Perfecto. Elige restaurante y completa los datos:",
-      allergies_saved:"Alergias/preferencias guardadas.",
-      say_more:"¿Qué te apetece hoy?",
-      unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
-      and:"y",
-      res_thanks:"✅ Reserva recibida.",
-      res_offline:"📌 Estás sin conexión. Se enviará al volver.",
-      pick_restaurant:"Selecciona el restaurante: Les Corts, Gràcia o Sant Antoni.",
-      locations:"Tenemos tres locales en Barcelona:",
-      diet_intro:"Modo chef activado 👨‍🍳 — dime tus necesidades y te afino la carta:",
-      diet_cta:"Elige una o varias y confirma:",
-      diet_confirm_btn:"Guardar y sugerir",
-      diet_none_btn:"Sin restricciones",
-      diet_saved_fun:(list)=>`Anotado: ${list}. Ya estoy pensando en un par de platos que te van a gustar…`,
-      diet_saved_none:"Perfecto, sin restricciones — me encantan los retos sabrosos. Vamos con unas sugerencias…",
-      diet_humor_ping:"Alergias registradas. Llevaré la paella con mano experta.",
-      health_preface:"Apunte culinario-nutricional:",
-      health_disclaimer:"Información general; no sustituye consejo médico.",
-      season_now:"Ahora en temporada:",
-      season_of:"Temporada de",
-      month_names:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
-      game_open:"Abriendo el juego… encuentra 7 palabras y desbloquea tu sorpresa. ¡Suerte!",
-      game_promo_msg:(code)=>`🎉 ¡Código promocional listo! Usa: ${code} — lo añadiré a tu reserva.`
-  },
-  ca:{welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu còmplice culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
-      ask_allergies:"Tens alguna al·lèrgia o preferència de dieta?",
-      ask_allergies_specific:"Perfecte — quina al·lèrgia o dieta he de tindre en compte? (p. ex., gluten, marisc, llet, vegà, vegetarià)",
-      menu_intro:"Aquests són alguns destacats de la carta:",
-      rec_ready:"Segons el que m’has dit, et recomane:",
-      rec_need_info:"Digue’m al·lèrgies o preferències i afinaré les propostes.",
-      saved_prefs:"Anotat! Ho recordaré.",
-      no_match:"No he trobat cap plat segur. Vols opcions sense gluten o vegetarianes?",
-      lore_intro:"Sabies que…?",
-      reservation_prompt:"Genial. Tria el restaurant i completa les dades:",
-      allergies_saved:"Al·lèrgies/preferències desades.",
-      say_more:"Què et ve de gust avui?",
-      unknown:"Gràcies pel teu missatge. En què més et puc ajudar?",
-      and:"i",
-      res_thanks:"✅ Reserva rebuda.",
-      res_offline:"📌 Fora de línia. S’enviarà quan torne.",
-      pick_restaurant:"Selecciona el restaurant: Les Corts, Gràcia o Sant Antoni.",
-      locations:"Tenim tres locals a Barcelona:",
-      diet_intro:"Mode xef activat 👨‍🍳 — digue’m les teues necessitats i t’afinaré la carta:",
-      diet_cta:"Tria una o diverses i confirma:",
-      diet_confirm_btn:"Desar i suggerir",
-      diet_none_btn:"Sense restriccions",
-      diet_saved_fun:(list)=>`Anotat: ${list}. Ja tinc un parell de plats en ment…`,
-      diet_saved_none:"Perfecte, sense restriccions — m’encanten els reptes saborosos. Anem amb suggeriments…",
-      diet_humor_ping:"Al·lèrgies registrades. Portaré la paella amb mà mestra.",
-      health_preface:"Apunt culinari-nutricional:",
-      health_disclaimer:"Informació general; no substitueix consell mèdic.",
-      season_now:"Ara en temporada:",
-      season_of:"Temporada de",
-      month_names:["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"],
-      game_open:"Obrint el joc… troba 7 paraules i desbloqueja la sorpresa. Bona sort!",
-      game_promo_msg:(code)=>`🎉 Codi promocional a punt! Usa: ${code} — l’afegiré a la teua reserva.`
-  }
+  en:{ welcome:"Welcome to Xativa! I'm AlexBot, your culinary sidekick. Ask me about ingredients, techniques, traditions—or book a table.",
+       ask_allergies:"Any allergies or diet preferences?",
+       ask_allergies_specific:"Great—what allergy or diet should I consider? (e.g., gluten, shellfish, milk, vegan, vegetarian)",
+       menu_intro:"Here are a few highlights from our menu:",
+       rec_ready:"Based on your preferences, I recommend:",
+       rec_need_info:"Tell me allergies or diet preferences and I’ll tailor suggestions.",
+       saved_prefs:"Got it — I’ll remember that.",
+       no_match:"I couldn’t find a safe match. Want gluten-free or vegetarian options?",
+       lore_intro:"Did you know?",
+       reservation_prompt:"Great. Choose the restaurant and fill the details:",
+       allergies_saved:"Allergies/preferences saved.",
+       say_more:"What are you in the mood for today?",
+       unknown:"Thanks for your message. How else can I help?",
+       and:"and",
+       res_thanks:"✅ Reservation received.",
+       res_offline:"📌 You’re offline. It will sync when back.",
+       pick_restaurant:"Please select the restaurant: Les Corts, Gràcia or Sant Antoni.",
+       locations:"We have three locations in Barcelona:",
+       diet_intro:"Chef mode on 👨‍🍳 — tell me your needs and I’ll curate the menu:",
+       diet_cta:"Select one or more and confirm:",
+       diet_confirm_btn:"Save & suggest",
+       diet_none_btn:"No restrictions",
+       diet_saved_fun:(list)=>`Noted: ${list}. Let me plate up some ideas…`,
+       diet_saved_none:"Perfect, no restrictions — my favourite kind of challenge. Let’s find you something delicious…",
+       diet_humor_ping:"Allergies noted. I’ll steer the paella like a pro.",
+       health_preface:"Quick culinary-nutrition brief:",
+       health_disclaimer:"This is general information, not medical advice.",
+       season_now:"In season now:",
+       season_of:"Season for",
+       month_names:["January","February","March","April","May","June","July","August","September","October","November","December"],
+       game_opening:"Launching the culinary word hunt… Good luck!" },
+  es:{ welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu cómplice culinario. Pregúntame por ingredientes, técnicas, tradiciones… o haz una reserva.",
+       ask_allergies:"¿Tienes alergias o preferencias de dieta?",
+       ask_allergies_specific:"Genial — ¿qué alergia o dieta debo considerar? (p. ej., gluten, marisco, leche, vegano, vegetariano)",
+       menu_intro:"Estos son algunos destacados de la carta:",
+       rec_ready:"Según lo que me cuentas, te recomiendo:",
+       rec_need_info:"Cuéntame alergias o preferencias y afino las sugerencias.",
+       saved_prefs:"¡Anotado! Lo recordaré.",
+       no_match:"No encontré un plato seguro. ¿Te enseño opciones sin gluten o vegetarianas?",
+       lore_intro:"¿Sabías que…?",
+       reservation_prompt:"Perfecto. Elige restaurante y completa los datos:",
+       allergies_saved:"Alergias/preferencias guardadas.",
+       say_more:"¿Qué te apetece hoy?",
+       unknown:"Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
+       and:"y",
+       res_thanks:"✅ Reserva recibida.",
+       res_offline:"📌 Estás sin conexión. Se enviará al volver.",
+       pick_restaurant:"Selecciona el restaurante: Les Corts, Gràcia o Sant Antoni.",
+       locations:"Tenemos tres locales en Barcelona:",
+       diet_intro:"Modo chef activado 👨‍🍳 — dime tus necesidades y te afino la carta:",
+       diet_cta:"Elige una o varias y confirma:",
+       diet_confirm_btn:"Guardar y sugerir",
+       diet_none_btn:"Sin restricciones",
+       diet_saved_fun:(list)=>`Anotado: ${list}. Ya estoy pensando en un par de platos que te van a gustar…`,
+       diet_saved_none:"Perfecto, sin restricciones — me encantan los retos sabrosos. Vamos con unas sugerencias…",
+       diet_humor_ping:"Alergias registradas. Llevaré la paella con mano experta.",
+       health_preface:"Apunte culinario-nutricional:",
+       health_disclaimer:"Información general; no sustituye consejo médico.",
+       season_now:"Ahora en temporada:",
+       season_of:"Temporada de",
+       month_names:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+       game_opening:"Abriendo la sopa de letras culinaria… ¡Suerte!" },
+  ca:{ welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu còmplice culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
+       ask_allergies:"Tens alguna al·lèrgia o preferència de dieta?",
+       ask_allergies_specific:"Perfecte — quina al·lèrgia o dieta he de tindre en compte? (p. ex., gluten, marisc, llet, vegà, vegetarià)",
+       menu_intro:"Aquests són alguns destacats de la carta:",
+       rec_ready:"Segons el que m’has dit, et recomane:",
+       rec_need_info:"Digue’m al·lèrgies o preferències i afinaré les propostes.",
+       saved_prefs:"Anotat! Ho recordaré.",
+       no_match:"No he trobat cap plat segur. Vols opcions sense gluten o vegetarianes?",
+       lore_intro:"Sabies que…?",
+       reservation_prompt:"Genial. Tria el restaurant i completa les dades:",
+       allergies_saved:"Al·lèrgies/preferències desades.",
+       say_more:"Què et ve de gust avui?",
+       unknown:"Gràcies pel teu missatge. En què més et puc ajudar?",
+       and:"i",
+       res_thanks:"✅ Reserva rebuda.",
+       res_offline:"📌 Fora de línia. S’enviarà quan torne.",
+       pick_restaurant:"Selecciona el restaurant: Les Corts, Gràcia o Sant Antoni.",
+       locations:"Tenim tres locals a Barcelona:",
+       diet_intro:"Mode xef activat 👨‍🍳 — digue’m les teues necessitats i t’afinaré la carta:",
+       diet_cta:"Tria una o diverses i confirma:",
+       diet_confirm_btn:"Desar i suggerir",
+       diet_none_btn:"Sense restriccions",
+       diet_saved_fun:(list)=>`Anotat: ${list}. Ja tinc un parell de plats en ment…`,
+       diet_saved_none:"Perfecte, sense restriccions — m’encanten els reptes saborosos. Anem amb suggeriments…",
+       diet_humor_ping:"Al·lèrgies registrades. Portaré la paella amb mà mestra.",
+       health_preface:"Apunt culinari-nutricional:",
+       health_disclaimer:"Informació general; no substitueix consell mèdic.",
+       season_now:"Ara en temporada:",
+       season_of:"Temporada de",
+       month_names:["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"],
+       game_opening:"Obrint la sopa de lletres culinària… Bona sort!" }
 };
 
-// ===== Palabras clave / Intents =====
+// ===== Intents =====
 const KEYWORDS = {
-  es:{greet:["hola","buenas","buenos días","buenas tardes","buenas noches"],
-      menu:["menú","carta","platos","comida","recomendación"],
-      rec:["recomienda","recomiéndame","sugerencia","que comer","qué como"],
-      allergy:["alergia","alergias","dietéticas","dieta","restricción","restricciones"],
-      lore:["historia","mito","tradición","origen","leyenda"],
-      reserve:["reserva","reservar","booking","mesa","mesa para"],
-      restaurant:["les corts","corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
-      ingredient:["háblame de","hablame de","qué es","que es","beneficios de","temporada de","historia de","sobre","especia","especias","ingrediente","ingredientes"],
-      health:["colesterol","triglicéridos","azúcar","diabetes","hipertensión","sodio","salud","cardio"],
-      seasonWords:["temporada","de temporada","está de temporada","que hay de temporada","qué hay de temporada"]
-  },
-  en:{greet:["hello","hi","hey"],
-      menu:["menu","card","dishes","food","recommendation"],
-      rec:["recommend","suggest","what should i eat"],
-      allergy:["allergy","allergies","dietary","diet","restriction","intolerance"],
-      lore:["history","myth","tradition","origin","legend"],
-      reserve:["reserve","reservation","book","table"],
-      restaurant:["les corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d'en vidalet","vidalet"],
-      ingredient:["tell me about","what is","benefits of","season of","history of","about","spice","spices","ingredient","ingredients"],
-      health:["cholesterol","triglycerides","sugar","diabetes","hypertension","sodium","health","cardio"],
-      seasonWords:["seasonal","in season","what’s in season","whats in season","what is in season","season now"]
-  },
-  ca:{greet:["hola","bones"],
-      menu:["menú","carta","plats","menjar","recomanació"],
-      rec:["recomana","recomanació","què menge","que menjar"],
-      allergy:["al·lèrgia","al·lèrgies","dietètiques","dieta","restricció","intolerància"],
-      lore:["història","mite","tradició","origen","llegenda"],
-      reserve:["reserva","reservar","taula"],
-      restaurant:["les corts","gràcia","gracia","sant antoni","muntaner","bordeus","torrent d’en vidalet","torrent d'en vidalet","vidalet"],
-      ingredient:["parla'm de","què és","que es","beneficis de","temporada de","història de","sobre","espècia","espècies","ingredient","ingredients"],
-      health:["colesterol","triglicèrids","sucre","diabetis","hipertensió","sodi","salut","cardio"],
-      seasonWords:["de temporada","està de temporada","què hi ha de temporada","temporada ara"]
-  }
+  es:{ greet:["hola","buenas","buenos días","buenas tardes","buenas noches"],
+       menu:["menú","carta","platos","comida","recomendación"],
+       rec:["recomienda","recomiéndame","sugerencia","que comer","qué como"],
+       allergy:["alergia","alergias","dietéticas","dieta","restricción","restricciones"],
+       lore:["historia","mito","tradición","origen","llegenda","leyenda"],
+       reserve:["reserva","reservar","booking","mesa","mesa para"],
+       locations:["ubicacion","ubicación","dirección","direcciones","locales","sucursales"],
+       ingredient:["háblame de","hablame de","qué es","que es","beneficios de","temporada de","historia de","sobre","especia","especias","ingrediente","ingredientes"],
+       health:["colesterol","triglicéridos","azúcar","diabetes","hipertensión","sodio","salud","cardio"],
+       seasonWords:["temporada","de temporada","está de temporada","que hay de temporada","qué hay de temporada"],
+       game:["juego","sopa","sopa de letras","promoción","promocion"] },
+  en:{ greet:["hello","hi","hey"],
+       menu:["menu","card","dishes","food","recommendation"],
+       rec:["recommend","suggest","what should i eat"],
+       allergy:["allergy","allergies","dietary","diet","restriction","intolerance"],
+       lore:["history","myth","tradition","origin","legend"],
+       reserve:["reserve","reservation","book","table"],
+       locations:["location","locations","address","addresses"],
+       ingredient:["tell me about","what is","benefits of","season of","history of","about","spice","spices","ingredient","ingredients"],
+       health:["cholesterol","triglycerides","sugar","diabetes","hypertension","sodium","health","cardio"],
+       seasonWords:["seasonal","in season","what’s in season","whats in season","what is in season"],
+       game:["game","word","word hunt","puzzle"] },
+  ca:{ greet:["hola","bones"],
+       menu:["menú","carta","plats","menjar","recomanació"],
+       rec:["recomana","recomanació","què menge","que menjar"],
+       allergy:["al·lèrgia","al·lèrgies","dietètiques","dieta","restricció","intolerància"],
+       lore:["història","mite","tradició","origen","llegenda"],
+       reserve:["reserva","reservar","taula"],
+       locations:["ubicació","ubicacions","adreça","adreces","locals","sucursals"],
+       ingredient:["parla'm de","què és","que es","beneficis de","temporada de","història de","sobre","espècia","espècies","ingredient","ingredients"],
+       health:["colesterol","triglicèrids","sucre","diabetis","hipertensió","sodi","salut","cardio"],
+       seasonWords:["de temporada","està de temporada","què hi ha de temporada","temporada ara"],
+       game:["joc","sopa","sopa de lletres","promoció"] }
 };
 
-// ===== Dataset local mínimo (fallback offline) =====
+// ===== Datasets mínimos (offline) =====
 const CULINARY = {
   es: {
     "arroz": { summary:"Base de la paella; variedades bomba o senia absorben caldo sin romperse.", techniques:["Sofreír y nacarar","Hervor y reposo"], pairings:["Azafrán","Pimentón"], nutrition:{energy_kcal:346,protein_g:6.7,fat_g:0.9,carbs_g:76}, culture:"El ‘socarrat’ es apreciado." },
@@ -194,15 +188,6 @@ document.addEventListener('visibilitychange', () => {
 });
 ['click','keydown','touchstart','touchend','pointerdown','focusin'].forEach(evt => {
   document.addEventListener(evt, () => { if (!userInteracted){ userInteracted = true; tryUnlockTTS(); } }, { passive: true });
-});
-
-// Mensajes desde el juego (promo code)
-window.addEventListener('message', (ev) => {
-  const d = ev?.data || {};
-  if (d && d.type === 'xativaPromo' && d.promoCode) {
-    try { localStorage.setItem('xativa_promo', d.promoCode); } catch {}
-    reply(I18N[currentLanguage].game_promo_msg(d.promoCode));
-  }
 });
 
 async function initApp(){
@@ -237,6 +222,8 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
+
+  // chips con data-intent
   suggestionChips.forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
@@ -244,11 +231,26 @@ function setupEventListeners(){
       else { userInput.value = chip.textContent; handleSendMessage(); }
     });
   });
+
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 
-  // Overlay juego
-  gameClose?.addEventListener('click', closeGameOverlay);
-  gameOverlay?.addEventListener('click', (e)=>{ if (e.target === gameOverlay) closeGameOverlay(); });
+  // Juego: cerrar
+  gameClose?.addEventListener('click', hideGamePanel);
+
+  // Captura promo desde iframe del juego
+  window.addEventListener('message', (e)=>{
+    const d = e.data || {};
+    if (d.type === 'xativaPromo' && d.promoCode){
+      try { localStorage.setItem('xativa_promo', d.promoCode); } catch {}
+      const msg = currentLanguage==='es'
+        ? `🎉 Código promocional guardado: ${d.promoCode} — se añadirá automáticamente a tu reserva.`
+        : currentLanguage==='ca'
+          ? `🎉 Codi promocional desat: ${d.promoCode} — s’afegirà automàticament a la teua reserva.`
+          : `🎉 Promo code saved: ${d.promoCode} — it will be added to your booking.`;
+      addMessageToChat(msg, 'bot');
+      if (!isMobileDevice() || userInteracted) speakText(msg);
+    }
+  });
 }
 function inferIntentFromChipText(txt){
   const t = (txt||'').toLowerCase();
@@ -257,7 +259,7 @@ function inferIntentFromChipText(txt){
     allergy: ['diet','dietary','alerg','dietéticas','dietètiques','vegano','vegetariano','allergy','restric'],
     reserve: ['reserve','reservation','reservar','reserva','booking'],
     locations: ['locations','ubicaciones','ubicacions','direcciones','direccions','address'],
-    game: ['juego','reto','game','word','sopa']
+    game: ['juego','sopa','sopa de letras','word','hunt','puzzle']
   };
   for (const [intent, arr] of Object.entries(sets)){
     if (arr.some(k => t.includes(k))) return intent;
@@ -321,9 +323,7 @@ function detectIntent(raw){
   const K = KEYWORDS[currentLanguage];
   const result = { intent:'unknown', message: raw };
 
-  const maybeRest = parseRestaurant(msg);
-  if (maybeRest){ USER.preferredRestaurant = maybeRest; saveMemory(); }
-
+  // Ingredientes por patrón
   const pat = {
     es: /\b(háblame de|hablame de|qué es|que es|beneficios de|temporada de|historia de|sobre)\s+(.{2,})/i,
     en: /\b(tell me about|what is|benefits of|season of|history of|about)\s+(.{2,})/i,
@@ -341,15 +341,14 @@ function detectIntent(raw){
     return result;
   }
 
+  if (K.game.some(k=>msg.includes(k))) { result.intent='game'; return result; }
   if (K.reserve.some(k=>msg.includes(k))) { result.intent='reserve'; return result; }
   if (K.lore.some(k=>msg.includes(k)))    { result.intent='lore'; return result; }
   if (K.allergy.some(k=>msg.includes(k))) { result.intent='allergy'; return result; }
   if (K.rec.some(k=>msg.includes(k)))     { result.intent='recommend'; return result; }
   if (K.menu.some(k=>msg.includes(k)))    { result.intent='menu'; return result; }
+  if (K.locations.some(k=>msg.includes(k))){ result.intent='locations'; return result; }
   if (K.greet.some(k=>msg.includes(k)))   { result.intent='greet'; return result; }
-
-  // NUEVO: juego
-  if (/\b(juego|reto|game|word|sopa)\b/.test(msg)) { result.intent='game'; return result; }
 
   const guess = guessTopicFromFreeText(msg);
   if (guess) { result.intent='ingredient'; result.topic=guess; return result; }
@@ -365,12 +364,8 @@ function guessTopicFromFreeText(msg){
   const tokens = msg.split(/\s+/).filter(w => w && !stop.includes(w));
   return tokens.slice(-3).join(' ').trim() || null;
 }
-function parseRestaurant(msg){
-  if (/\b(les\s*corts|corts|bordeus)\b/.test(msg)) return 'les_corts';
-  if (/\b(gràcia|gracia|vidalet)\b/.test(msg)) return 'gracia';
-  if (/\b(sant\s*antoni|muntaner|antoni)\b/.test(msg)) return 'sant_antoni';
-  return null;
-}
+
+// ===== Dispatcher =====
 function dispatchIntent(intent, payload={}){
   switch(intent){
     case 'greet': reply(I18N[currentLanguage].say_more); break;
@@ -386,7 +381,7 @@ function dispatchIntent(intent, payload={}){
     case 'ingredient': handleIngredient(payload.topic || payload.message || ''); break;
     case 'health': handleHealthQuery(payload.topic || ''); break;
     case 'season': handleSeasonQuery(payload); break;
-    case 'game': openGameOverlay(); reply(I18N[currentLanguage].game_open); break;
+    case 'game': openGamePanel(); break;
     default: reply(I18N[currentLanguage].unknown);
   }
 }
@@ -418,18 +413,18 @@ function replyLore(){
 }
 function replyLocations(){
   const lines = {
-    es:[`${I18N.es.locations}`,
-        `• Les Corts · C/ Bordeus, 35 · Barcelona`,
-        `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
-        `• Sant Antoni · C/ Muntaner, 6 · Barcelona`],
-    en:[`${I18N.en.locations}`,
-        `• Les Corts · C/ Bordeus, 35 · Barcelona`,
-        `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
-        `• Sant Antoni · C/ Muntaner, 6 · Barcelona`],
-    ca:[`${I18N.ca.locations}`,
-        `• Les Corts · C/ Bordeus, 35 · Barcelona`,
-        `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
-        `• Sant Antoni · C/ Muntaner, 6 · Barcelona`]
+    es: [`${I18N.es.locations}`,
+         `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+         `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+         `• Sant Antoni · C/ Muntaner, 6 · Barcelona`],
+    en: [`${I18N.en.locations}`,
+         `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+         `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+         `• Sant Antoni · C/ Muntaner, 6 · Barcelona`],
+    ca: [`${I18N.ca.locations}`,
+         `• Les Corts · C/ Bordeus, 35 · Barcelona`,
+         `• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona`,
+         `• Sant Antoni · C/ Muntaner, 6 · Barcelona`]
   }[currentLanguage];
   reply(lines.join('\n'));
 }
@@ -447,7 +442,7 @@ function recommendDishes(n=3){
   return ok.slice(0,n);
 }
 
-// ===== Diálogo de “Necesidades dietéticas” =====
+// ===== Alergias (diálogo) =====
 function startAllergyDialog(){
   DIALOG.awaiting = 'allergy';
   reply(I18N[currentLanguage].ask_allergies_specific);
@@ -470,12 +465,12 @@ function handleAllergyAnswer(message){
 function showDietaryWizard(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
   const labels = {
-    es:{cta:I18N.es.diet_cta, confirm:I18N.es.diet_confirm_btn, none:I18N.es.diet_none_btn,
-        chips:['Sin gluten','Vegano','Vegetariano','Sin lactosa','Sin marisco','Sin frutos secos']},
-    en:{cta:I18N.en.diet_cta, confirm:I18N.en.diet_confirm_btn, none:I18N.en.diet_none_btn,
-        chips:['Gluten-free','Vegan','Vegetarian','Lactose-free','No shellfish','No nuts']},
-    ca:{cta:I18N.ca.diet_cta, confirm:I18N.ca.diet_confirm_btn, none:I18N.ca.diet_none_btn,
-        chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs']}
+    es: { cta:I18N.es.diet_cta, confirm:I18N.es.diet_confirm_btn, none:I18N.es.diet_none_btn,
+          chips:['Sin gluten','Vegano','Vegetariano','Sin lactosa','Sin marisco','Sin frutos secos'] },
+    en: { cta:I18N.en.diet_cta, confirm:I18N.en.diet_confirm_btn, none:I18N.en.diet_none_btn,
+          chips:['Gluten-free','Vegan','Vegetarian','Lactose-free','No shellfish','No nuts'] },
+    ca: { cta:I18N.ca.diet_cta, confirm:I18N.ca.diet_confirm_btn, none:I18N.ca.diet_none_btn,
+          chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs'] }
   }[currentLanguage];
   wrap.innerHTML = `
     <div class="dietary-wizard">
@@ -484,10 +479,11 @@ function showDietaryWizard(){
         ${labels.chips.map((t,i)=>`<button class="chip diet-chip" data-key="${i}">${t}</button>`).join('')}
       </div>
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="chip diet-confirm">${labels.confirm}</button>
+        <button class="chip chip-primary diet-confirm">${labels.confirm}</button>
         <button class="chip diet-none" style="opacity:.9">${labels.none}</button>
       </div>
-    </div>`;
+    </div>
+  `;
   chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
   const selected = new Set();
   wrap.querySelectorAll('.diet-chip').forEach(btn=>{
@@ -512,8 +508,6 @@ function showDietaryWizard(){
     reply(I18N[currentLanguage].diet_saved_fun(list)); replyRecommendations(); DIALOG.awaiting = null; wrap.remove();
   });
 }
-
-// ===== Parser de alergias =====
 function parseAndSaveAllergies(text, opts={}){
   const map = {
     en:{gluten:'gluten', shellfish:'shellfish', fish:'fish', egg:'egg', milk:'milk', vegan:'vegan', vegetarian:'vegetarian', lactose:'milk', nuts:'nuts'},
@@ -581,7 +575,6 @@ async function handleIngredient(topicRaw){
       : "Oh, that’s a delicious topic. Here’s the good stuff:";
   reply(preface + "\n" + parts.join('\n'));
 }
-
 async function handleHealthQuery(topicRaw){
   const lang = currentLanguage;
   const topic = cleanTopic(topicRaw || '');
@@ -609,17 +602,17 @@ function handleSeasonQuery(payload){
   if (payload.topic) {
     const info = seasonForIngredient(payload.topic, currentLanguage);
     if (info) reply(info);
-    else reply(currentLanguage==='es' ? "No tengo la temporada de ese producto todavía."
-         : currentLanguage==='ca' ? "Encara no tinc la temporada d’aquest producte."
-                                  : "I don’t have that item’s season yet.");
+    else reply(currentLanguage==='es' ? "No tengo la temporada de ese producto todavía." :
+         currentLanguage==='ca' ? "Encara no tinc la temporada d’aquest producte." :
+                                  "I don’t have that item’s season yet.");
     return;
   }
   const month = payload.month || (new Date().getMonth()+1);
   const list = listSeasonForMonth(month);
   if (!list.length){
-    reply(currentLanguage==='es' ? "No tengo datos de temporada para ese mes."
-         : currentLanguage==='ca' ? "No tinc dades de temporada per a eixe mes."
-                                  : "No season data for that month.");
+    reply(currentLanguage==='es' ? "No tengo datos de temporada para ese mes." :
+         currentLanguage==='ca' ? "No tinc dades de temporada per a eixe mes." :
+                                  "No season data for that month.");
     return;
   }
   const monthName = I18N[currentLanguage].month_names[month-1];
@@ -699,7 +692,7 @@ function showReservationForm(){
   const defStr = formatLocalForInput(def);
   const restVal = USER.preferredRestaurant || '';
   const prefillAllergies = (USER.allergies||[]).join(', ');
-  const promoCode = (localStorage.getItem('xativa_promo') || '').trim();
+  const savedPromo = localStorage.getItem('xativa_promo') || '';
 
   wrap.innerHTML=`
     <form id="reservation-form" class="reservation-form">
@@ -734,9 +727,9 @@ function showReservationForm(){
         <input type="text" name="allergies" placeholder="gluten, marisco..." value="${prefillAllergies}"></label><br>
 
       <label><span data-en="Notes:" data-es="Notas:" data-ca="Notes:">Notas:</span><br>
-        <textarea name="notes" placeholder="Preferencias extra, celebración, etc.">${promoCode ? "Código promocional: "+promoCode : ""}</textarea></label><br>
+        <textarea name="notes" placeholder="Preferencias extra, celebración, etc.">${savedPromo ? ('Código promo: ' + savedPromo) : ''}</textarea></label><br>
 
-      <button type="submit" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva">Confirmar Reserva</button>
+      <button type="submit" class="chip chip-primary" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva">Confirmar Reserva</button>
     </form>`;
   chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
   changeLanguage(currentLanguage);
@@ -792,16 +785,18 @@ function openReservationDB(){
   });
 }
 
-// ===== Juego (overlay) =====
-function openGameOverlay(){
-  if (!gameOverlay || !gameIframe) return;
-  gameOverlay.hidden = false;
-  // Forzar recarga del iframe para una sesión limpia
-  try { gameIframe.contentWindow.location.reload(); } catch {}
+// ===== Juego (panel + iframe) =====
+function openGamePanel(){
+  // Mensaje corto
+  reply(I18N[currentLanguage].game_opening);
+  // src con idioma
+  const langQ = currentLanguage;
+  gameFrame.src = `/game/culinary-game.html?lang=${encodeURIComponent(langQ)}`;
+  gamePanel.hidden = false;
 }
-function closeGameOverlay(){
-  if (!gameOverlay) return;
-  gameOverlay.hidden = true;
+function hideGamePanel(){
+  gamePanel.hidden = true;
+  try { gameFrame.src = 'about:blank'; } catch {}
 }
 
 // ===== TTS =====

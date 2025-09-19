@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants">
-  <meta name="theme-color" content="#8B0000">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants" />
+  <meta name="theme-color" content="#8B0000" />
   <title>XativaBot - Your Personal Chef Assistant</title>
 
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="/manifest.json?v=2">
-  <link rel="icon" type="image/png" href="images/icon-192x192.png">
-  <link rel="apple-touch-icon" href="images/apple-touch-icon-180.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="/manifest.json?v=3" />
+  <link rel="icon" type="image/png" href="/images/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon-180.png" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="app-container">
     <header class="app-header">
       <div class="logo-container">
-        <img src="images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo">
+        <img src="/images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo" />
       </div>
 
       <div style="display:flex; gap:12px; align-items:center;">
@@ -46,11 +46,11 @@
     <main class="chat-container">
       <div class="chef-profile">
         <div class="chef-avatar">
-          <img src="images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar">
+          <img src="/images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar" />
         </div>
         <div class="chef-info">
           <h1>AlexBot</h1>
-          <p class="chef-title" data-en="Executive Chef" data-es="Chef Ejecutivo" data-ca="Xef Executiu">Executive Chef</p>
+          <p class="chef-title" data-en="Executive Chef" data-es="Chef Ejecutivo" data-ca="Xef Executiu">Chef Ejecutivo</p>
         </div>
       </div>
 
@@ -60,25 +60,42 @@
              data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
              data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
              data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
-            Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?
+             ¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?
           </p>
         </div>
       </div>
 
       <div class="suggestion-chips">
-        <button class="chip" data-intent="menu" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">Recomendaciones del menú</button>
-        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">Necesidades dietéticas especiales</button>
-        <button class="chip" data-intent="reserve" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">Hacer una reserva</button>
-        <button class="chip" data-intent="locations" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">Ubicaciones de restaurantes</button>
-        <!-- NUEVO: botón del juego -->
-        <button class="chip" data-intent="game" data-en="Culinary word hunt" data-es="Reto culinario" data-ca="Repte culinari">🎮 Reto culinario</button>
+        <button class="chip" data-intent="menu"
+                data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">
+          Recomendaciones del menú
+        </button>
+
+        <button class="chip" data-intent="allergy"
+                data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">
+          Necesidades dietéticas especiales
+        </button>
+
+        <button class="chip" data-intent="reserve"
+                data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">
+          Hacer una reserva
+        </button>
+
+        <button class="chip" data-intent="locations"
+                data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">
+          Ubicaciones de restaurantes
+        </button>
+
+        <!-- NUEVO: botón para abrir el juego -->
+        <button class="chip chip-primary" data-intent="game"
+                data-en="Culinary word hunt" data-es="Sopa culinaria" data-ca="Sopa culinària">
+          Sopa culinaria
+        </button>
       </div>
 
       <div class="user-input-container">
-        <textarea id="user-input" placeholder="Type your message..."
-                  data-en="Type your message..."
-                  data-es="Escribe tu mensaje..."
-                  data-ca="Escriu el teu missatge..."></textarea>
+        <textarea id="user-input" placeholder="Escribe tu mensaje..."
+                  data-en="Type your message..." data-es="Escribe tu mensaje..." data-ca="Escriu el teu missatge..."></textarea>
         <div class="input-actions">
           <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
@@ -97,24 +114,29 @@
     </main>
 
     <div class="voice-indicator" id="voice-indicator">
-      <div class="voice-waves"><span></span><span></span><span></span><span></span><span></span></div>
-      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Listening...</p>
-    </div>
-  </div>
-
-  <!-- Overlay del juego -->
-  <div id="game-overlay" class="game-overlay" hidden>
-    <div class="game-frame">
-      <button class="game-close" aria-label="Close game">×</button>
-      <iframe id="game-iframe" title="Culinary Word Hunt" src="/game/culinary-game.html"></iframe>
+      <div class="voice-waves">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Escuchando...</p>
     </div>
   </div>
 
   <footer class="app-footer">
-    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">All rights reserved.</span></p>
+    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">Todos los derechos reservados.</span></p>
   </footer>
 
-  <script src="app.js"></script>
+  <!-- Panel del juego (overlay) -->
+  <div id="game-panel" class="game-panel" hidden>
+    <div class="game-card">
+      <div class="game-head">
+        <strong id="game-title" data-es="Sopa de letras culinaria" data-en="Culinary Word Hunt" data-ca="Sopa de lletres culinària">Sopa de letras culinaria</strong>
+        <button class="game-close" id="game-close" aria-label="Cerrar">✕</button>
+      </div>
+      <iframe id="game-frame" title="Culinary Word Game" sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-popups allow-forms"></iframe>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
