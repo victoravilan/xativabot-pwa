@@ -1,188 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants"/>
-  <meta name="theme-color" content="#8B0000"/>
+  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants">
+  <meta name="theme-color" content="#8B0000">
   <title>XativaBot - Your Personal Chef Assistant</title>
 
-  <link rel="stylesheet" href="styles.css"/>
-  <link rel="manifest" href="/manifest.json?v=3"/>
-  <link rel="icon" type="image/png" href="images/icon-192x192.png"/>
-  <link rel="apple-touch-icon" href="images/apple-touch-icon-180.png"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="manifest" href="/manifest.json?v=3">
+  <link rel="icon" type="image/png" href="/images/icon-192x192.png">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon-180.png">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"/>
-
-  <!-- Botón de instalación PWA (opcional) -->
-  <button id="install-btn" style="display:none" onclick="installApp()" class="chip">📲 Instalar aplicación</button>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
+
 <body>
-<div class="app-container">
-  <header class="app-header">
-    <div class="logo-container">
-      <img src="images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo"/>
-    </div>
-
-    <div style="display:flex; gap:12px; align-items:center;">
-      <div class="language-selector">
-        <select id="language-select" aria-label="Language">
-          <option value="en">English</option>
-          <option value="es" selected>Español</option>
-          <option value="ca">Català</option>
-        </select>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="/images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo">
       </div>
-      <div class="region-selector">
-        <select id="region-select" aria-label="Region">
-          <option value="">España (nacional)</option>
-          <option value="ES-VC">Comunitat Valenciana</option>
-          <option value="ES-AN">Andalucía</option>
-          <option value="ES-CN">Canarias</option>
-          <option value="ES-GA">Galicia</option>
-        </select>
+
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="language-selector">
+          <select id="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="es" selected>Español</option>
+            <option value="ca">Català</option>
+          </select>
+        </div>
+        <div class="region-selector">
+          <select id="region-select" aria-label="Region">
+            <option value="">España (nacional)</option>
+            <option value="ES-VC">Comunitat Valenciana</option>
+            <option value="ES-AN">Andalucía</option>
+            <option value="ES-CN">Canarias</option>
+            <option value="ES-GA">Galicia</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </header>
-
-  <main class="chat-container">
-    <div class="chef-profile">
-      <div class="chef-avatar">
-        <img src="images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar"/>
-      </div>
-      <div class="chef-info">
-        <h1>AlexBot</h1>
-        <p class="chef-title" data-en="Executive Chef" data-es="Chef Ejecutivo" data-ca="Xef Executiu">Executive Chef</p>
-      </div>
-    </div>
-
-    <div class="chat-messages" id="chat-messages">
-      <div class="message bot-message">
-        <p class="welcome-message"
-           data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
-           data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
-           data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
-          Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?
-        </p>
-      </div>
-    </div>
-
-    <div class="suggestion-chips">
-      <button class="chip" data-intent="menu"
-              data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">
-        Recomendaciones del menú
-      </button>
-
-      <button class="chip" data-intent="allergy"
-              data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">
-        Necesidades dietéticas especiales
-      </button>
-
-      <button class="chip" data-intent="reserve"
-              data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">
-        Hacer una reserva
-      </button>
-
-      <button class="chip" data-intent="locations"
-              data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">
-        Ubicaciones de restaurantes
-      </button>
-
-      <!-- NUEVO: botón de juego -->
-      <button class="chip" data-intent="game"
-              data-en="Culinary Word Hunt" data-es="Juego del Sabor (Sopa de letras)" data-ca="Joc del Gust (Sopa de lletres)">
-        Juego del Sabor (Sopa de letras)
-      </button>
-    </div>
-
-    <div class="user-input-container">
-      <textarea id="user-input" placeholder="Type your message..."
-                data-en="Type your message..." data-es="Escribe tu mensaje..." data-ca="Escriu el teu missatge..."></textarea>
-      <div class="input-actions">
-        <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
-            <path fill="none" d="M0 0h24v24H0z"/>
-            <path d="M12 15c2.21 0 4-1.79 4-4V5c0-2.21-1.79-4-4-4S8 2.79 8 5v6c0 2.21 1.79 4 4 4zm0-2c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2s2 .9 2 2v6c0 1.1-.9 2-2 2zm4 2v1c0 2.76-2.24 5-5 5s-5-2.24-5-5v-1H4v1c0 3.53 2.61 6.43 6 6.92V22h4v-2.08c3.39-.49 6-3.39 6-6.92v-1h-2z"/>
-          </svg>
-        </button>
-        <button id="send-btn" class="send-btn" aria-label="Send">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
-            <path fill="none" d="M0 0h24v24H0z"/>
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </main>
-
-  <div class="voice-indicator" id="voice-indicator">
-    <div class="voice-waves">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Listening...</p>
-  </div>
-</div>
-
-<footer class="app-footer">
-  <p>© 2023 Xativa Restaurants.
-    <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">
-      All rights reserved.
-    </span>
-  </p>
-</footer>
-
-<!-- Modal del juego -->
-<div id="game-modal" class="game-modal hidden" aria-hidden="true" role="dialog" aria-label="Juego del Sabor">
-  <div class="game-panel">
-    <button class="game-close" id="game-close" aria-label="Cerrar">&times;</button>
-    <header class="game-header">
-      <h2 id="game-title" data-es="Juego del Sabor · Sopa de letras" data-en="Culinary Word Hunt" data-ca="Joc del Gust · Sopa de lletres">
-        Juego del Sabor · Sopa de letras
-      </h2>
-      <p id="game-subtitle" class="subtitle"
-         data-es="Encuentra ingredientes y especias (consigue 7 para tu código sorpresa)"
-         data-en="Find ingredients & spices (get 7 to unlock your surprise code)"
-         data-ca="Troba ingredients i espècies (aconsegueix-ne 7 per al teu codi sorpresa)">
-        Encuentra ingredientes y especias (consigue 7 para tu código sorpresa)
-      </p>
     </header>
 
-    <section class="game-stats">
-      <div class="stat"><span id="game-found">0</span> <small data-es="encontradas" data-en="found" data-ca="trobades">encontradas</small></div>
-      <div class="stat"><span id="game-total">0</span> <small data-es="totales" data-en="total" data-ca="totals">totales</small></div>
-      <div class="stat"><span id="game-percent">0%</span> <small data-es="completado" data-en="complete" data-ca="completat">completado</small></div>
-    </section>
+    <main class="chat-container">
+      <div class="chef-profile">
+        <div class="chef-avatar">
+          <img src="/images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar">
+        </div>
+        <div class="chef-info">
+          <h1>AlexBot</h1>
+          <p class="chef-title" data-en="Executive Chef" data-es="Chef Ejecutivo" data-ca="Xef Executiu">Chef Ejecutivo</p>
+        </div>
+      </div>
 
-    <div class="progress-bar"><div id="game-progress" class="progress"></div></div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="message bot-message">
+          <p class="welcome-message"
+             data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
+             data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
+             data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
+            ¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?
+          </p>
+        </div>
+      </div>
 
-    <div class="grid-container">
-      <div id="game-grid" class="grid"></div>
+      <div class="suggestion-chips">
+        <button class="chip" data-intent="menu" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">Recomendaciones del menú</button>
+        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">Necesidades dietéticas especiales</button>
+        <button class="chip" data-intent="reserve" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">Hacer una reserva</button>
+        <button class="chip" data-intent="locations" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">Ubicaciones de restaurantes</button>
+        <!-- NUEVO: botón del juego -->
+        <button class="chip" data-intent="game" data-en="Culinary Word Hunt" data-es="Sopa de letras culinaria" data-ca="Sopa de lletres culinària">Sopa de letras culinaria</button>
+      </div>
+
+      <div class="user-input-container">
+        <textarea id="user-input"
+          placeholder="Escribe tu mensaje…"
+          data-en="Type your message..."
+          data-es="Escribe tu mensaje..."
+          data-ca="Escriu el teu missatge..."></textarea>
+
+        <div class="input-actions">
+          <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M12 15c2.21 0 4-1.79 4-4V5c0-2.21-1.79-4-4-4S8 2.79 8 5v6c0 2.21-1.79 4-4 4zm0-2c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2s2 .9 2 2v6c0 1.1-.9 2-2 2zm4 2v1c0 2.76-2.24 5-5 5s-5-2.24-5-5v-1H4v1c0 3.53 2.61 6.43 6 6.92V22h4v-2.08c3.39-.49 6-3.39 6-6.92v-1h-2z"/>
+            </svg>
+          </button>
+          <button id="send-btn" class="send-btn" aria-label="Send">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <div class="voice-indicator" id="voice-indicator">
+      <div class="voice-waves">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Escuchando...</p>
     </div>
-
-    <div class="word-list-container">
-      <h3 class="word-list-title" data-es="Ingredientes por descubrir" data-en="Words to find" data-ca="Paraules a trobar">
-        Ingredientes por descubrir
-      </h3>
-      <div id="game-word-list" class="word-list"></div>
-    </div>
-
-    <div id="game-reward" class="game-reward hidden"></div>
   </div>
-</div>
 
-<script src="app.js"></script>
+  <footer class="app-footer">
+    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">Todos los derechos reservados.</span></p>
+  </footer>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('Service worker registered!', reg))
-        .catch(err => console.log('Service worker registration failed:', err));
-    });
-  }
-</script>
+  <!-- MODAL DEL JUEGO -->
+  <div id="game-modal" class="game-modal" aria-hidden="true">
+    <div class="game-panel" role="dialog" aria-modal="true">
+      <div class="game-header">
+        <h2 data-es="Sopa de letras culinaria" data-en="Culinary Word Hunt" data-ca="Sopa de lletres culinària">Sopa de letras culinaria</h2>
+        <button id="game-close" class="game-close" aria-label="Cerrar">×</button>
+      </div>
 
-<script src="/install.js"></script>
+      <iframe id="game-frame" class="game-frame" src="/game/wordhunt.html" title="Sopa de letras"></iframe>
+
+      <div class="game-footer">
+        <div class="game-hint">
+          <span data-es="Cuando encuentres 7 palabras, se generará tu código. Si el juego no lo envía automáticamente, pégalo aquí:" data-en="When you find 7 words, a code will be generated. If the game doesn’t send it automatically, paste it here:" data-ca="Quan trobes 7 paraules, es generarà el teu codi. Si el joc no l’envia automàticament, enganxa’l ací:">
+            Cuando encuentres 7 palabras, se generará tu código. Si el juego no lo envía automáticamente, pégalo aquí:
+          </span>
+        </div>
+        <div class="game-controls">
+          <input id="game-code-input" type="text" placeholder="XAT-ABC123" />
+          <button id="game-save-btn" class="chip"
+                  data-es="Guardar código" data-en="Save code" data-ca="Desar codi">Guardar código</button>
+          <span id="game-status" class="game-status"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="install-btn" style="display:none" onclick="installApp()" class="chip">📲 Instalar aplicación</button>
+
+  <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service worker registered!', reg))
+          .catch(err => console.log('Service worker registration failed:', err));
+      });
+    }
+  </script>
+  <script src="/install.js"></script>
 </body>
 </html>

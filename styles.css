@@ -1,303 +1,217 @@
 /* ==========================
-  XativaBot PWA - Main Stylesheet
-  (se mantiene tu diseño y se agrega bloque GAME al final)
+   XativaBot PWA - Main Stylesheet
    ========================== */
-:root {
-  --primary-color: #8B0000;
-  --secondary-color: #F8F1E9;
-  --accent-color: #D4AF37;
-  --text-color: #333333;
-  --light-text: #FFFFFF;
-  --background-color: #F9F9F9;
-  --card-bg: #FFFFFF;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --border-radius: 12px;
-  --transition: all 0.3s ease;
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Roboto', sans-serif;
+:root{
+  --primary-color:#8B0000;
+  --secondary-color:#F8F1E9;
+  --accent-color:#D4AF37;
+  --text-color:#333333;
+  --light-text:#FFFFFF;
+  --background-color:#F9F9F9;
+  --card-bg:#FFFFFF;
+  --shadow:0 4px 12px rgba(0,0,0,0.1);
+  --border-radius:12px;
+  --transition:all 0.3s ease;
+  --font-heading:'Playfair Display',serif;
+  --font-body:'Roboto',sans-serif;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  font-family: var(--font-body);
-  background-color: var(--background-color);
-  color: var(--text-color);
-  line-height: 1.6;
-  overflow-x: hidden;
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-body);
+  background-color:var(--background-color);
+  color:var(--text-color);
+  line-height:1.6;
+  overflow-x:hidden;
 }
-
-.app-container {
-  max-width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+.app-container{max-width:100%;min-height:100vh;display:flex;flex-direction:column}
 
 /* Header */
-.app-header {
-  background-color: var(--primary-color);
-  color: var(--light-text);
-  padding: 15px 20px;
-  display:flex; justify-content:space-between; align-items:center;
-  box-shadow: var(--shadow);
-  position: sticky; top:0; z-index:100;
+.app-header{
+  background-color:var(--primary-color);
+  color:var(--light-text);
+  padding:15px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:var(--shadow);position:sticky;top:0;z-index:100;
+}
+.logo-container{display:flex;align-items:center}
+.logo{height:40px;width:auto}
+.language-selector select{
+  background-color:transparent;border:1px solid rgba(255,255,255,0.3);
+  color:var(--light-text);padding:8px 12px;border-radius:20px;font-size:14px;
+  outline:none;cursor:pointer;transition:var(--transition)
+}
+.language-selector select:hover{background-color:rgba(255,255,255,0.1)}
+.language-selector select option{background-color:var(--primary-color);color:var(--light-text)}
+
+/* Chat container */
+.chat-container{
+  flex:1;display:flex;flex-direction:column;padding:20px;
+  max-width:800px;margin:0 auto;width:100%;
 }
 
-.logo-container { display:flex; align-items:center; }
-.logo { height:40px; width:auto; }
+/* Chef profile */
+.chef-profile{
+  display:flex;align-items:center;margin-bottom:30px;padding:20px;
+  background-color:var(--card-bg);border-radius:var(--border-radius);box-shadow:var(--shadow)
+}
+.chef-avatar{width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--accent-color);margin-right:20px}
+.chef-avatar img{width:100%;height:100%;object-fit:cover}
+.chef-info h1{font-family:var(--font-heading);color:var(--primary-color);margin-bottom:5px;font-size:24px}
+.chef-title{color:#666;font-size:16px;font-style:italic}
 
-/* Selector idioma */
-.language-selector select {
-  background-color: transparent;
-  border: 1px solid rgba(255,255,255,0.3);
-  color: var(--light-text);
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  outline: none; cursor:pointer;
-  transition: var(--transition);
-}
-.language-selector select:hover { background-color: rgba(255,255,255,0.1); }
-.language-selector select option {
-  background-color: var(--primary-color);
-  color: var(--light-text);
-}
-
-/* Chat */
-.chat-container {
-  flex:1; display:flex; flex-direction:column;
-  padding:20px; max-width:800px; margin:0 auto; width:100%;
-}
-
-/* Perfil */
-.chef-profile {
-  display:flex; align-items:center; margin-bottom:30px; padding:20px;
-  background-color: var(--card-bg); border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-}
-.chef-avatar {
-  width:80px; height:80px; border-radius:50%; overflow:hidden;
-  border:3px solid var(--accent-color); margin-right:20px;
-}
-.chef-avatar img { width:100%; height:100%; object-fit:cover; }
-.chef-info h1 { font-family: var(--font-heading); color:var(--primary-color); margin-bottom:5px; font-size:24px; }
-.chef-title { color:#666; font-size:16px; font-style:italic; }
-
-/* Mensajes */
-.chat-messages {
-  flex:1; overflow-y:auto; padding:20px 0;
-  display:flex; flex-direction:column; gap:15px;
-}
-.message {
-  max-width:80%; padding:12px 16px; border-radius:18px; margin-bottom:10px;
-  animation: fadeIn .3s ease;
-}
-@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-.bot-message { background-color: var(--secondary-color); align-self:flex-start; border-bottom-left-radius:5px; }
-.user-message { background-color: var(--primary-color); color:var(--light-text); align-self:flex-end; border-bottom-right-radius:5px; }
-.welcome-message { font-size:16px; line-height:1.5; }
+/* Messages */
+.chat-messages{flex:1;overflow-y:auto;padding:20px 0;display:flex;flex-direction:column;gap:15px}
+.message{max-width:80%;padding:12px 16px;border-radius:18px;margin-bottom:10px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)}}
+.bot-message{background-color:var(--secondary-color);align-self:flex-start;border-bottom-left-radius:5px}
+.user-message{background-color:var(--primary-color);color:var(--light-text);align-self:flex-end;border-bottom-right-radius:5px}
+.welcome-message{font-size:16px;line-height:1.5}
 
 /* Chips */
-.suggestion-chips { display:flex; flex-wrap:wrap; gap:10px; margin:15px 0; }
-.chip {
-  background-color: var(--secondary-color); color: var(--primary-color);
-  border:none; padding:8px 16px; border-radius:20px; font-size:14px;
-  cursor:pointer; transition: var(--transition); white-space:nowrap;
+.suggestion-chips{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+.chip{
+  background-color:var(--secondary-color);color:var(--primary-color);border:none;
+  padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer;transition:var(--transition);white-space:nowrap
 }
-.chip:hover { background-color: var(--primary-color); color: var(--light-text); transform: translateY(-2px); }
+.chip:hover{background-color:var(--primary-color);color:var(--light-text);transform:translateY(-2px)}
 
 /* Input */
-.user-input-container {
-  display:flex; background-color: var(--card-bg); border-radius: var(--border-radius);
-  padding:12px; box-shadow: var(--shadow); margin-top:20px;
+.user-input-container{
+  display:flex;background-color:var(--card-bg);border-radius:var(--border-radius);
+  padding:12px;box-shadow:var(--shadow);margin-top:20px
 }
-#user-input {
-  flex:1; border:none; outline:none; background:transparent; padding:10px;
-  font-family: var(--font-body); font-size:16px; resize:none; max-height:120px; min-height:24px;
+#user-input{
+  flex:1;border:none;outline:none;background:transparent;padding:10px;
+  font-family:var(--font-body);font-size:16px;resize:none;max-height:120px;min-height:24px
 }
-.input-actions { display:flex; align-items:center; gap:10px; }
-.voice-btn,.send-btn {
-  background:none; border:none; cursor:pointer; padding:8px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center; transition:var(--transition);
+.input-actions{display:flex;align-items:center;gap:10px}
+.voice-btn,.send-btn{
+  background:none;border:none;cursor:pointer;padding:8px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;transition:var(--transition)
 }
-.voice-btn svg,.send-btn svg { fill: var(--primary-color); width:24px; height:24px; }
-.voice-btn:hover,.send-btn:hover { background-color: rgba(139,0,0,0.1); }
-.voice-btn.active { background-color: var(--primary-color); }
-.voice-btn.active svg { fill: var(--light-text); }
+.voice-btn svg,.send-btn svg{fill:var(--primary-color);width:24px;height:24px}
+.voice-btn:hover,.send-btn:hover{background-color:rgba(139,0,0,0.1)}
+.voice-btn.active{background-color:var(--primary-color)}
+.voice-btn.active svg{fill:var(--light-text)}
 
-/* Indicator voz */
-.voice-indicator {
-  position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-  background:rgba(0,0,0,.7); color:#fff; padding:15px 30px; border-radius:30px;
-  display:none; align-items:center; justify-content:center; flex-direction:column; z-index:1000;
+/* Voice indicator */
+.voice-indicator{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background-color:rgba(0,0,0,0.7);color:#fff;padding:15px 30px;border-radius:30px;
+  display:none;align-items:center;justify-content:center;flex-direction:column;z-index:1000
 }
-.voice-indicator.active { display:flex; animation: fadeIn .3s ease; }
-.voice-waves { display:flex; align-items:center; height:40px; margin-bottom:10px; }
-.voice-waves span {
-  display:inline-block; width:4px; height:20px; margin:0 3px; background:#fff;
-  border-radius:2px; animation: wave 1s infinite ease-in-out;
-}
-.voice-waves span:nth-child(2){animation-delay:.1s;} .voice-waves span:nth-child(3){animation-delay:.2s;}
-.voice-waves span:nth-child(4){animation-delay:.3s;} .voice-waves span:nth-child(5){animation-delay:.4s;}
-@keyframes wave { 0%,100%{height:10px;} 50%{height:30px;} }
-.listening-text { font-size:14px; }
+.voice-indicator.active{display:flex;animation:fadeIn .3s ease}
+.voice-waves{display:flex;align-items:center;height:40px;margin-bottom:10px}
+.voice-waves span{display:inline-block;width:4px;height:20px;margin:0 3px;background-color:#fff;border-radius:2px;animation:wave 1s infinite ease-in-out}
+.voice-waves span:nth-child(2){animation-delay:.1s}
+.voice-waves span:nth-child(3){animation-delay:.2s}
+.voice-waves span:nth-child(4){animation-delay:.3s}
+.voice-waves span:nth-child(5){animation-delay:.4s}
+@keyframes wave{0%,100%{height:10px} 50%{height:30px}}
+.listening-text{font-size:14px}
 
 /* Footer */
-.app-footer { background-color:var(--primary-color); color:var(--light-text); text-align:center; padding:15px; font-size:14px; }
+.app-footer{background-color:var(--primary-color);color:#fff;text-align:center;padding:15px;font-size:14px}
 
 /* Responsive */
-@media (max-width: 768px){
-  .chat-container{ padding:15px; }
-  .chef-profile{ padding:15px; }
-  .chef-avatar{ width:60px; height:60px; }
-  .chef-info h1{ font-size:20px; }
-  .message{ max-width:90%; }
+@media (max-width:768px){
+  .chat-container{padding:15px}
+  .chef-profile{padding:15px}
+  .chef-avatar{width:60px;height:60px}
+  .chef-info h1{font-size:20px}
+  .message{max-width:90%}
 }
-@media (max-width: 480px){
-  .app-header{ padding:10px 15px; }
-  .logo{ height:30px; }
-  .language-selector select{ padding:6px 10px; font-size:12px; }
-  .chef-profile{ flex-direction:column; text-align:center; }
-  .chef-avatar{ margin-right:0; margin-bottom:15px; }
-  .suggestion-chips{ justify-content:center; }
-  .chip{ font-size:12px; padding:6px 12px; }
+@media (max-width:480px){
+  .app-header{padding:10px 15px}
+  .logo{height:30px}
+  .language-selector select{padding:6px 10px;font-size:12px}
+  .chef-profile{flex-direction:column;text-align:center}
+  .chef-avatar{margin-right:0;margin-bottom:15px}
+  .suggestion-chips{justify-content:center}
+  .chip{font-size:12px;padding:6px 12px}
 }
 
 /* Dark mode */
-@media (prefers-color-scheme: dark){
+@media (prefers-color-scheme:dark){
   :root{
-    --background-color:#121212; --card-bg:#1E1E1E; --text-color:#E0E0E0; --secondary-color:#2C1A1A;
+    --background-color:#121212;--card-bg:#1E1E1E;--text-color:#E0E0E0;--secondary-color:#2C1A1A;
   }
-  .chef-info h1{ color: var(--accent-color); }
-  .chef-title{ color:#A0A0A0; }
+  .chef-info h1{color:var(--accent-color)}
+  .chef-title{color:#A0A0A0}
 }
 
-/* =========================
-   Reserva form (burbuja)
-   ========================= */
+/* ==========================
+   Burbuja Formulario Reserva
+   ========================== */
 .message.bot-message .reservation-form{
-  display:grid; gap:10px; margin-top:8px; width:100%; max-width:520px;
-  background:#fff; border:1px solid #eee; border-radius:14px; padding:14px; box-shadow:0 4px 18px rgba(0,0,0,.06);
+  display:grid;gap:10px;margin-top:8px;width:100%;max-width:520px;
+  background:#fff;border:1px solid #eee;border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,.06)
 }
-.reservation-form label{ font-size:.92rem; color:#333; display:grid; gap:6px; }
-.reservation-form input,
-.reservation-form textarea,
-.reservation-form select,
-.reservation-form button{
-  font-family:inherit; font-size:.95rem;
+.reservation-form label{font-size:.92rem;color:#333;display:grid;gap:6px}
+.reservation-form input,.reservation-form textarea,.reservation-form select,.reservation-form button{
+  font-family:inherit;font-size:.95rem
 }
-.reservation-form input[type="text"],
-.reservation-form input[type="email"],
-.reservation-form input[type="tel"],
-.reservation-form input[type="datetime-local"],
-.reservation-form input[type="number"],
-.reservation-form textarea{
-  width:100%; border:1px solid #e5e7eb; background:#fafafa; color:#111;
-  border-radius:10px; padding:10px 12px; transition:border-color .15s, box-shadow .15s, background-color .15s;
+.reservation-form input[type="text"],.reservation-form input[type="email"],.reservation-form input[type="tel"],
+.reservation-form input[type="datetime-local"],.reservation-form input[type="number"],.reservation-form textarea{
+  width:100%;border:1px solid #e5e7eb;background:#fafafa;color:#111;border-radius:10px;padding:10px 12px;
+  transition:border-color .15s,box-shadow .15s,background-color .15s
 }
-.reservation-form textarea{ min-height:84px; resize:vertical; }
-.reservation-form input:focus,
-.reservation-form textarea:focus{
-  outline:none; border-color:#8B0000; box-shadow:0 0 0 3px rgba(139,0,0,.15); background:#fff;
+.reservation-form textarea{min-height:84px;resize:vertical}
+.reservation-form input:focus,.reservation-form textarea:focus{
+  outline:none;border-color:#8B0000;box-shadow:0 0 0 3px rgba(139,0,0,.15);background:#fff
 }
-.reservation-form ::placeholder{ color:#9aa0a6; }
+.reservation-form ::placeholder{color:#9aa0a6}
 @media (min-width:520px){
-  .reservation-form{ grid-template-columns:1fr 1fr; }
-  .reservation-form label:nth-last-of-type(2){ grid-column:1 / -1; }
-  .reservation-form button[type="submit"]{ grid-column:1 / -1; justify-self:stretch; }
+  .reservation-form{grid-template-columns:1fr 1fr}
+  .reservation-form label:nth-last-of-type(2){grid-column:1 / -1}
+  .reservation-form button[type="submit"]{grid-column:1 / -1;justify-self:stretch}
 }
 .reservation-form button[type="submit"]{
-  appearance:none; border:none; border-radius:12px; padding:12px 16px;
-  background:#8B0000; color:#fff; font-weight:600; cursor:pointer;
-  transition: transform .08s, box-shadow .15s, opacity .15s;
-  box-shadow:0 8px 20px rgba(139,0,0,.25);
+  appearance:none;border:none;border-radius:12px;padding:12px 16px;background:#8B0000;color:#fff;font-weight:600;cursor:pointer;
+  transition:transform .08s, box-shadow .15s;box-shadow:0 8px 20px rgba(139,0,0,.25)
 }
-.reservation-form button[type="submit"]:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(139,0,0,.28); }
-.reservation-form button[type="submit"]:active{ transform:translateY(0); box-shadow:0 6px 14px rgba(139,0,0,.22); }
+.reservation-form button[type="submit"]:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(139,0,0,.28)}
+.reservation-form button[type="submit"]:active{transform:translateY(0);box-shadow:0 6px 14px rgba(139,0,0,.22)}
+.reservation-form button[disabled]{opacity:.65;cursor:not-allowed}
 
-/* Dark form */
-@media (prefers-color-scheme: dark){
-  .message.bot-message .reservation-form{ background:#151515; border-color:#222; box-shadow:0 4px 18px rgba(0,0,0,.45); }
-  .reservation-form label{ color:#ddd; }
-  .reservation-form input[type="text"],
-  .reservation-form input[type="email"],
-  .reservation-form input[type="tel"],
-  .reservation-form input[type="datetime-local"],
-  .reservation-form input[type="number"],
-  .reservation-form textarea{
-    background:#101010; border-color:#222; color:#f0f0f0;
-  }
-  .reservation-form input:focus,
-  .reservation-form textarea:focus{
-    border-color:#d24; box-shadow:0 0 0 3px rgba(210,34,68,.2); background:#0b0b0b;
-  }
-}
-
-/* =========================
-   GAME (Sopa de letras)
-   ========================= */
+/* ==========================
+   MODAL DEL JUEGO (iframe)
+   ========================== */
 .game-modal{
-  position:fixed; inset:0; background:rgba(0,0,0,.85); display:flex;
-  align-items:center; justify-content:center; padding:20px; z-index:1200;
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:none;align-items:center;justify-content:center;padding:12px;z-index:2000
 }
-.hidden{ display:none !important; }
-
+.game-modal.open{display:flex}
 .game-panel{
-  background:#fff; color:#222; width:100%; max-width:1000px;
-  border-radius:24px; border:3px solid var(--primary-color);
-  box-shadow:0 10px 30px rgba(0,0,0,.3); padding:20px 20px 28px;
-  position:relative; max-height:92vh; overflow:auto;
+  width:min(980px,100%);height:min(90vh,100%);background:var(--card-bg);border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden
+}
+.game-header{
+  display:flex;align-items:center;justify-content:space-between;background:var(--primary-color);
+  color:#fff;padding:10px 14px
 }
 .game-close{
-  position:absolute; top:14px; right:14px; width:44px; height:44px;
-  border:none; border-radius:50%; background:#f8f9fa; cursor:pointer;
-  font-size:28px; color:#c0392b; box-shadow:0 3px 6px rgba(0,0,0,.1);
+  border:none;background:transparent;font-size:24px;color:#fff;cursor:pointer;line-height:1
 }
-.game-close:hover{ background:#c0392b; color:#fff; transform:rotate(90deg) scale(1.05); transition: .2s; }
-
-.game-header h2{ color:var(--primary-color); text-align:center; margin:10px 0 4px; }
-.subtitle{ text-align:center; }
-
-.game-stats{ display:flex; gap:18px; justify-content:center; margin:10px 0 14px; }
-.game-stats .stat{ background:#fff5f5; border:2px solid #f8d7da; border-radius:14px; padding:8px 14px; }
-.game-stats .stat span{ font-weight:700; color:var(--primary-color); }
-
-.progress-bar{ width:100%; height:12px; background:#e0e0e0; border-radius:6px; overflow:hidden; border:1px solid #ccc; margin-bottom:16px; }
-.progress{ height:100%; background:linear-gradient(90deg, var(--primary-color), #6d0019, #ffd700); width:0%; }
-
-.grid-container{
-  overflow-x:auto; margin:0 auto 14px; padding:12px 0; display:flex; justify-content:center;
-  background:#fffaf8; border-radius:15px; border:2px dashed #f8d7da;
+.game-frame{
+  width:100%;height:100%;flex:1;border:none;background:#000; /* el juego define su propio fondo */
 }
-.grid{ display:grid; gap:3px; background:#fff5f5; padding:12px; border-radius:12px; }
-.cell{
-  width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-  background:#fff; border:2px solid #f0e6e6; font-weight:700; font-size:1rem; user-select:none;
-  border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,.05); font-family:'Courier New', monospace; position:relative;
-  transition: .12s;
+.game-footer{
+  padding:10px 12px;border-top:1px solid rgba(0,0,0,.08);background:var(--secondary-color)
 }
-.cell:hover:not(.found){ background:#fff3e0; border-color:var(--primary-color); transform: translateY(-2px); }
-.cell.selected{ background:#ffe0b2; color:var(--primary-color); border-color:var(--primary-color); transform:scale(1.06); z-index:2; }
-.cell.found{ background:#27ae60; color:#fff; border-color:#1e8449; box-shadow:0 2px 6px rgba(39,174,96,.25); }
+.game-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+#game-code-input{
+  flex:1;min-width:180px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff
+}
+.game-status{font-size:.9rem;opacity:.85}
 
-.word-list-container{
-  margin:14px 0 0; padding:14px; background:linear-gradient(135deg, #fdf2f2 0%, #fceaea 100%);
-  border-radius:20px; border:2px solid #f8d7da;
-}
-.word-list-title{ text-align:center; color:var(--primary-color); margin-bottom:12px; }
-.word-list{
-  display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:10px; justify-content:center;
-}
-.word-item{
-  padding:10px 12px; background: linear-gradient(135deg, #8B0000 0%, #6d0019 100%);
-  color:#fff; border-radius:20px; font-weight:600; text-align:center; border:1px solid rgba(255,255,255,.2);
-}
-.word-item.found{ background: linear-gradient(135deg, #27ae60 0%, #229954 100%); text-decoration:line-through; opacity:.9; }
+/* Dietary wizard chips (reutiliza .chip) */
+.dietary-wizard .diet-chip.active{background:var(--primary-color);color:#fff}
 
-.game-reward{
-  margin-top:16px; padding:12px; border-radius:12px; background:#fffbee; border:1px solid #ffe08a; color:#7f5f00; text-align:center;
+/* Dark modal */
+@media (prefers-color-scheme:dark){
+  .game-panel{background:#141414}
+  .game-footer{background:#1c1c1c;border-top-color:#333}
+  #game-code-input{background:#101010;color:#f0f0f0;border-color:#222}
 }
-
-/* Más legibilidad del input */
-#user-input { background:#fff; color:#111; }

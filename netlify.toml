@@ -1,11 +1,14 @@
 [build]
-  publish = "."
+  publish   = "."
   functions = "netlify/functions"
 
-# Cabeceras para todas las funciones (útil para preflight)
 [[headers]]
-  for = "/.netlify/functions/*"
+  for = "/manifest.json"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
