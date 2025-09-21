@@ -1,492 +1,304 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#8B0000" />
-<title>Sopa de Letras Gastronómica · Xativa</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sopa de Letras Gastronómica · XativaBot</title>
+  <meta name="theme-color" content="#8B0000" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --vino:#8B0000; --vino2:#5f0000; --dorado:#D4AF37; --crema:#F8F1E9; --blanco:#fff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#fff,#fcfcfd);color:#222}
+    header{background:linear-gradient(180deg,#990000,var(--vino));color:#fff;padding:16px 14px}
+    h1{margin:0;font-family:"Playfair Display",serif;font-size:clamp(22px,5vw,30px)}
+    .sub{margin-top:6px;opacity:.9}
 
-<style>
-  :root{
-    --vino:#8B0000;
-    --vino-2:#6f0000;
-    --vino-3:#520000;
-    --gold:#E5C44B;
-    --card:#ffffff;
-    --ink:#1a1a1a;
-    --muted:#5c5c5c;
-    --soft:#f8f1e9;
-    --chip:#f7eae2;
-    --green:#28a745;
-    --sel:#f6e99a;
-    --grid-bg:#fff6f6;
-    --tile:#ffffff;
-    --tile-b:#e6e6e6;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
-    color:var(--ink); background:linear-gradient(180deg, #faf6f6 0%, #fff 20%, #fff 100%);
-  }
+    main{padding:14px}
+    .how{background:linear-gradient(180deg,#fff6e8,#ffeede);border:1px solid #f6d8ae;border-radius:12px;padding:10px;color:#5a3c00;margin-bottom:12px}
+    .how b{color:#7a1500}
 
-  .wrap{
-    max-width:1000px; margin:0 auto; padding:16px env(safe-area-inset-right) 32px env(safe-area-inset-left);
-  }
+    .row{display:grid;gap:14px;grid-template-columns:1.1fr .9fr;align-items:start}
+    @media (max-width: 880px){ .row{grid-template-columns:1fr} }
 
-  .hero{
-    background:linear-gradient(160deg,var(--vino) 0%, var(--vino-2) 60%, var(--vino-3) 100%);
-    color:#fff; border-radius:22px; padding:24px; box-shadow:0 10px 30px rgba(139,0,0,.25); margin-top:8px;
-  }
-  .hero h1{margin:0; font-size:clamp(22px,4.8vw,36px); line-height:1.2; text-align:center}
-  .hero .sub{margin:10px auto 0; text-align:center; opacity:.95; max-width:50ch; font-weight:500}
-  .underline{display:inline-block; height:4px; width:120px; background:var(--gold); border-radius:4px; margin:10px auto 0}
+    .panel{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:12px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+    .stat{background:#fff;border:1px solid #eee;border-radius:12px;text-align:center;padding:10px}
+    .big{font-weight:800;font-size:clamp(18px,5vw,24px);color:var(--vino)}
+    .bar{height:8px;background:#eee;border-radius:999px;overflow:hidden}
+    .bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--dorado),#ffd463);transition:width .35s}
 
-  .card{background:var(--card); border-radius:18px; box-shadow:0 8px 24px rgba(0,0,0,.08); border:1px solid #eee}
-  .howto{margin:16px 0; padding:18px; border:2px solid rgba(139,0,0,.15)}
-  .howto p{margin:0; color:#3b3b3b}
-  .stats{margin:16px 0; padding:16px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center}
-  .stats .num{font-weight:800; font-size:clamp(20px,6vw,34px); color:var(--vino)}
-  .stats small{color:var(--muted)}
-  .progress{height:10px; background:#eee; border-radius:999px; overflow:hidden; margin:8px 16px 0}
-  .bar{height:100%; width:0%; background:linear-gradient(90deg,var(--gold),#ffd43b); transition:width .25s ease}
+    .grid-wrap{margin-top:10px;border:2px dashed #f6c7c7;border-radius:12px;padding:8px;background:linear-gradient(180deg,#fff7f7,#fff9f9)}
+    .grid{display:grid;gap:6px;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:contain}
+    .cell{width:min(8.2vw,38px);height:min(8.2vw,38px);max-width:42px;max-height:42px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;border:1px solid #e6e6e6;box-shadow:0 3px 10px rgba(0,0,0,.06);font-weight:800;letter-spacing:.6px;color:#2b3a4a;font-size:clamp(14px,4vw,18px)}
+    .cell.active{outline:3px solid rgba(255,215,0,.65);background:#fff9dd}
+    .cell.found{background:#1e7d3a;color:#fff;border-color:#16622d}
 
-  .boardWrap{margin:10px 0 18px; padding:14px; background:var(--grid-bg); border:2px dashed rgba(139,0,0,.2); border-radius:14px}
-  .board{
-    --size:16; /* cambia tamaño del tablero si lo deseas */
-    display:grid; grid-template-columns:repeat(var(--size), minmax(0,1fr)); gap:8px;
-    touch-action:none; /* MEJORA táctil: bloquea zoom/scroll mientras se arrastra selección */
-  }
-  .cell{
-    background:var(--tile); border:1px solid var(--tile-b); height:42px; border-radius:10px;
-    display:flex; align-items:center; justify-content:center; font-weight:800; letter-spacing:.5px;
-    font-size:20px; color:#2b2b2b; user-select:none; -webkit-user-select:none; position:relative;
-    transition:transform .06s ease, background .12s ease, border-color .12s ease;
-  }
-  .cell.sel{background:var(--sel); border-color:#e8d46a}
-  .cell.hit{background:#d2f7dc; border-color:#b9ebc6; color:#0e5e27}
-  .cell:active{transform:scale(.98)}
-  .legend{
-    margin:18px 0; padding:18px; display:flex; flex-direction:column; gap:16px;
-  }
-  .legend h2{margin:0; text-align:center; color:var(--vino)}
-  .chips{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px}
-  .chip{
-    padding:14px 18px; border-radius:999px; border:none; cursor:pointer; font-weight:800; letter-spacing:.5px;
-    text-transform:uppercase; background:linear-gradient(160deg,var(--vino) 0%, var(--vino-2) 70%); color:#fff;
-    box-shadow:0 10px 20px rgba(139,0,0,.2); outline:none;
-  }
-  .chip.done{background:linear-gradient(160deg,#1e9d52,#178b45); color:#fff}
-  .chip:focus-visible{outline:3px solid #ffd43b}
+    .words{background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid #eee;border-radius:12px;padding:12px}
+    .words h3{font-family:"Playfair Display",serif;text-align:center;color:var(--vino);margin:0 0 8px;font-size:clamp(18px,4.5vw,22px)}
+    .list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .chip{border:none;border-radius:999px;padding:10px 12px;font-weight:800;letter-spacing:.8px;background:linear-gradient(180deg,#b30c0c,var(--vino2));color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
+    .chip.found{background:#1f9d55}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
+    .btn{background:var(--vino);border:none;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;box-shadow:0 10px 24px rgba(139,0,0,.28);cursor:pointer}
+    .btn.alt{background:#111}
 
-  .footer{margin:22px 0 8px; text-align:center; color:#555}
-
-  /* Modal historia */
-  .modal{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.55); z-index:40; padding:18px}
-  .modal.open{display:grid}
-  .sheet{
-    max-width:800px; width:100%; background:var(--card); border-radius:18px; padding:20px 18px 22px;
-    border:3px solid var(--vino-2); box-shadow:0 18px 50px rgba(0,0,0,.35);
-  }
-  .sheet h3{margin:4px 0 8px; color:var(--vino); font-size:clamp(18px,4.6vw,28px)}
-  .sheet p{margin:10px 0; line-height:1.75; font-size:18px}
-  .closeX{position:absolute; right:16px; top:12px; background:#fff; border:2px solid var(--vino-2); color:var(--vino);
-          width:34px; height:34px; border-radius:999px; font-weight:900; cursor:pointer}
-  .promo{margin-top:12px; padding:14px; border-radius:14px; background:#fff8da; border:1px solid #f1e1a6; color:#5a4300}
-  .btnRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
-  .btn{
-    border:none; background:linear-gradient(160deg,var(--vino) 0%, var(--vino-2) 70%); color:#fff; padding:10px 14px; border-radius:10px;
-    font-weight:700; cursor:pointer
-  }
-  .btn.alt{background:#1f8345}
-  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; padding:2px 6px; background:#000; color:#fff; border-radius:6px}
-
-  @media (max-width:720px){
-    .board{gap:6px}
-    .cell{height:38px; border-radius:9px; font-size:18px}
-    .chips{grid-template-columns:1fr}
-  }
-</style>
+    /* Modal historia */
+    .overlay{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);z-index:10;padding:10px}
+    .overlay.show{display:flex}
+    .sheet{width:100%;max-width:720px;background:#fff;border-radius:16px;border:2px solid #8b000022;box-shadow:0 30px 60px rgba(0,0,0,.35);padding:14px 16px;position:relative}
+    .x{position:absolute;right:16px;top:12px;background:var(--vino);color:#fff;border:none;border-radius:999px;width:36px;height:36px;display:grid;place-items:center;font-weight:700}
+    .sheet h2{font-family:"Playfair Display",serif;margin:6px 0 10px;color:var(--vino);font-size:clamp(18px,5vw,26px)}
+    .desc{line-height:1.8;font-size:16px}
+    footer{padding:16px 14px;text-align:center;color:#666}
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="hero">
-      <h1 id="title">Sopa de Letras Gastronómica</h1>
-      <div class="underline"></div>
-      <p class="sub" id="subtitle">Descubre ingredientes, especias y vegetales del mundo. Toca y arrastra para seleccionar.</p>
-    </section>
+  <header>
+    <h1>Sopa de Letras Gastronómica</h1>
+    <p class="sub">Arrastra dentro del tablero para seleccionar; al acertar verás la historia culinaria. Completa 7 palabras para un código promo 🎉</p>
+  </header>
 
-    <section class="card howto">
-      <p id="howto"><strong>Cómo jugar:</strong> Toca y arrastra suavemente para seleccionar palabras. Están en cualquier dirección (↔ ↕ ↗ ↘). Al encontrar una palabra se abrirá su historia gastronómica.</p>
-    </section>
+  <main>
+    <div class="how"><b>Consejo:</b> durante el gesto táctil el tablero no se desplaza (mejor precisión).</div>
 
-    <section class="card">
-      <div class="stats">
-        <div>
-          <div class="num" id="foundNum">0</div>
-          <small id="foundLabel">Encontradas</small>
+    <div class="row">
+      <section class="panel">
+        <div class="stats">
+          <div class="stat"><div class="big" id="gm-found">0</div><div>Encontradas</div></div>
+          <div class="stat"><div class="big" id="gm-total">—</div><div>Totales</div></div>
+          <div class="stat"><div class="big" id="gm-pct">0%</div><div>Completado</div></div>
         </div>
-        <div>
-          <div class="num" id="totalNum">0</div>
-          <small id="totalLabel">Totales</small>
+        <div class="bar"><span id="gm-bar"></span></div>
+
+        <div class="grid-wrap">
+          <div id="gm-grid" class="grid" role="grid" aria-label="Sopa de letras"></div>
         </div>
-        <div>
-          <div class="num" id="pctNum">0%</div>
-          <small id="pctLabel">Completado</small>
+        <div class="actions">
+          <button class="btn alt" onclick="location.href='index.html'">Volver</button>
+          <button class="btn" id="gm-restart">Reiniciar</button>
         </div>
-      </div>
-      <div class="progress"><div class="bar" id="bar"></div></div>
+      </section>
 
-      <div class="boardWrap">
-        <div id="board" class="board" aria-label="Tablero"></div>
-      </div>
-    </section>
+      <aside class="words">
+        <h3>Ingredientes por descubrir</h3>
+        <div id="gm-wordlist" class="list"></div>
+      </aside>
+    </div>
+  </main>
 
-    <section class="card legend">
-      <h2 id="toFindTitle">Ingredientes por descubrir</h2>
-      <div id="wordsList" class="chips"></div>
-    </section>
-
-    <p class="footer" id="footerNote">Al completar las 7 primeras palabras recibirás un código culinario de cortesía.</p>
-  </div>
-
-  <!-- Modal de historia / fin -->
-  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="storyTitle">
+  <div id="story" class="overlay" aria-modal="true" role="dialog">
     <div class="sheet">
-      <button class="closeX" aria-label="Cerrar" onclick="toggleModal(false)">×</button>
-      <h3 id="storyTitle">Historia</h3>
-      <p id="storyText"></p>
-      <div id="promoBox" class="promo" style="display:none"></div>
-      <div class="btnRow">
-        <button class="btn" onclick="toggleModal(false)" id="closeBtn">Cerrar</button>
-        <button class="btn alt" onclick="copyPromo()" id="copyBtn" style="display:none">Copiar código</button>
-      </div>
+      <button class="x" id="story-x">✕</button>
+      <h2 id="story-title">Título</h2>
+      <div id="story-body" class="desc"></div>
     </div>
   </div>
 
-<script>
-(() => {
-  // ====== i18n básico ======
-  const params = new URLSearchParams(location.search);
-  const lang = (params.get('lang') || document.documentElement.lang || 'es').toLowerCase();
-  const T = {
-    es:{
-      title:'Sopa de Letras Gastronómica',
-      subtitle:'Descubre ingredientes, especias y vegetales del mundo. Toca y arrastra para seleccionar.',
-      howto:'<strong>Cómo jugar:</strong> Toca y arrastra suavemente para seleccionar palabras. Están en cualquier dirección (↔ ↕ ↗ ↘). Al encontrar una palabra se abrirá su historia gastronómica.',
-      found:'Encontradas', total:'Totales', done:'Completado',
-      toFind:'Ingredientes por descubrir',
-      footer:'Al completar las 7 primeras palabras recibirás un código culinario de cortesía.',
-      congrats:'🎉 ¡Excelente! Has completado el reto. Tu código promocional es:',
-      copy:'Copiar código', close:'Cerrar'
-    },
-    en:{
-      title:'Culinary Word Search',
-      subtitle:'Discover ingredients, spices and vegetables. Touch & drag to select.',
-      howto:'<strong>How to play:</strong> Touch and drag gently to select words. They can be in any direction (↔ ↕ ↗ ↘). Each word reveals a short culinary story.',
-      found:'Found', total:'Total', done:'Completed',
-      toFind:'Ingredients to discover',
-      footer:'After 7 words you’ll get a culinary courtesy code.',
-      congrats:'🎉 Great! Challenge completed. Your promo code:',
-      copy:'Copy code', close:'Close'
-    },
-    ca:{
-      title:'Sopa de Lletres Gastronòmica',
-      subtitle:'Descobreix ingredients, espècies i verdures. Toca i arrossega per seleccionar.',
-      howto:'<strong>Com jugar:</strong> Toca i arrossega suaument per seleccionar paraules. En qualsevol direcció (↔ ↕ ↗ ↘). Cada paraula obri una breu història culinària.',
-      found:'Trobades', total:'Totals', done:'Completat',
-      toFind:'Ingredients per descobrir',
-      footer:'En completar 7 paraules rebràs un codi de cortesia culinària.',
-      congrats:'🎉 Genial! Repte completat. El teu codi promocional:',
-      copy:'Copia el codi', close:'Tancar'
-    }
-  }[lang];
+  <footer>© Xativa Restaurants</footer>
 
-  // Pintar i18n
-  document.getElementById('title').textContent = T.title;
-  document.getElementById('subtitle').textContent = T.subtitle;
-  document.getElementById('howto').innerHTML = T.howto;
-  document.getElementById('foundLabel').textContent = T.found;
-  document.getElementById('totalLabel').textContent = T.total;
-  document.getElementById('pctLabel').textContent = T.done;
-  document.getElementById('toFindTitle').textContent = T.toFind;
-  document.getElementById('footerNote').textContent = T.footer;
-  document.getElementById('closeBtn').textContent = T.close;
-  document.getElementById('copyBtn').textContent = T.copy;
-
-  // ====== Dataset de palabras (labels + historias) ======
-  // key = colocación (sin espacios/acentos), label = visible por idioma
+  <script>
+  // ===== Datos =====
   const WORDS = [
-    W('CANELA',  {en:'CINNAMON', ca:'CANYELLA'}, s('La canela, corteza del canelo, perfuma postres y guisos desde la antigüedad árabe-andaluza. En paellas dulces históricas era invitada frecuente.')),
-    W('CILANTRO',{en:'CILANTRO', ca:'CILANTRE'}, s('De sabor cítrico-anisado, llegó de Asia y prendió en América. En la fideuà aporta un frescor inesperado.')),
-    W('JENGIBRE',{en:'GINGER', ca:'GINGEBRE'}, s('Rizoma picante y medicinal. En marinados para pescados realza el umami y limpia el paladar.')),
-    W('TOMATE',  {en:'TOMATO', ca:'TOMÀTIC'}, s('Emblema mediterráneo desde el siglo XVI. Frito lento con AOVE forma sofritos base de arroces.')),
-    W('BERENJENA',{en:'EGGPLANT', ca:'ALBERGÍNIA'}, s('Asada al carbón revela notas ahumadas ideales para salsas con pimentón y comino.')),
-    W('QUINOA',  {en:'QUINOA', ca:'QUINOA'}, s('Grano andino sagrado. La NASA la consideró alimento de astronautas por su proteína completa.')),
-    W('CURCUMA', {en:'TURMERIC', ca:'CÚRCUMA'}, s('Color dorado y notas terrosas. Potencia caldos de pescado y alioli emulsionado.')),
-    W('AGUACATE',{en:'AVOCADO', ca:'ALVOCAT'}, s('Mantecoso y sutil. En tartares marinos aporta grasa noble y suaviza el picante.')),
-    W('ALBAHACA',{en:'BASIL', ca:'ALFÀBREGA'}, s('Aroma verde y balsámico; la variedad genovesa reina en pestos y aceites perfumados.')),
-    W('ROMERO',  {en:'ROSEMARY', ca:'ROMER'}, s('Matorral mediterráneo. Una rama al final del asado perfuma sin amargar.')),
-    W('VAINILLA',{en:'VANILLA', ca:'VAINILLA'}, s('Orquídea aromática de Mesoamérica. Su vaina guarda miles de semillas llenas de vainillina.')),
-    W('NUEZMOSCADA',{en:'NUTMEG', ca:'NOU MOSCADA'}, s('Rallada al momento, redondea cremas y bechameles. Exceso amarga: una pizca basta.')),
-    W('PIMIENTA',{en:'PEPPER', ca:'PEBRE'}, s('La “reina de las especias”. Molida al instante libera pineno y limoneno muy volátiles.')),
-    W('COMINO',  {en:'CUMIN', ca:'COMÍ'}, s('Semilla cálida y terrosa. Casamiento perfecto con garbanzos, berenjena y yogur.')),
-    W('OLIVO',   {en:'OLIVE TREE', ca:'OLIVERA'}, s('Del árbol al AOVE: frutado, amargo y picante deben estar en equilibrio—trío de oro.'))
-  ];
-  // Nota: puedes ajustar a 7 si quieres un reto más corto
-  const PROMO_THRESHOLD = 7;
-
-  function s(es){ return {es, en:es, ca:es}; }
-  function W(key, labels, story){ return { key:normalize(key), labels:{es:key, ...labels}, story }; }
-  function normalize(str){ return str.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f\s]/g,''); }
-
-  // ====== Generador de tablero ======
-  const size = 16; // 16x16 otorga espacio para 15 palabras
-  const boardEl = document.getElementById('board');
-  boardEl.style.setProperty('--size', size);
-  const grid = Array.from({length:size}, ()=> Array(size).fill(''));
-  const dirs = [
-    [0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]
+    { key:"CANELA", name:"Canela", story:"La canela proviene de la corteza interna del <i>Cinnamomum verum</i>. En la Antigüedad se valoraba como oro: perfumaba vinos, carnes y postres. En la paella dulce medieval se usaba con arroz y leche; hoy es reina del arroz con leche y compotas." },
+    { key:"COMINO", name:"Comino", story:"El comino, esencial en el Mediterráneo y Oriente, aporta notas cálidas y terrosas. Tostado brevemente despierta su aceite esencial (cuminaldehído). Ideal para guisos, legumbres y embutidos." },
+    { key:"CILANTRO", name:"Cilantro", story:"Amado y polémico por su perfil cítrico. Las hojas aromatizan salsas y ceviches; las semillas, más dulces, se usan molidas en currys y panes." },
+    { key:"JENGIBRE", name:"Jengibre", story:"Rizoma picante y fresco; en infusiones ayuda a la digestión. En cocina, brillo cítrico para salteados, marinados y repostería." },
+    { key:"TOMATE", name:"Tomate", story:"Llegó de América y conquistó Europa. Su umami es clave en salsas, sofritos y paellas modernas." },
+    { key:"BERENJENA", name:"Berenjena", story:"La berenjena absorbe sabores como esponja. A la brasa, asada o en escalivada, se vuelve sedosa y dulce." },
+    { key:"QUINOA", name:"Quinoa", story:"Sagrada para los incas, hoy valorada por su proteína completa. Perfecta en ensaladas o como guarnición." },
+    { key:"CURCUMA", name:"Cúrcuma", story:"Raíz dorada con curcumina. Aporta color y un amargor amable; imprescindible en currys y arroces especiados." },
+    { key:"AGUACATE", name:"Aguacate", story:"Fruto mantecoso y nutritivo. En guacamole o ensaladas aporta cremosidad y grasas cardiosaludables." },
+    { key:"ALBAHACA", name:"Albahaca", story:"Hierba del pesto: fresca, anisada, amiga del tomate. Añádela al final para preservar sus aromas." },
+    { key:"ROMERO", name:"Romero", story:"Aromático mediterráneo de carnes y panes. Úsalo con moderación: su potencia domina con facilidad." },
+    { key:"VAINILLA", name:"Vainilla", story:"Orquídea cultivada por su fruto. Sus vainas curadas perfuman cremas, bizcochos y helados." },
+    { key:"NUEZMOSCADA", name:"Nuez moscada", story:"Rallada al momento, levanta bechameles y purés. Combina con espinacas y quesos suaves." },
+    { key:"PIMIENTA", name:"Pimienta", story:"La reina de las especias. Negra, blanca o verde: pícara y perfumada, finaliza salsas y carnes." }
   ];
 
-  // colocar palabras
-  const placements = [];
-  for(const w of WORDS){
-    placeWord(w.key);
-  }
-  function placeWord(word){
-    const letters = word.split('');
-    for(let attempts=0; attempts<400; attempts++){
-      const dir = dirs[(Math.random()*dirs.length)|0];
-      const r0 = (Math.random()*size)|0;
-      const c0 = (Math.random()*size)|0;
-      const r1 = r0 + dir[0]*(letters.length-1);
-      const c1 = c0 + dir[1]*(letters.length-1);
-      if (r1<0 || r1>=size || c1<0 || c1>=size) continue;
-      // cabe y no colisiona
-      let ok=true;
-      for(let i=0;i<letters.length;i++){
-        const r=r0+dir[0]*i, c=c0+dir[1]*i;
-        const cell=grid[r][c];
-        if (cell && cell!==letters[i]) { ok=false; break; }
-      }
-      if (!ok) continue;
-      for(let i=0;i<letters.length;i++){
-        const r=r0+dir[0]*i, c=c0+dir[1]*i;
-        grid[r][c]=letters[i];
-      }
-      placements.push({word, r0,c0,dir, len:letters.length});
-      return true;
-    }
-    return false;
-  }
-
-  // rellenar
-  const ABC = "AÁBCDEÉFGHIÍJKLMNÑOÓPQRSTUÚÜVWXYZ";
-  for(let r=0;r<size;r++){
-    for(let c=0;c<size;c++){
-      if (!grid[r][c]) grid[r][c] = ABC[(Math.random()*ABC.length)|0];
-    }
-  }
-
-  // render
-  const cells=[];
-  for(let r=0;r<size;r++){
-    for(let c=0;c<size;c++){
-      const d=document.createElement('div');
-      d.className='cell';
-      d.textContent = grid[r][c];
-      d.dataset.r=r; d.dataset.c=c;
-      boardEl.appendChild(d);
-      cells.push(d);
-    }
-  }
-
-  // leyenda
-  const listEl = document.getElementById('wordsList');
-  WORDS.forEach((w,i)=>{
-    const b=document.createElement('button');
-    b.className='chip'; b.id='chip-'+w.key;
-    b.type='button'; b.textContent = (w.labels[lang] || w.labels.es);
-    listEl.appendChild(b);
-  });
-
-  // ====== Interacción táctil: Pointer Events ======
-  let dragging=false, pid=null, start=null, currentPath=[];
-  boardEl.addEventListener('pointerdown', (e)=>{
-    const t=e.target.closest('.cell'); if(!t) return;
-    pid=e.pointerId; dragging=true; boardEl.setPointerCapture(pid);
-    start = [ +t.dataset.r, +t.dataset.c ];
-    currentPath = [t];
-    t.classList.add('sel');
-    e.preventDefault();
-  }, {passive:false});
-
-  boardEl.addEventListener('pointermove', (e)=>{
-    if(!dragging || e.pointerId!==pid) return;
-    const t=e.target.closest('.cell'); if(!t) return;
-    const r=+t.dataset.r, c=+t.dataset.c;
-    updateSelection(start[0], start[1], r, c);
-    e.preventDefault();
-  }, {passive:false});
-
-  boardEl.addEventListener('pointerup', (e)=>{
-    if(e.pointerId!==pid) return;
-    finalizeSelection();
-    dragging=false; pid=null; start=null; currentPath=[];
-  });
-
-  function updateSelection(r0,c0, r1,c1){
-    // obliga selección en línea recta (H, V, D)
-    const dr = Math.sign(r1-r0), dc = Math.sign(c1-c0);
-    if (!(dr===0 || dc===0 || Math.abs(r1-r0)===Math.abs(c1-c0))) return;
-
-    // limpiar selección previa
-    currentPath.forEach(el=> el.classList.remove('sel'));
-    currentPath = [];
-
-    let r=r0, c=c0;
-    while(true){
-      const el = queryCell(r,c);
-      if (el){ el.classList.add('sel'); currentPath.push(el); }
-      if (r===r1 && c===c1) break;
-      r+=dr; c+=dc;
-    }
-  }
-  function queryCell(r,c){
-    return boardEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-  }
-
-  // ====== Lógica de acierto ======
-  const foundSet = new Set();
-  const foundWords = new Set();
-  const foundNumEl = document.getElementById('foundNum');
-  const totalNumEl = document.getElementById('totalNum');
-  const pctNumEl = document.getElementById('pctNum');
-  const barEl = document.getElementById('bar');
-  totalNumEl.textContent = WORDS.length;
-
-  function finalizeSelection(){
-    if (!currentPath.length) return;
-    const letters = currentPath.map(el=> el.textContent.toUpperCase()).join('');
-    const reversed = letters.split('').reverse().join('');
-    const match = matchWord(letters) || matchWord(reversed);
-    if (match){
-      // marcar
-      currentPath.forEach(el=> el.classList.remove('sel'));
-      currentPath.forEach(el=> el.classList.add('hit'));
-      foundWords.add(match);
-      // marcar chip
-      const chip=document.getElementById('chip-'+match);
-      if (chip) chip.classList.add('done');
-      // historia
-      showStory(match);
-      // progreso
-      const n = foundWords.size;
-      foundNumEl.textContent = n;
-      const pct = Math.round(n*100/WORDS.length);
-      pctNumEl.textContent = pct+'%';
-      barEl.style.width = pct+'%';
-
-      // promo al llegar al umbral
-      if (!hasPromo() && n>=PROMO_THRESHOLD){
-        const code = makePromo();
-        saveGame({completed:false, words:[...foundWords], promoCode:code});
-        // mostrar aviso dentro del modal actual
-        showPromo(code, true);
-      }else{
-        saveGame({completed:foundWords.size===WORDS.length, words:[...foundWords], promoCode:getPromo()});
-      }
-    }else{
-      // limpiar si no hay match
-      currentPath.forEach(el=> el.classList.remove('sel'));
-    }
-  }
-
-  function matchWord(seq){
-    const norm = normalize(seq);
-    const item = WORDS.find(w => w.key===norm);
-    return item ? item.key : null;
-  }
-
-  // ====== Historias / Modal ======
-  function showStory(key){
-    const item = WORDS.find(w=> w.key===key);
-    if (!item) return;
-    const title = item.labels[lang] || item.labels.es;
-    const text  = item.story[lang] || item.story.es;
-
-    document.getElementById('storyTitle').textContent = `🍷 ${title}`;
-    document.getElementById('storyText').textContent  = text;
-    document.getElementById('promoBox').style.display='none';
-    document.getElementById('copyBtn').style.display='none';
-    toggleModal(true);
-  }
-  window.toggleModal = (open) => {
-    document.getElementById('modal').classList.toggle('open', !!open);
-  }
-
-  // ====== Promo & storage ======
-  function makePromo(){
-    const rand = Math.random().toString(36).slice(2,6).toUpperCase();
-    const d = new Date();
-    const stamp = String(d.getFullYear()).slice(2)+(""+(d.getMonth()+1)).padStart(2,'0')+(""+d.getDate()).padStart(2,'0');
-    const code = `XATIVA-${stamp}-${rand}`;
-    return code;
-  }
-  function showPromo(code, fromWin=false){
-    const box = document.getElementById('promoBox');
-    box.innerHTML = `<strong>${T.congrats}</strong> <span class="kbd">${code}</span><br>
-      <small>Se guardó automáticamente y se añadirá a tu reserva.</small>`;
-    box.style.display='block';
-    const copyBtn=document.getElementById('copyBtn'); copyBtn.style.display='inline-block';
-    if (!fromWin) toggleModal(true);
-  }
-  function saveGame({completed, words, promoCode}){
-    const data = {
-      lang, completed, promoCode: promoCode || null, words,
-      finishedAt: new Date().toISOString()
-    };
-    localStorage.setItem('xativabot-game', JSON.stringify(data));
-    // evento para integrarse con la app (si está embebido mismo dominio)
-    try{ window.dispatchEvent(new CustomEvent('xativabot-game-finished',{detail:data})); }catch{}
-  }
-  function getPromo(){
-    try{
-      const d=JSON.parse(localStorage.getItem('xativabot-game')||'{}');
-      return d.promoCode||null;
-    }catch{ return null; }
-  }
-  function hasPromo(){ return !!getPromo(); }
-
-  window.copyPromo = () => {
-    const d=JSON.parse(localStorage.getItem('xativabot-game')||'{}');
-    if (!d.promoCode) return;
-    navigator.clipboard?.writeText(d.promoCode).then(()=>{
-      alert('Código copiado');
-    });
+  // ===== Estado =====
+  const GM = { size:14, minPromo:7, grid:[], cells:[], placed:[], found:new Set(), selecting:false, start:null, path:[] };
+  const el = {
+    grid: document.getElementById('gm-grid'),
+    list: document.getElementById('gm-wordlist'),
+    found: document.getElementById('gm-found'),
+    total: document.getElementById('gm-total'),
+    pct: document.getElementById('gm-pct'),
+    bar: document.getElementById('gm-bar'),
+    restart: document.getElementById('gm-restart'),
+    story: document.getElementById('story'),
+    storyX: document.getElementById('story-x'),
+    title: document.getElementById('story-title'),
+    body: document.getElementById('story-body')
   };
 
-  // Si ya había progreso, aplicar chips y mostrar promo
-  (function hydrate(){
-    try{
-      const d=JSON.parse(localStorage.getItem('xativabot-game')||'{}');
-      if (d?.words?.length){
-        d.words.forEach(k=>{
-          const chip=document.getElementById('chip-'+k);
-          if (chip) chip.classList.add('done');
-          foundWords.add(k);
-        });
-        const n=foundWords.size; foundNumEl.textContent=n;
-        totalNumEl.textContent=WORDS.length;
-        const pct=Math.round(n*100/WORDS.length);
-        pctNumEl.textContent=pct+'%'; barEl.style.width=pct+'%';
+  // ===== Utiles =====
+  const norm = s => s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toUpperCase();
+  const dirs = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+  function canPlace(word,r,c,dr,dc){
+    for(let i=0;i<word.length;i++){
+      const rr=r+dr*i, cc=c+dc*i;
+      if(rr<0||cc<0||rr>=GM.size||cc>=GM.size) return false;
+      const ch=GM.grid[rr][cc];
+      if(ch!=='' && ch!==word[i]) return false;
+    }
+    return true;
+  }
+  function placeWord(word){
+    for(let k=0;k<300;k++){
+      const [dr,dc]=dirs[(Math.random()*dirs.length)|0];
+      const r=(Math.random()*GM.size)|0, c=(Math.random()*GM.size)|0;
+      if (canPlace(word,r,c,dr,dc)){
+        for(let i=0;i<word.length;i++) GM.grid[r+dr*i][c+dc*i]=word[i];
+        return {r,c,dr,dc,len:word.length};
       }
-      if (d?.promoCode) showPromo(d.promoCode);
-    }catch{}
-  })();
+    }
+    return null;
+  }
+  function fillRandom(){
+    const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for(let r=0;r<GM.size;r++){
+      for(let c=0;c<GM.size;c++){
+        if(!GM.grid[r][c]) GM.grid[r][c]=A[(Math.random()*A.length)|0];
+      }
+    }
+  }
+  function build(){
+    GM.grid = Array.from({length:GM.size}, ()=> Array(GM.size).fill(''));
+    GM.placed=[]; GM.found=new Set(); GM.selecting=false; GM.start=null; GM.path=[];
+    for(const w of WORDS){
+      const placed = placeWord(norm(w.key));
+      if(placed) GM.placed.push({key:w.key, ...placed});
+    }
+    fillRandom(); renderGrid(); renderList(); updateStats();
+  }
 
-})();
-</script>
+  function renderGrid(){
+    el.grid.style.gridTemplateColumns=`repeat(${GM.size}, minmax(28px, 1fr))`;
+    el.grid.innerHTML=''; GM.cells=[];
+    for(let r=0;r<GM.size;r++){
+      for(let c=0;c<GM.size;c++){
+        const d=document.createElement('button');
+        d.className='cell'; d.type='button'; d.textContent=GM.grid[r][c];
+        d.dataset.r=r; d.dataset.c=c; el.grid.appendChild(d); GM.cells.push(d);
+      }
+    }
+    el.grid.addEventListener('pointerdown', onDown, {passive:false});
+    el.grid.addEventListener('pointermove', onMove, {passive:false});
+    el.grid.addEventListener('pointerup', onUp, {passive:false});
+    el.grid.addEventListener('pointercancel', onUp, {passive:false});
+    el.grid.addEventListener('touchmove', e=>{ if(GM.selecting) e.preventDefault(); }, {passive:false});
+  }
+  function renderList(){
+    el.list.innerHTML='';
+    WORDS.forEach(w=>{
+      const b=document.createElement('button');
+      b.className='chip'; b.type='button'; b.textContent=w.key.replace('NUEZMOSCADA','NUEZ MOSCADA');
+      b.id=`w-${w.key}`;
+      b.addEventListener('click',()=> showStory(w.name,w.story));
+      el.list.appendChild(b);
+    });
+    el.total.textContent = WORDS.length;
+  }
+  function updateStats(){
+    const n = GM.found.size;
+    el.found.textContent = n;
+    const pct = Math.round(n*100/WORDS.length);
+    el.pct.textContent = pct+'%';
+    el.bar.style.width = pct+'%';
+  }
+  function elementFromEvent(ev){
+    const pt = ('clientX' in ev) ? {x:ev.clientX,y:ev.clientY} : {x:ev.touches[0].clientX, y:ev.touches[0].clientY};
+    const el = document.elementFromPoint(pt.x, pt.y);
+    return (el && el.classList.contains('cell')) ? el : null;
+  }
+  function line(r0,c0,r1,c1){
+    const dr=Math.sign(r1-r0), dc=Math.sign(c1-c0);
+    if(!(dr===0||dc===0||Math.abs(r1-r0)===Math.abs(c1-c0))){
+      const ar=Math.abs(r1-r0), ac=Math.abs(c1-c0);
+      if(ar>ac){ c1=c0+(r1>r0? ar : -ar)*Math.sign(c1-c0||1); }
+      else     { r1=r0+(c1>c0? ac : -ac)*Math.sign(r1-r0||1); }
+    }
+    const DR=Math.sign(r1-r0), DC=Math.sign(c1-c0);
+    const out=[]; let r=r0,c=c0; out.push({r,c});
+    while(r!==r1||c!==c1){ r+=DR; c+=DC; if(r<0||c<0||r>=GM.size||c>=GM.size) break; out.push({r,c}); }
+    return out;
+  }
+  function clearActive(){ GM.cells.forEach(d=>d.classList.remove('active')); }
+  function markActive(path){ clearActive(); path.forEach(p=> document.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('active')); }
+  function markFound(path){ path.forEach(p=> document.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('found')); }
+
+  function onDown(e){
+    e.preventDefault(); GM.selecting=true;
+    const cell = elementFromEvent(e); if(!cell) return;
+    GM.start = { r:+cell.dataset.r, c:+cell.dataset.c };
+    GM.path=[GM.start]; markActive(GM.path);
+  }
+  function onMove(e){
+    if(!GM.selecting) return; e.preventDefault();
+    const cell = elementFromEvent(e); if(!cell) return;
+    const r=+cell.dataset.r, c=+cell.dataset.c;
+    GM.path = line(GM.start.r, GM.start.c, r, c);
+    markActive(GM.path);
+  }
+  function onUp(e){
+    if(!GM.selecting) return;
+    GM.selecting=false;
+    if(!GM.path || GM.path.length<2){ clearActive(); return; }
+    const text = GM.path.map(p=> GM.grid[p.r][p.c]).join('');
+    const tNorm = norm(text), tRev = norm(text.split('').reverse().join(''));
+    const hit = WORDS.find(w => tNorm===norm(w.key) || tRev===norm(w.key));
+    if(hit && !GM.found.has(hit.key)){
+      GM.found.add(hit.key);
+      markFound(GM.path);
+      document.getElementById(`w-${hit.key}`)?.classList.add('found');
+      updateStats();
+      showStory(hit.name, hit.story);
+      maybePromo();
+    }
+    clearActive();
+  }
+
+  function showStory(title, html){
+    el.title.textContent = title;
+    el.body.innerHTML = html;
+    el.story.classList.add('show');
+  }
+  el.storyX.addEventListener('click', ()=> el.story.classList.remove('show'));
+  el.story.addEventListener('click', e=>{ if(e.target===el.story) el.story.classList.remove('show'); });
+
+  // ===== Promo =====
+  function genCode(){
+    const s='abcdefghjkmnpqrstuvwxyz23456789'; let out='';
+    for(let i=0;i<8;i++) out+= s[(Math.random()*s.length)|0];
+    return out;
+  }
+  function maybePromo(){
+    if(GM.found.size < 7) return;
+    const existing = localStorage.getItem('xativabot-promo-code');
+    if(existing) return;
+    const code = genCode();
+    localStorage.setItem('xativabot-promo-code', code);
+    const payload = { when:new Date().toISOString(), found:Array.from(GM.found), code };
+    localStorage.setItem('xativabot-game', JSON.stringify(payload));
+
+    // Notificar a ventana padre si existe (iframe o window.open)
+    try{
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({type:'xativabot:promo', code}, '*');
+      }
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({type:'xativabot:promo', code}, '*');
+      }
+    }catch{}
+    alert('🎉 ¡Código promocional: '+code+'! Se añadirá a tu reserva.');
+  }
+
+  // ===== Init =====
+  el.restart.addEventListener('click', build);
+  build();
+  </script>
 </body>
 </html>
