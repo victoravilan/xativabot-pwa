@@ -7,18 +7,29 @@
   <meta name="theme-color" content="#8B0000" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --vino:#8B0000; --vino2:#5f0000; --dorado:#D4AF37; --crema:#F8F1E9; --blanco:#fff;
-    }
+    :root{ --vino:#8B0000; --vino2:#5f0000; --dorado:#D4AF37; --crema:#F8F1E9; --blanco:#fff; --tin:#222; }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#fff,#fcfcfd);color:#222}
-    header{background:linear-gradient(180deg,#990000,var(--vino));color:#fff;padding:16px 14px}
-    h1{margin:0;font-family:"Playfair Display",serif;font-size:clamp(22px,5vw,30px)}
-    .sub{margin-top:6px;opacity:.9}
+    html,body{height:100%}
+    body{margin:0;font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#fff;color:var(--tin)}
+
+    .topbar{
+      display:flex; align-items:center; gap:10px;
+      background:linear-gradient(180deg,#990000,var(--vino)); color:#fff; padding:10px 12px;
+      position:sticky; top:0; z-index:5;
+    }
+    .topbar a.back{
+      text-decoration:none; color:#fff; background:#0000001a; border:1px solid #ffffff55;
+      padding:8px 10px; border-radius:999px; font-weight:700;
+    }
+    .topbar h1{
+      margin:0; font-family:"Playfair Display",serif; font-size:clamp(18px,5vw,24px);
+    }
+
+    header{padding:12px}
+    .sub{margin-top:6px;opacity:.8}
 
     main{padding:14px}
     .how{background:linear-gradient(180deg,#fff6e8,#ffeede);border:1px solid #f6d8ae;border-radius:12px;padding:10px;color:#5a3c00;margin-bottom:12px}
-    .how b{color:#7a1500}
 
     .row{display:grid;gap:14px;grid-template-columns:1.1fr .9fr;align-items:start}
     @media (max-width: 880px){ .row{grid-template-columns:1fr} }
@@ -52,17 +63,22 @@
     .x{position:absolute;right:16px;top:12px;background:var(--vino);color:#fff;border:none;border-radius:999px;width:36px;height:36px;display:grid;place-items:center;font-weight:700}
     .sheet h2{font-family:"Playfair Display",serif;margin:6px 0 10px;color:var(--vino);font-size:clamp(18px,5vw,26px)}
     .desc{line-height:1.8;font-size:16px}
+
     footer{padding:16px 14px;text-align:center;color:#666}
   </style>
 </head>
 <body>
-  <header>
+  <div class="topbar">
+    <a class="back" href="index.html">← Volver</a>
     <h1>Sopa de Letras Gastronómica</h1>
+  </div>
+
+  <header>
     <p class="sub">Arrastra dentro del tablero para seleccionar; al acertar verás la historia culinaria. Completa 7 palabras para un código promo 🎉</p>
   </header>
 
   <main>
-    <div class="how"><b>Consejo:</b> durante el gesto táctil el tablero no se desplaza (mejor precisión).</div>
+    <div class="how"><b>Consejo:</b> durante el gesto táctil el tablero no se desplaza (mejor precisión en móviles).</div>
 
     <div class="row">
       <section class="panel">
@@ -77,7 +93,7 @@
           <div id="gm-grid" class="grid" role="grid" aria-label="Sopa de letras"></div>
         </div>
         <div class="actions">
-          <button class="btn alt" onclick="location.href='index.html'">Volver</button>
+          <a class="btn alt" href="index.html">Volver</a>
           <button class="btn" id="gm-restart">Reiniciar</button>
         </div>
       </section>
@@ -100,7 +116,7 @@
   <footer>© Xativa Restaurants</footer>
 
   <script>
-  // ===== Datos =====
+  /* Igual que la versión previa funcional – táctil preciso + promo guardado */
   const WORDS = [
     { key:"CANELA", name:"Canela", story:"La canela proviene de la corteza interna del <i>Cinnamomum verum</i>. En la Antigüedad se valoraba como oro: perfumaba vinos, carnes y postres. En la paella dulce medieval se usaba con arroz y leche; hoy es reina del arroz con leche y compotas." },
     { key:"COMINO", name:"Comino", story:"El comino, esencial en el Mediterráneo y Oriente, aporta notas cálidas y terrosas. Tostado brevemente despierta su aceite esencial (cuminaldehído). Ideal para guisos, legumbres y embutidos." },
@@ -118,7 +134,6 @@
     { key:"PIMIENTA", name:"Pimienta", story:"La reina de las especias. Negra, blanca o verde: pícara y perfumada, finaliza salsas y carnes." }
   ];
 
-  // ===== Estado =====
   const GM = { size:14, minPromo:7, grid:[], cells:[], placed:[], found:new Set(), selecting:false, start:null, path:[] };
   const el = {
     grid: document.getElementById('gm-grid'),
@@ -134,9 +149,9 @@
     body: document.getElementById('story-body')
   };
 
-  // ===== Utiles =====
   const norm = s => s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toUpperCase();
   const dirs = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+
   function canPlace(word,r,c,dr,dc){
     for(let i=0;i<word.length;i++){
       const rr=r+dr*i, cc=c+dc*i;
@@ -269,7 +284,6 @@
   el.storyX.addEventListener('click', ()=> el.story.classList.remove('show'));
   el.story.addEventListener('click', e=>{ if(e.target===el.story) el.story.classList.remove('show'); });
 
-  // ===== Promo =====
   function genCode(){
     const s='abcdefghjkmnpqrstuvwxyz23456789'; let out='';
     for(let i=0;i<8;i++) out+= s[(Math.random()*s.length)|0];
@@ -283,21 +297,27 @@
     localStorage.setItem('xativabot-promo-code', code);
     const payload = { when:new Date().toISOString(), found:Array.from(GM.found), code };
     localStorage.setItem('xativabot-game', JSON.stringify(payload));
-
-    // Notificar a ventana padre si existe (iframe o window.open)
     try{
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({type:'xativabot:promo', code}, '*');
-      }
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({type:'xativabot:promo', code}, '*');
-      }
+      if (window.parent && window.parent !== window) window.parent.postMessage({type:'xativabot:promo', code}, '*');
+      if (window.opener && !window.opener.closed) window.opener.postMessage({type:'xativabot:promo', code}, '*');
     }catch{}
     alert('🎉 ¡Código promocional: '+code+'! Se añadirá a tu reserva.');
   }
 
-  // ===== Init =====
-  el.restart.addEventListener('click', build);
+  document.getElementById('gm-restart').addEventListener('click', build);
+  function fillRandom(){
+    const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for(let r=0;r<GM.size;r++) for(let c=0;c<GM.size;c++) if(!GM.grid[r][c]) GM.grid[r][c]=A[(Math.random()*A.length)|0];
+  }
+  function build(){
+    GM.grid = Array.from({length:GM.size}, ()=> Array(GM.size).fill(''));
+    GM.placed=[]; GM.found=new Set(); GM.selecting=false; GM.start=null; GM.path=[];
+    for(const w of WORDS){
+      const placed = placeWord(norm(w.key));
+      if(placed) GM.placed.push({key:w.key, ...placed});
+    }
+    fillRandom(); renderGrid(); renderList(); updateStats();
+  }
   build();
   </script>
 </body>
