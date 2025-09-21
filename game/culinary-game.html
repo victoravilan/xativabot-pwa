@@ -1,546 +1,374 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Xativa · Sopa de letras culinaria</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sopa de Letras Gastronómica</title>
 <style>
   :root{
-    --primary:#8B0000; /* rojo Xàtiva */
-    --accent:#D4AF37;  /* dorado */
-    --bg:#faf7f3;
-    --card:#fff;
-    --ink:#222;
-    --muted:#666;
-    --ok:#2e7d32;
-    --warn:#ad1457;
+    --primary:#8B0000; --primary-dark:#6d0019; --accent:#27ae60;
+    --bg:#fff8f6; --card:#ffffff; --text:#2c3e50;
   }
-  *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-    background:var(--bg); color:var(--ink);
+    margin:0; font-family:system-ui, -apple-system, "Roboto", Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #fff0ea, transparent 60%),
+                radial-gradient(1000px 800px at 100% 10%, #ffe8e3, transparent 50%),
+                #fffaf8;
+    color:var(--text);
   }
-  .wrap{
-    max-width:1100px; margin:0 auto; padding:14px; height:100%; display:flex; flex-direction:column; gap:12px;
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:12px
   }
-  header{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  .title{
+    font-weight:800;letter-spacing:.2px;
+    color:var(--primary);
+    font-size:clamp(18px,3vw,22px)
   }
-  h1{ font-size:20px; margin:0; display:flex; align-items:center; gap:8px; }
-  .hint{ color:var(--muted); font-size:14px; }
-  .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  button{
-    appearance:none; border:0; background:var(--primary); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
-    box-shadow:0 6px 16px rgba(139,0,0,.25);
+  .btn{
+    appearance:none;border:none;cursor:pointer;border-radius:12px;
+    padding:10px 14px;font-weight:700;
+    background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 100%);
+    color:#fff; box-shadow:0 6px 20px rgba(139,0,0,.25);
   }
-  button.secondary{ background:#111; }
-  button.ghost{ background:#fff; color:#111; border:1px solid #ddd; box-shadow:none; }
-  main{ display:grid; grid-template-columns: 1fr 320px; gap:14px; flex:1; min-height:0; }
-  @media (max-width: 900px){ main{ grid-template-columns: 1fr; } }
-  .board{
-    background:var(--card); border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.08); padding:12px; display:flex; flex-direction:column; gap:10px; min-height:0;
+  .grid-card{
+    background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08);
+    border:1px solid #f2dede; padding:12px
   }
+  .grid-wrap{display:flex;gap:12px;flex-wrap:wrap}
   .grid{
-    user-select:none; -webkit-user-select:none;
-    display:grid; gap:4px; padding:6px; background:#fff; border-radius:10px; border:1px solid #eee;
-    touch-action:none;
+    display:grid;gap:3px;background:#fff5f5;border:1px dashed #f8d7da;padding:6px;border-radius:10px
   }
   .cell{
-    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:16px; border-radius:6px; background:#f7f7f7; color:#111; border:1px solid #eee;
-    transition:background .1s, transform .06s;
+    width:32px;height:32px;display:grid;place-items:center;
+    font-weight:700;border-radius:6px;background:#fff;color:#333;
+    box-shadow:0 1px 0 rgba(0,0,0,.03);
+    user-select:none
   }
-  .cell:hover{ transform:translateY(-1px); }
-  .cell.active{ background:#ffe3e3; border-color:#f2b2b2; }
-  .cell.found{ background:#e7f6ea; border-color:#b9e2c0; color:#0b3d0b; }
-  .wordlist{
-    display:flex; gap:8px; flex-wrap:wrap; margin:4px 2px 0;
-  }
-  .wtag{
-    padding:6px 10px; font-size:13px; border-radius:999px; background:#f1f1f1; border:1px solid #e5e5e5; color:#333;
-  }
-  .wtag.ok{ background:#e8f5e9; border-color:#c8e6c9; color:#1b5e20; text-decoration:line-through; }
+  .cell.selected{background:#ffe0e0}
+  .cell.found{background:#e9f9ef;color:#19692c}
   .side{
-    background:var(--card); border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.08); padding:12px; display:flex; flex-direction:column; gap:10px; min-height:0;
+    min-width:260px;flex:1;background:var(--card);border-radius:12px;padding:10px 12px;
+    border:1px solid #fde0e6
   }
-  .side h3{ margin:0 0 6px; font-size:16px; }
-  .log{
-    flex:1; overflow:auto; border:1px solid #eee; border-radius:10px; padding:10px; background:#fff;
+  .word-list{display:flex;flex-wrap:wrap;gap:8px}
+  .word-item{
+    background:linear-gradient(180deg,#fff,#fff6);
+    border:1px solid #f2dede;padding:8px 10px;border-radius:999px;
+    color:var(--primary);font-weight:700;cursor:pointer
   }
-  .fact{
-    border-left:4px solid var(--accent); background:#fff8e6; padding:8px 10px; border-radius:8px; margin:0 0 10px;
+  .word-item.found{
+    text-decoration:line-through;background:#e9f9ef;color:#19692c;border-color:#d3f1dc
   }
-  .fact h4{ margin:0 0 4px; font-size:14px; }
-  .fact p{ margin:0; font-size:13px; color:#333; }
-  .progress{ font-size:14px; color:#333; }
-  .promo{
-    display:none; background:#fff; border:2px dashed var(--accent); color:#111; padding:10px; border-radius:10px; font-weight:700;
+  .info{
+    margin-top:12px;background:#fffef8;border:1px solid #ffe6bf;border-radius:12px;padding:10px 12px
   }
-  .promo.show{ display:block; }
-  footer{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-  }
-  .badge{ background:#ffe9a8; color:#5c4200; padding:6px 10px; border-radius:10px; border:1px solid #f1d37a; font-weight:600; }
+  .stat{opacity:.8;font-size:.92rem;margin:8px 0}
   /* Modal */
-  .modal[hidden]{ display:none; }
-  .modal{
-    position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px;
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;place-items:center;z-index:10;padding:16px}
+  .modal.show{display:grid}
+  .card{
+    width:min(100%,560px);background:#fff;border-radius:18px;padding:16px 16px 18px;
+    box-shadow:0 18px 60px rgba(0,0,0,.25);border:2px solid rgba(139,0,0,.15)
   }
-  .modal > .card{
-    width:min(520px, 100%); background:#fff; border-radius:16px; padding:18px; text-align:center;
-    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  .promo{
+    display:flex;gap:10px;align-items:center;justify-content:space-between;background:#f8f1e9;border:1px dashed #d4af37;border-radius:12px;padding:10px 12px
   }
-  .modal h2{ margin:0 0 8px; }
-  .code{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    font-size:18px; letter-spacing:1px; padding:10px 12px; border-radius:10px; background:#111; color:#fff; display:inline-block; margin:6px 0 10px;
-  }
-  .small{ font-size:12px; color:#666; }
+  .promo-code{font-weight:900;font-size:1.2rem;color:var(--primary)}
+  .small{opacity:.8;font-size:.92rem}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div>
-      <h1>🍲 <span data-i="title">Sopa de letras culinaria</span></h1>
-      <div class="hint" data-i="hint">Arrastra o toca desde una letra inicial hasta la final (horizontal, vertical o diagonal). Encuentra 7 para desbloquear tu código.</div>
-    </div>
-    <div class="controls">
-      <button id="newGameBtn" class="ghost" data-i="newgame">Nueva partida</button>
-    </div>
-  </header>
+  <div class="head">
+    <div class="title" id="gameTitle">Sopa de letras culinaria</div>
+    <button class="btn" id="restartBtn">Reiniciar</button>
+  </div>
 
-  <main>
-    <section class="board">
-      <div class="wordlist" id="wordList"></div>
+  <div class="grid-card">
+    <div class="grid-wrap">
       <div class="grid" id="grid"></div>
-      <div class="progress" id="progress"></div>
-      <div class="promo" id="promoBox"></div>
-    </section>
-
-    <aside class="side">
-      <h3 data-i="stories">Historias y notas</h3>
-      <div class="log" id="log"></div>
-    </aside>
-  </main>
-
-  <footer>
-    <div class="badge" id="statusBadge">Ready</div>
-    <div class="hint small" data-i="footer">Completa 7 palabras para tu sorpresa gastronómica.</div>
-  </footer>
+      <div class="side">
+        <div class="small" id="subtitle">Encuentra estas palabras:</div>
+        <div class="word-list" id="wordList"></div>
+        <div class="info" id="infoBox">Selecciona letras contiguas en línea recta. Al acertar, te cuento una historia/mito del ingrediente.</div>
+        <div class="stat" id="statBox">Progreso: <span id="foundCount">0</span>/<span id="totalCount">0</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Modal promoción -->
-<div id="promoModal" class="modal" hidden>
+<!-- Modal promo -->
+<div class="modal" id="winModal">
   <div class="card">
-    <h2 data-i="congrats">¡Felicidades!</h2>
-    <p data-i="unlocked">Has desbloqueado tu código promocional para la reserva:</p>
-    <div class="code" id="promoCodeBox">XATIVA-FOOD-0000</div>
-    <p class="small" data-i="savehint">Lo guardaremos y lo añadiremos automáticamente a tu reserva.</p>
-    <div style="margin-top:10px">
-      <button id="closeModalBtn" class="secondary" data-i="close">Cerrar</button>
+    <h2 id="winTitle">🎉 ¡Felicidades!</h2>
+    <p id="winMsg" class="small">Has completado el reto. Aquí tienes tu código promocional:</p>
+    <div class="promo">
+      <div class="promo-code" id="promoCode">XAT-ABC123</div>
+      <button class="btn" id="copyBtn">Copiar</button>
+    </div>
+    <p class="small" id="winNote">Lo hemos guardado y se enviará junto a tu reserva.</p>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" id="closeWin">Cerrar</button>
     </div>
   </div>
 </div>
 
 <script>
-(function(){
-  // ========= i18n básico =========
-  const UI = {
-    es: {
-      title: "Sopa de letras culinaria",
-      hint: "Arrastra o toca desde una letra inicial hasta la final (horizontal, vertical o diagonal). Encuentra 7 para desbloquear tu código.",
-      newgame: "Nueva partida",
-      stories: "Historias y notas",
-      footer: "Completa 7 palabras para tu sorpresa gastronómica.",
-      found_of: (a,b)=>`Encontradas ${a} de ${b}`,
-      congrats: "¡Felicidades!",
-      unlocked: "Has desbloqueado tu código promocional para la reserva:",
-      savehint: "Lo guardaremos y lo añadiremos automáticamente a tu reserva.",
-      close: "Cerrar",
-      codeReady: (c)=>`🎉 Código promocional listo: ${c}`,
+(() => {
+  // ===== idioma por querystring =====
+  const params = new URLSearchParams(location.search);
+  const lang = (params.get('lang') || 'es').toLowerCase();
+  const T = {
+    es:{
+      title:"Sopa de letras culinaria",
+      find:"Encuentra estas palabras:",
+      info:"Selecciona letras contiguas en línea recta. Al acertar, te cuento una historia/mito del ingrediente.",
+      progress:"Progreso:",
+      winTitle:"🎉 ¡Felicidades!",
+      winMsg:"Has completado el reto. Aquí tienes tu código promocional:",
+      winNote:"Lo hemos guardado y se enviará junto a tu reserva.",
+      copy:"Copiar",
+      restart:"Reiniciar"
     },
-    en: {
-      title: "Culinary Word Hunt",
-      hint: "Drag or tap from a start letter to the end (horizontal, vertical or diagonal). Find 7 to unlock your code.",
-      newgame: "New game",
-      stories: "Stories & notes",
-      footer: "Find 7 words to unlock your culinary surprise.",
-      found_of: (a,b)=>`Found ${a} of ${b}`,
-      congrats: "Congratulations!",
-      unlocked: "You've unlocked your promotional code for the booking:",
-      savehint: "We’ll store it and add it to your reservation automatically.",
-      close: "Close",
-      codeReady: (c)=>`🎉 Promo code ready: ${c}`,
+    en:{
+      title:"Culinary Word Search",
+      find:"Find these words:",
+      info:"Select contiguous letters in a straight line. When you find one, I’ll tell you a story/myth about it.",
+      progress:"Progress:",
+      winTitle:"🎉 Congrats!",
+      winMsg:"You nailed it. Here’s your promo code:",
+      winNote:"We saved it and will attach it to your booking.",
+      copy:"Copy",
+      restart:"Restart"
     },
-    ca: {
-      title: "Sopa de lletres culinària",
-      hint: "Arrossega o toca des d’una lletra inicial fins a la final (horitzontal, vertical o diagonal). Troba’n 7 per a desbloquejar el codi.",
-      newgame: "Nova partida",
-      stories: "Històries i notes",
-      footer: "Completa 7 paraules per a la teua sorpresa gastronòmica.",
-      found_of: (a,b)=>`Trobades ${a} de ${b}`,
-      congrats: "Felicitats!",
-      unlocked: "Has desbloquejat el teu codi promocional per a la reserva:",
-      savehint: "El desarem i l’afegirem automàticament a la reserva.",
-      close: "Tancar",
-      codeReady: (c)=>`🎉 Codi promocional llest: ${c}`,
+    ca:{
+      title:"Sopa de lletres culinària",
+      find:"Troba aquestes paraules:",
+      info:"Selecciona lletres contigües en línia recta. En encertar, et conte una història/mite de l’ingredient.",
+      progress:"Progrés:",
+      winTitle:"🎉 Enhorabona!",
+      winMsg:"Ho has clavat. Ací tens el teu codi promocional:",
+      winNote:"L’hem guardat i s’adjuntarà a la reserva.",
+      copy:"Copiar",
+      restart:"Reiniciar"
     }
-  };
-  const lang = (new URL(location.href).searchParams.get('lang') || navigator.language || 'es').slice(0,2);
-  const L = UI[lang] || UI.es;
-  document.querySelectorAll('[data-i]').forEach(el=>{
-    const key = el.getAttribute('data-i');
-    if (typeof L[key] === 'string') el.textContent = L[key];
-  });
+  }[lang];
 
-  // ========= Datos del juego =========
-  // Palabras sin acentos y en mayúsculas para lógica; mostramos con tildes cuando proceda
+  // ===== UI textos =====
+  document.getElementById('gameTitle').textContent = T.title;
+  document.getElementById('subtitle').textContent = T.find;
+  document.getElementById('infoBox').textContent = T.info;
+  document.getElementById('winTitle').textContent = T.winTitle;
+  document.getElementById('winMsg').textContent = T.winMsg;
+  document.getElementById('winNote').textContent = T.winNote;
+  document.getElementById('copyBtn').textContent = T.copy;
+  document.getElementById('restartBtn').textContent = T.restart;
+
+  // ===== Dataset de palabras + mini-lore (puedes ampliar a tu gusto; aquí 12) =====
   const WORDS = [
-    // word, display
-    ["ARROZ","ARROZ"],
-    ["AZAFRAN","AZAFRÁN"],
-    ["ACEITE","ACEITE"],
-    ["SOFRITO","SOFRITO"],
-    ["SOCARRAT","SOCARRAT"],
-    ["PAELLA","PAELLA"],
-    ["FIDEUA","FIDEUÀ"],
-    ["ALLIPEBRE","ALL I PEBRE"],
-    ["CALDO","CALDO"],
-    ["TOMATE","TOMATE"],
-    ["AJO","AJO"],
-    ["PIMENTON","PIMENTÓN"],
-    ["MARISCO","MARISCO"],
-    ["GAMBAS","GAMBAS"],
-    ["CALAMAR","CALAMAR"]
+    { w:"ARROZ", lore:"El socarrat es el tesoro del fondo: textura crujiente y sabor concentrado." },
+    { w:"AZAFRAN", lore:"Oro rojo: da color y aroma floral; tostar levemente potencia su magia." },
+    { w:"FIDEUA", lore:"Nacida por azar en Gandía cuando faltó arroz. Fideos tostados, sabor marino." },
+    { w:"TOMATE", lore:"De sospechoso a rey de la huerta. En su día se creyó venenoso en Europa." },
+    { w:"AJO", lore:"Humilde y poderoso: base de sofritos y alioli; sabor que manda callar." },
+    { w:"PIMENTON", lore:"Dulce o picante, ahumado o no: define chorizos, guisos y arroces." },
+    { w:"CALAMAR", lore:"Aliado perfecto en arroces de mar; tierno con cocción breve o larga." },
+    { w:"ALMEJA", lore:"Aporta yodo y salinidad suave; abierta al vapor, pura elegancia." },
+    { w:"ROMERO", lore:"Hierba mediterránea resina-pino; perfuma asados y patatas." },
+    { w:"LIMON", lore:"Acidez luminosa; equilibra grasas y refresca marinados." },
+    { w:"ACEITE", lore:"AOVE: frutado, amargo y picante — el triángulo de la calidad." },
+    { w:"PAELLA", lore:"Icono valenciano: sofrito, caldo sabroso y reposo respetuoso." }
   ];
-  const TARGET_TO_UNLOCK = 7;
 
-  // Historias/mitos/notas por palabra (ES/EN/CA muy conciso)
-  const INFO = {
-    ARROZ:{
-      es:"Base de la paella: variedades bomba o sénia absorben caldo sin romperse; el ‘socarrat’ es el final crujiente y deseado.",
-      en:"Paella’s base: bomba or senia rice absorbs stock without bursting; the ‘socarrat’ is the prized crispy bottom.",
-      ca:"Base de la paella: varietats bomba o sénia absorbeixen brou sense trencar-se; el ‘socarrat’ és el final cruixent i desitjat."
-    },
-    AZAFRAN:{
-      es:"Oro rojo mediterráneo: estigmas del Crocus sativus; aporta aroma floral y color dorado.",
-      en:"Mediterranean ‘red gold’: stigmas of Crocus sativus; floral aroma and golden hue.",
-      ca:"‘Or roig’ mediterrani: estigmes del Crocus sativus; aroma floral i color daurat."
-    },
-    ACEITE:{
-      es:"El AOVE sustenta sofritos y aliños; su frutado, amargor y picor varían según la variedad y el terroir.",
-      en:"Extra virgin olive oil grounds sofritos and dressings; fruitiness, bitterness and pungency vary by cultivar and terroir.",
-      ca:"L’oli d’oliva verge extra sosté sofregits i amanides; el fruitat, l’amargor i el picant varien segons la varietat i el terrer."
-    },
-    SOFRITO:{
-      es:"Técnica de cocción lenta de hortalizas en grasa: construye profundidad y dulzor en arroces y guisos.",
-      en:"Slow cooking technique of vegetables in fat: builds depth and sweetness in rice and stews.",
-      ca:"Tècnica de cocció lenta d’hortalisses en greix: construeix profunditat i dolçor en arrossos i guisats."
-    },
-    SOCARRAT:{
-      es:"Capa tostada al fondo de la paella; se logra con calor final controlado y caldo justo.",
-      en:"Toasted layer at the pan’s bottom; achieved with controlled finishing heat and just enough stock.",
-      ca:"Capa torrada al fons de la paella; s’aconsegueix amb calor final controlada i brou just."
-    },
-    PAELLA:{
-      es:"Icono valenciano: equilibrio entre caldo, arroz y fuego. Tradición de domingo y reunión.",
-      en:"Valencian icon: balance of stock, rice and fire. A Sunday and gathering tradition.",
-      ca:"Icona valenciana: equilibri entre brou, arròs i foc. Tradició de diumenge i reunió."
-    },
-    FIDEUA:{
-      es:"Nacida en Gandía: fideos dorados en paella con caldo de pescado; textura melosa.",
-      en:"Born in Gandía: noodles toasted in paella pan with fish stock; luscious texture.",
-      ca:"Nascuda a Gandia: fideus daurats en paella amb brou de peix; textura melosa."
-    },
-    ALLIPEBRE:{
-      es:"Guiso tradicional de anguila con ajo y pimentón en la Albufera.",
-      en:"Traditional eel stew with garlic and paprika from the Albufera.",
-      ca:"Guisat tradicional d’anguila amb all i pebre a l’Albufera."
-    },
-    CALDO:{
-      es:"El alma del arroz: potencia sabor y transfiere gelatina; limpia o tostada según estilo.",
-      en:"The soul of rice: drives flavor and transfers gelatin; clear or roasted style.",
-      ca:"L’ànima de l’arròs: potencia sabor i transfereix gelatina; clar o torrat segons l’estil."
-    },
-    TOMATE:{
-      es:"Acidez y umami en sofritos; maduración y variedad determinan dulzor.",
-      en:"Acidity and umami in sofritos; ripeness and cultivar define sweetness.",
-      ca:"Acidesa i umami en sofregits; maduració i varietat determinen dolçor."
-    },
-    AJO:{
-      es:"Pilar aromático; crudo es picante, confitado aporta dulzor y cremosidad.",
-      en:"Aromatic pillar; raw is pungent, confited is sweet and creamy.",
-      ca:"Pilar aromàtic; cru és picant, confitat aporta dolçor i cremositat."
-    },
-    PIMENTON:{
-      es:"Dulce o picante; tostado brevemente libera color y perfume, cuidado con amargar.",
-      en:"Sweet or hot; briefly toasted releases color and perfume, beware of bitterness.",
-      ca:"Dolç o picant; lleugerament torrat allibera color i perfum, compte amb l’amargor."
-    },
-    MARISCO:{
-      es:"Aporta yodo y dulzor marino; cocinar poco para mantener textura firme.",
-      en:"Brings iodine and oceanic sweetness; cook lightly to keep firm texture.",
-      ca:"Aporta iode i dolçor marina; coure poc per mantindre textura ferma."
-    },
-    GAMBAS:{
-      es:"Cabezas para salsas intensas; vuelta y vuelta para caramelo y jugosidad.",
-      en:"Heads for intense sauces; quick sear for caramelization and juiciness.",
-      ca:"Caps per a salses intenses; volta i volta per a caramel i suculència."
-    },
-    CALAMAR:{
-      es:"O muy breve o muy largo: regla del calamar para ternura; tinta para arroces.",
-      en:"Very short or very long: squid rule for tenderness; ink enriches rice dishes.",
-      ca:"O molt breu o molt llarg: regla del calamar per a tendresa; tinta per a arrossos."
-    }
-  };
-
-  // ========= Estado =========
+  // ===== Config del tablero =====
+  const ROWS=12, COLS=12;
   const gridEl = document.getElementById('grid');
-  const wordListEl = document.getElementById('wordList');
-  const logEl = document.getElementById('log');
-  const progressEl = document.getElementById('progress');
-  const statusBadge = document.getElementById('statusBadge');
-  const promoBox = document.getElementById('promoBox');
-  const promoModal = document.getElementById('promoModal');
-  const promoCodeBox = document.getElementById('promoCodeBox');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const newGameBtn = document.getElementById('newGameBtn');
+  const listEl = document.getElementById('wordList');
+  const infoEl = document.getElementById('infoBox');
+  const foundCountEl = document.getElementById('foundCount');
+  const totalCountEl = document.getElementById('totalCount');
+  const winModal = document.getElementById('winModal');
+  const promoCodeEl = document.getElementById('promoCode');
 
-  const SIZE = 12;
-  let GRID = [];
-  let OCC = []; // ocupación con ids de palabra
-  let PLACED = []; // {word, display, cells:[{r,c}]}
-  let FOUND = new Set();
-  let selecting = false;
-  let startCell = null;
-  let currentPath = [];
+  totalCountEl.textContent = WORDS.length;
 
-  // ========= Utilidades =========
-  function randInt(n){ return Math.floor(Math.random()*n); }
-  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=randInt(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-  function normDir(dr,dc){
-    const g = (x)=> x===0?0 : (x>0?1:-1);
-    dr = g(dr); dc = g(dc);
-    if (dr!==0 && dc!==0){ /* diag ok */ }
-    return {dr, dc};
-  }
-  function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
-  function sanitize(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z]/g,''); }
+  // Estado
+  const grid = Array.from({length:ROWS}, ()=> Array(COLS).fill(null));
+  const placed = [];
+  const found = new Set();
+  let selection = [];
 
-  // ========= Construcción del tablero =========
-  function newGrid(){
-    GRID = Array.from({length:SIZE},()=>Array(SIZE).fill(''));
-    OCC  = Array.from({length:SIZE},()=>Array(SIZE).fill(null));
-    PLACED = [];
-    FOUND.clear();
-    gridEl.className = 'grid';
-    gridEl.style.gridTemplateColumns = `repeat(${SIZE}, 32px)`;
-    logEl.innerHTML='';
-    promoBox.classList.remove('show');
+  // Util
+  const ABC = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+  function rand(n){ return Math.floor(Math.random()*n); }
+  function inBounds(r,c){ return r>=0 && r<ROWS && c>=0 && c<COLS; }
+  function qs(sel){ return document.querySelector(sel); }
 
-    // Colocar palabras
-    const words = shuffle(WORDS.slice());
-    words.forEach(([raw, display])=>{
-      placeWord(raw, display);
-    });
+  // Colocar palabras en direcciones (H,V,D)
+  const DIRS = [
+    [0,1], [1,0], [1,1], [0,-1], [-1,0], [-1,-1], [1,-1], [-1,1]
+  ];
 
-    // Rellenar huecos
-    const ABC = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
-    for(let r=0;r<SIZE;r++){
-      for(let c=0;c<SIZE;c++){
-        if (!GRID[r][c]) GRID[r][c] = ABC[randInt(ABC.length)];
+  function placeAll(){
+    // Limpia
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) grid[r][c]=null;
+    placed.length=0; found.clear(); selection.length=0;
+
+    // Coloca una a una
+    for (const obj of WORDS){
+      const W = obj.w.toUpperCase().replace(/Á|À/g,'A').replace(/É|È/g,'E').replace(/Í|Ì/g,'I').replace(/Ó|Ò/g,'O').replace(/Ú|Ù/g,'U').replace(/Ñ/g,'Ñ');
+      let ok=false, tries=0;
+      while(!ok && tries<400){
+        tries++;
+        const dir = DIRS[rand(DIRS.length)];
+        const r0 = rand(ROWS), c0 = rand(COLS);
+        let r=r0,c=c0, valid=true;
+        for (let i=0;i<W.length;i++){
+          if(!inBounds(r,c)){ valid=false; break; }
+          const cell = grid[r][c];
+          if (cell && cell !== W[i]) { valid=false; break; }
+          r+=dir[0]; c+=dir[1];
+        }
+        if (!valid) continue;
+        // Coloca
+        r=r0; c=c0;
+        for (let i=0;i<W.length;i++){
+          grid[r][c] = W[i];
+          r+=dir[0]; c+=dir[1];
+        }
+        placed.push({w:W, start:[r0,c0], dir});
+        ok=true;
       }
+      if(!ok) console.warn('No pude colocar', obj.w);
     }
 
-    renderGrid();
-    renderWordList();
-    updateProgress();
-    statusBadge.textContent = 'Ready';
-  }
-
-  function placeWord(raw, display){
-    const W = sanitize(raw);
-    const len = W.length;
-    const dirs = shuffle([
-      {dr:0,dc:1}, {dr:0,dc:-1},
-      {dr:1,dc:0}, {dr:-1,dc:0},
-      {dr:1,dc:1}, {dr:1,dc:-1}, {dr:-1,dc:1}, {dr:-1,dc:-1}
-    ]);
-    for (const {dr,dc} of dirs){
-      // posiciones posibles
-      for (let tries=0; tries<200; tries++){
-        const sr = randInt(SIZE), sc = randInt(SIZE);
-        const er = sr + dr*(len-1), ec = sc + dc*(len-1);
-        if (!inBounds(er,ec)) continue;
-        let ok = true;
-        for (let i=0;i<len;i++){
-          const r = sr + dr*i, c = sc + dc*i;
-          const ch = GRID[r][c];
-          if (ch && ch !== W[i]) { ok = false; break; }
-        }
-        if (!ok) continue;
-        // escribir
-        const cells = [];
-        for (let i=0;i<len;i++){
-          const r = sr + dr*i, c = sc + dc*i;
-          GRID[r][c] = W[i];
-          OCC[r][c] = W; // id por palabra
-          cells.push({r,c});
-        }
-        PLACED.push({word:W, display, cells});
-        return true;
-      }
+    // Rellena huecos
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      if(!grid[r][c]) grid[r][c] = ABC[rand(ABC.length)];
     }
-    return false;
   }
 
-  function renderGrid(){
+  function draw(){
+    gridEl.style.gridTemplateColumns = `repeat(${COLS}, 32px)`;
     gridEl.innerHTML = '';
-    for(let r=0;r<SIZE;r++){
-      for(let c=0;c<SIZE;c++){
-        const div = document.createElement('div');
-        div.className = 'cell';
-        div.textContent = GRID[r][c] || '';
-        div.dataset.r = r; div.dataset.c = c;
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const div=document.createElement('div');
+        div.className='cell';
+        div.textContent=grid[r][c];
+        div.dataset.r=r; div.dataset.c=c;
         gridEl.appendChild(div);
       }
     }
-  }
-  function renderWordList(){
-    wordListEl.innerHTML = '';
-    PLACED.forEach(p=>{
-      const tag = document.createElement('div');
-      tag.className = 'wtag';
-      tag.textContent = p.display;
-      tag.id = 'wtag_'+p.word;
-      wordListEl.appendChild(tag);
-    });
-  }
 
-  // ========= Selección (ratón/táctil) =========
-  gridEl.addEventListener('pointerdown', (e)=>{
-    const cell = e.target.closest('.cell'); if (!cell) return;
-    gridEl.setPointerCapture(e.pointerId);
-    selecting = true;
-    clearActivePath();
-    startCell = cell;
-    currentPath = [cell];
-    cell.classList.add('active');
-  });
-  gridEl.addEventListener('pointermove', (e)=>{
-    if (!selecting) return;
-    const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.cell');
-    if (!cell || !gridEl.contains(cell)) return;
-    if (currentPath[currentPath.length-1] === cell) return;
-    // recalcular línea entre startCell y cell con dirección normalizada
-    const sr = +startCell.dataset.r, sc = +startCell.dataset.c;
-    const er = +cell.dataset.r, ec = +cell.dataset.c;
-    const {dr,dc} = normDir(er - sr, ec - sc);
-    if (dr === 0 && dc === 0) return;
-    // construir path
-    clearActivePath();
-    currentPath = [];
-    let r = sr, c = sc;
-    while (inBounds(r,c)) {
-      currentPath.push(getCellAt(r,c));
-      if (r===er && c===ec) break;
-      r += dr; c += dc;
+    // Lista palabras
+    listEl.innerHTML='';
+    for(const obj of WORDS){
+      const b=document.createElement('button');
+      b.className='word-item';
+      b.dataset.word=obj.w;
+      b.textContent=obj.w;
+      listEl.appendChild(b);
     }
-    currentPath.forEach(el=> el.classList.add('active'));
-  });
-  gridEl.addEventListener('pointerup', (e)=>{
-    if (!selecting) return;
-    selecting = false;
-    gridEl.releasePointerCapture(e.pointerId);
-    checkSelection();
-    clearActivePath();
-    startCell = null;
-    currentPath = [];
-  });
 
-  function getCellAt(r,c){
-    return gridEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+    foundCountEl.textContent = found.size;
   }
-  function clearActivePath(){
-    currentPath.forEach(el=> el.classList.remove('active'));
+
+  function reset(){
+    placeAll(); draw();
+    infoEl.textContent = T.info;
+    found.clear(); foundCountEl.textContent = found.size;
+    winModal.classList.remove('show');
   }
+
+  // Selección con ratón/táctil
+  function cellAtEvent(e){
+    const el = e.target.closest('.cell');
+    if(!el) return null;
+    return { el, r: +el.dataset.r, c: +el.dataset.c };
+  }
+
+  let isDown=false, start=null;
+  gridEl.addEventListener('pointerdown', e=>{
+    const info = cellAtEvent(e); if(!info) return;
+    isDown=true; start=info; selection=[info];
+    info.el.classList.add('selected');
+  });
+  gridEl.addEventListener('pointermove', e=>{
+    if(!isDown) return;
+    const info = cellAtEvent(e); if(!info) return;
+    const last = selection[selection.length-1];
+    if (last && (info.r !== last.r || info.c !== last.c)){
+      selection.push(info);
+      info.el.classList.add('selected');
+    }
+  });
+  window.addEventListener('pointerup', ()=>{
+    if(!isDown) return; isDown=false;
+    checkSelection();
+    selection.forEach(s=>s.el.classList.remove('selected'));
+    selection=[];
+  }, {passive:true});
 
   function checkSelection(){
-    if (!currentPath.length) return;
-    const letters = currentPath.map(el=> el.textContent).join('');
-    const rev = letters.split('').reverse().join('');
-    // Comparar con palabras colocadas
-    const hit = PLACED.find(p=>{
-      const s = p.word;
-      return s === letters || s === rev;
-    });
-    if (!hit) {
-      statusBadge.textContent = '—';
-      return;
+    if (selection.length<2) return;
+    // Derivar string y normalizar
+    const s = selection.map(x=>x.el.textContent).join('').toUpperCase();
+    const candidates = [s, [...selection].reverse().map(x=>x.el.textContent).join('').toUpperCase()];
+    let hit = null;
+    for(const cand of candidates){
+      const foundWord = WORDS.find(o=>o.w === cand);
+      if (foundWord && !found.has(foundWord.w)){
+        hit = foundWord; break;
+      }
     }
-    if (FOUND.has(hit.word)) {
-      statusBadge.textContent = '✓';
-      return;
-    }
-    // Marcar found
-    FOUND.add(hit.word);
-    hit.cells.forEach(({r,c})=> getCellAt(r,c).classList.add('found'));
-    const chip = document.getElementById('wtag_'+hit.word);
-    if (chip) chip.classList.add('ok');
+    if (!hit) return;
 
-    // Log historia
-    const fact = document.createElement('div');
-    fact.className = 'fact';
-    const title = document.createElement('h4'); title.textContent = hit.display;
-    const p = document.createElement('p'); p.textContent = (INFO[hit.word] && (INFO[hit.word][lang] || INFO[hit.word].es)) || '';
-    fact.appendChild(title); fact.appendChild(p);
-    logEl.prepend(fact);
+    // Marca celdas y palabra
+    selection.forEach(x=>x.el.classList.add('found'));
+    const item = [...document.querySelectorAll('.word-item')].find(b=>b.dataset.word===hit.w);
+    if (item) item.classList.add('found');
 
-    updateProgress();
-    statusBadge.textContent = '¡Bien!';
-    maybeUnlockPromo();
-  }
+    found.add(hit.w);
+    foundCountEl.textContent = found.size;
+    infoEl.textContent = hit.lore;
 
-  function updateProgress(){
-    const total = PLACED.length;
-    const found = FOUND.size;
-    progressEl.textContent = L.found_of(found, total);
-  }
+    // Win logic (umbral 7)
+    if (found.size >= 7){
+      const code = getOrCreatePromo();
+      promoCodeEl.textContent = code;
+      winModal.classList.add('show');
 
-  // ========= Promoción =========
-  function maybeUnlockPromo(){
-    if (FOUND.size >= TARGET_TO_UNLOCK && !localStorage.getItem('xativa_promo')){
-      const code = makePromoCode();
-      try { localStorage.setItem('xativa_promo', code); } catch {}
-      // Mensaje al padre (app)
-      try {
-        window.parent.postMessage({ type:'xativaPromo', promoCode: code, words: Array.from(FOUND) }, '*');
-      } catch {}
-      // Mostrar modal
-      promoCodeBox.textContent = code;
-      promoModal.hidden = false;
-      // Caja info en tablero
-      promoBox.textContent = L.codeReady(code);
-      promoBox.classList.add('show');
+      // Comunicar al padre
+      try{
+        parent.postMessage({ type:'CULINARY_GAME_DONE', code, words:[...found], lang }, '*');
+      }catch(e){}
     }
   }
-  function makePromoCode(){
-    const n = Math.floor(1000 + Math.random()*9000);
-    return `XATIVA-FOOD-${n}`;
-  }
-  closeModalBtn.addEventListener('click', ()=> promoModal.hidden = true);
 
-  // ========= Nueva partida =========
-  newGameBtn.addEventListener('click', ()=>{
-    newGrid();
-    statusBadge.textContent = 'Ready';
+  // Promo code
+  function getOrCreatePromo(){
+    const k='xativabot-game-promo';
+    let v = localStorage.getItem(k);
+    if (v) return v;
+    v = 'XAT-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    localStorage.setItem(k, v);
+    return v;
+  }
+
+  // Botones
+  document.getElementById('restartBtn').addEventListener('click', reset);
+  document.getElementById('copyBtn').addEventListener('click', ()=>{
+    const v = promoCodeEl.textContent.trim();
+    navigator.clipboard?.writeText(v);
   });
+  document.getElementById('closeWin').addEventListener('click', ()=> winModal.classList.remove('show'));
 
-  // ========= Start =========
-  newGrid();
-
+  // Start
+  reset();
 })();
 </script>
 </body>

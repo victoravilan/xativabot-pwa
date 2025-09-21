@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="XativaBot - Your personal chef assistant for Xativa restaurants" />
+  <meta name="theme-color" content="#8B0000" />
+  <title>XativaBot - Your Personal Chef Assistant</title>
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="/manifest.json?v=2" />
+  <link rel="icon" type="image/png" href="images/icon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+
+  <!-- Ajuste de contraste SOLO para chips (sin romper tu tema) -->
+  <style>
+    .chip {
+      background-color: var(--secondary-color) !important;
+      color: var(--primary-color) !important;
+      border: 1px solid rgba(0,0,0,0.05);
+      font-weight: 600;
+    }
+    .chip:hover, .chip.active {
+      background-color: var(--primary-color) !important;
+      color: #fff !important;
+    }
+
+    /* ======= Panel flotante del juego (aislado) ======= */
+    .game-panel[hidden] { display:none; }
+    .game-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display: grid;
+      place-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .game-card {
+      width: min(100%, 940px);
+      height: min(92vh, 720px);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border: 2px solid rgba(139,0,0,.18);
+    }
+    .game-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, #8B0000 0%, #6d0019 100%);
+      color: #fff;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+    }
+    .game-close {
+      appearance: none;
+      border: none;
+      color: #fff;
+      background: rgba(255,255,255,.18);
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    #game-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo" />
+      </div>
+
+      <!-- Selectores de idioma y región -->
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="language-selector">
+          <select id="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="es" selected>Español</option>
+            <option value="ca">Català</option>
+          </select>
+        </div>
+        <div class="region-selector">
+          <select id="region-select" aria-label="Region">
+            <option value="">España (nacional)</option>
+            <option value="ES-VC">Comunitat Valenciana</option>
+            <option value="ES-AN">Andalucía</option>
+            <option value="ES-CN">Canarias</option>
+            <option value="ES-GA">Galicia</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="chat-container">
+      <div class="chef-profile">
+        <div class="chef-avatar">
+          <img src="images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar" />
+        </div>
+        <div class="chef-info">
+          <h1>AlexBot</h1>
+          <p class="chef-title"
+             data-en="Executive Chef"
+             data-es="Chef Ejecutivo"
+             data-ca="Xef Executiu">Executive Chef</p>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="message bot-message">
+          <p class="welcome-message"
+             data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
+             data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
+             data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
+            Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?
+          </p>
+        </div>
+      </div>
+
+      <div class="suggestion-chips">
+        <button class="chip"
+                data-en="Menu recommendations"
+                data-es="Recomendaciones del menú"
+                data-ca="Recomanacions del menú">Menu recommendations</button>
+
+        <button class="chip" data-intent="allergy"
+                data-en="Special dietary needs"
+                data-es="Necesidades dietéticas especiales"
+                data-ca="Necessitats dietètiques especials">Necesidades dietéticas especiales</button>
+
+        <button class="chip"
+                data-en="Make a reservation"
+                data-es="Hacer una reserva"
+                data-ca="Fer una reserva">Make a reservation</button>
+
+        <button class="chip"
+                data-en="Restaurant locations"
+                data-es="Ubicaciones de restaurantes"
+                data-ca="Ubicacions de restaurants">Restaurant locations</button>
+
+        <!-- NUEVO: botón del juego -->
+        <button class="chip" id="open-game-btn"
+                data-en="Play: Culinary Word Search"
+                data-es="Jugar: Sopa de letras culinaria"
+                data-ca="Jugar: Sopa de lletres culinària">
+          Jugar: Sopa de letras culinaria
+        </button>
+      </div>
+
+      <div class="user-input-container">
+        <textarea id="user-input"
+                  placeholder="Type your message..."
+                  data-en="Type your message..."
+                  data-es="Escribe tu mensaje..."
+                  data-ca="Escriu el teu missatge..."></textarea>
+        <div class="input-actions">
+          <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 width="24" height="24" role="img">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M12 15c2.21 0 4-1.79 4-4V5c0-2.21-1.79-4-4-4S8 2.79 8 5v6c0 2.21 1.79 4 4 4zm0-2c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2s2 .9 2 2v6c0 1.1-.9 2-2 2zm4 2v1c0 2.76-2.24 5-5 5s-5-2.24-5-5v-1H4v1c0 3.53 2.61 6.43 6 6.92V22h4v-2.08c3.39-.49 6-3.39 6-6.92v-1h-2z"/>
+            </svg>
+          </button>
+          <button id="send-btn" class="send-btn" aria-label="Send">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 width="24" height="24" role="img">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <div class="voice-indicator" id="voice-indicator">
+      <div class="voice-waves">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="listening-text"
+         data-en="Listening..."
+         data-es="Escuchando..."
+         data-ca="Escoltant...">Listening...</p>
+    </div>
+  </div>
+
+  <!-- PANEL DEL JUEGO (overlay con iframe, aislado) -->
+  <div class="game-panel" id="game-panel" hidden>
+    <div class="game-card">
+      <div class="game-head">
+        <strong data-es="Sopa de letras culinaria"
+                data-en="Culinary Word Search"
+                data-ca="Sopa de lletres culinària">Sopa de letras culinaria</strong>
+        <button id="game-close" class="game-close" aria-label="Cerrar">×</button>
+      </div>
+      <iframe id="game-frame" title="Culinary Word Search" src="" loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>© 2023 Xativa Restaurants.
+      <span data-en="All rights reserved."
+            data-es="Todos los derechos reservados."
+            data-ca="Tots els drets reservats.">All rights reserved.</span>
+    </p>
+  </footer>
+
+  <!-- App principal -->
+  <script src="app.js"></script>
+
+  <!-- Registro del SW -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service worker registered!', reg))
+          .catch(err => console.log('Service worker registration failed:', err));
+      });
+    }
+  </script>
+
+  <!-- Instalación PWA -->
+  <script src="/install.js"></script>
+</body>
+</html>
