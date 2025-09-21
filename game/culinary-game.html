@@ -295,7 +295,349 @@
     if(existing) return;
     const code = genCode();
     localStorage.setItem('xativabot-promo-code', code);
+    const payload = { when:new Date().toISOString(), found:Array.from(GM.found), code };<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sopa de Letras Gastronómica · XativaBot</title>
+  <meta name="theme-color" content="#8B0000" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --vino:#8B0000; --vino2:#5f0000; --dorado:#D4AF37; --crema:#F8F1E9; --blanco:#fff; --tin:#222; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#fff;color:var(--tin);}
+
+    .topbar{
+      display:flex; align-items:center; gap:10px;
+      background:linear-gradient(180deg,#990000,var(--vino)); color:#fff; padding:10px 12px;
+      position:sticky; top:0; z-index:5;
+    }
+    .topbar a.back{
+      text-decoration:none; color:#fff; background:#0000001a; border:1px solid #ffffff55;
+      padding:8px 10px; border-radius:999px; font-weight:700;
+    }
+    .topbar h1{
+      margin:0; font-family:"Playfair Display",serif; font-size:clamp(18px,5vw,24px);
+    }
+
+    header{padding:12px}
+    .sub{margin-top:6px;opacity:.8}
+
+    main{padding:14px}
+    .how{background:linear-gradient(180deg,#fff6e8,#ffeede);border:1px solid #f6d8ae;border-radius:12px;padding:10px;color:#5a3c00;margin-bottom:12px}
+
+    /* layout base: 2 columnas; en móvil/landscape alto bajo -> 1 columna */
+    .row{display:grid;gap:14px;grid-template-columns:1.1fr .9fr;align-items:start}
+    @media (max-width: 880px){ .row{grid-template-columns:1fr} }
+    @media (max-height: 520px){ .row{grid-template-columns:1fr} }
+
+    .panel{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:12px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+    .stat{background:#fff;border:1px solid #eee;border-radius:12px;text-align:center;padding:10px}
+    .big{font-weight:800;font-size:clamp(18px,5vw,24px);color:var(--vino)}
+    .bar{height:8px;background:#eee;border-radius:999px;overflow:hidden}
+    .bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--dorado),#ffd463);transition:width .35s}
+
+    .grid-wrap{
+      margin-top:10px;border:2px dashed #f6c7c7;border-radius:12px;padding:8px;
+      background:linear-gradient(180deg,#fff7f7,#fff9f9);
+      max-height: calc(100svh - 260px); /* tablero visible con scroll si no cabe */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .grid{
+      display:grid;gap:6px;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none;
+      width:100%;
+    }
+
+    /* celdas: tamaño flexible (clamp) para encajar en móvil */
+    .cell{
+      width: clamp(22px, 6.8vw, 38px);
+      height: clamp(22px, 6.8vw, 38px);
+      max-width: 42px; max-height: 42px;
+      display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;
+      border:1px solid #e6e6e6;box-shadow:0 3px 10px rgba(0,0,0,.06);
+      font-weight:800;letter-spacing:.6px;color:#2b3a4a;font-size:clamp(14px,4vw,18px)
+    }
+    .cell.active{outline:3px solid rgba(255,215,0,.65);background:#fff9dd}
+    .cell.found{background:#1e7d3a;color:#fff;border-color:#16622d}
+
+    .words{background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid #eee;border-radius:12px;padding:12px}
+    .words h3{font-family:"Playfair Display",serif;text-align:center;color:var(--vino);margin:0 0 8px;font-size:clamp(18px,4.5vw,22px)}
+    .list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:520px){ .list{grid-template-columns:1fr} }
+    .chip{border:none;border-radius:999px;padding:10px 12px;font-weight:800;letter-spacing:.8px;background:linear-gradient(180deg,#b30c0c,var(--vino2));color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
+    .chip.found{background:#1f9d55}
+
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+    .btn{background:var(--vino);border:none;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;box-shadow:0 10px 24px rgba(139,0,0,.28);cursor:pointer}
+    .btn.alt{background:#111}
+
+    /* Modal historia */
+    .overlay{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);z-index:10;padding:10px}
+    .overlay.show{display:flex}
+    .sheet{width:100%;max-width:720px;background:#fff;border-radius:16px;border:2px solid #8b000022;box-shadow:0 30px 60px rgba(0,0,0,.35);padding:14px 16px;position:relative}
+    .x{position:absolute;right:16px;top:12px;background:var(--vino);color:#fff;border:none;border-radius:999px;width:36px;height:36px;display:grid;place-items:center;font-weight:700}
+    .sheet h2{font-family:"Playfair Display",serif;margin:6px 0 10px;color:var(--vino);font-size:clamp(18px,5vw,26px)}
+    .desc{line-height:1.8;font-size:16px}
+
+    footer{padding:16px 14px;text-align:center;color:#666}
+
+    /* en alturas muy bajas, asegura columna única y deja que el tablero se vea */
+    @media (max-height: 520px){
+      .grid-wrap{ max-height: calc(100svh - 220px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="index.html">← Volver</a>
+    <h1>Sopa de Letras Gastronómica</h1>
+  </div>
+
+  <header>
+    <p class="sub">Arrastra dentro del tablero para seleccionar; al acertar verás la historia culinaria. Completa 7 palabras para un código promo 🎉</p>
+  </header>
+
+  <main>
+    <div class="how"><b>Consejo:</b> el tablero tiene scroll propio si hace falta; al seleccionar no se desplaza la página (preciso en móvil).</div>
+
+    <div class="row">
+      <section class="panel">
+        <div class="stats">
+          <div class="stat"><div class="big" id="gm-found">0</div><div>Encontradas</div></div>
+          <div class="stat"><div class="big" id="gm-total">—</div><div>Totales</div></div>
+          <div class="stat"><div class="big" id="gm-pct">0%</div><div>Completado</div></div>
+        </div>
+        <div class="bar"><span id="gm-bar"></span></div>
+
+        <div class="grid-wrap">
+          <div id="gm-grid" class="grid" role="grid" aria-label="Sopa de letras"></div>
+        </div>
+        <div class="actions">
+          <a class="btn alt" href="index.html">Volver</a>
+          <button class="btn" id="gm-restart">Reiniciar</button>
+        </div>
+      </section>
+
+      <aside class="words">
+        <h3>Ingredientes por descubrir</h3>
+        <div id="gm-wordlist" class="list"></div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="story" class="overlay" aria-modal="true" role="dialog">
+    <div class="sheet">
+      <button class="x" id="story-x">✕</button>
+      <h2 id="story-title">Título</h2>
+      <div id="story-body" class="desc"></div>
+    </div>
+  </div>
+
+  <footer>© Xativa Restaurants</footer>
+
+  <script>
+  /* Datos de palabras + historias */
+  const WORDS = [
+    { key:"CANELA", name:"Canela", story:"La canela proviene de la corteza interna del <i>Cinnamomum verum</i>. En la Antigüedad se valoraba como oro: perfumaba vinos, carnes y postres. En la paella dulce medieval se usaba con arroz y leche; hoy es reina del arroz con leche y compotas." },
+    { key:"COMINO", name:"Comino", story:"El comino, esencial en el Mediterráneo y Oriente, aporta notas cálidas y terrosas. Tostado brevemente despierta su aceite esencial (cuminaldehído). Ideal para guisos, legumbres y embutidos." },
+    { key:"CILANTRO", name:"Cilantro", story:"Amado y polémico por su perfil cítrico. Las hojas aromatizan salsas y ceviches; las semillas, más dulces, se usan molidas en currys y panes." },
+    { key:"JENGIBRE", name:"Jengibre", story:"Rizoma picante y fresco; en infusiones ayuda a la digestión. En cocina, brillo cítrico para salteados, marinados y repostería." },
+    { key:"TOMATE", name:"Tomate", story:"Llegó de América y conquistó Europa. Su umami es clave en salsas, sofritos y paellas modernas." },
+    { key:"BERENJENA", name:"Berenjena", story:"La berenjena absorbe sabores como esponja. A la brasa, asada o en escalivada, se vuelve sedosa y dulce." },
+    { key:"QUINOA", name:"Quinoa", story:"Sagrada para los incas, hoy valorada por su proteína completa. Perfecta en ensaladas o como guarnición." },
+    { key:"CURCUMA", name:"Cúrcuma", story:"Raíz dorada con curcumina. Aporta color y un amargor amable; imprescindible en currys y arroces especiados." },
+    { key:"AGUACATE", name:"Aguacate", story:"Fruto mantecoso y nutritivo. En guacamole o ensaladas aporta cremosidad y grasas cardiosaludables." },
+    { key:"ALBAHACA", name:"Albahaca", story:"Hierba del pesto: fresca, anisada, amiga del tomate. Añádela al final para preservar sus aromas." },
+    { key:"ROMERO", name:"Romero", story:"Aromático mediterráneo de carnes y panes. Úsalo con moderación: su potencia domina con facilidad." },
+    { key:"VAINILLA", name:"Vainilla", story:"Orquídea cultivada por su fruto. Sus vainas curadas perfuman cremas, bizcochos y helados." },
+    { key:"NUEZMOSCADA", name:"Nuez moscada", story:"Rallada al momento, levanta bechameles y purés. Combina con espinacas y quesos suaves." },
+    { key:"PIMIENTA", name:"Pimienta", story:"La reina de las especias. Negra, blanca o verde: pícara y perfumada, finaliza salsas y carnes." }
+  ];
+
+  const GM = { size:14, grid:[], cells:[], placed:[], found:new Set(), selecting:false, start:null, path:[] };
+  const el = {
+    grid: document.getElementById('gm-grid'),
+    list: document.getElementById('gm-wordlist'),
+    found: document.getElementById('gm-found'),
+    total: document.getElementById('gm-total'),
+    pct: document.getElementById('gm-pct'),
+    bar: document.getElementById('gm-bar'),
+    restart: document.getElementById('gm-restart'),
+    story: document.getElementById('story'),
+    storyX: document.getElementById('story-x'),
+    title: document.getElementById('story-title'),
+    body: document.getElementById('story-body')
+  };
+
+  const norm = s => s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toUpperCase();
+  const dirs = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+
+  function canPlace(word,r,c,dr,dc){
+    for(let i=0;i<word.length;i++){
+      const rr=r+dr*i, cc=c+dc*i;
+      if(rr<0||cc<0||rr>=GM.size||cc>=GM.size) return false;
+      const ch=GM.grid[rr][cc];
+      if(ch!=='' && ch!==word[i]) return false;
+    }
+    return true;
+  }
+  function placeWord(word){
+    for(let k=0;k<300;k++){
+      const [dr,dc]=dirs[(Math.random()*dirs.length)|0];
+      const r=(Math.random()*GM.size)|0, c=(Math.random()*GM.size)|0;
+      if (canPlace(word,r,c,dr,dc)){
+        for(let i=0;i<word.length;i++) GM.grid[r+dr*i][c+dc*i]=word[i];
+        return {r,c,dr,dc,len:word.length};
+      }
+    }
+    return null;
+  }
+  function fillRandom(){
+    const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for(let r=0;r<GM.size;r++){
+      for(let c=0;c<GM.size;c++){
+        if(!GM.grid[r][c]) GM.grid[r][c]=A[(Math.random()*A.length)|0];
+      }
+    }
+  }
+  function build(){
+    GM.grid = Array.from({length:GM.size}, ()=> Array(GM.size).fill(''));
+    GM.placed=[]; GM.found=new Set(); GM.selecting=false; GM.start=null; GM.path=[];
+    for(const w of WORDS){
+      const placed = placeWord(norm(w.key));
+      if(placed) GM.placed.push({key:w.key, ...placed});
+    }
+    fillRandom(); renderGrid(); renderList(); updateStats();
+  }
+
+  function renderGrid(){
+    el.grid.style.gridTemplateColumns=`repeat(${GM.size}, minmax(22px, 1fr))`;
+    el.grid.innerHTML=''; GM.cells=[];
+    for(let r=0;r<GM.size;r++){
+      for(let c=0;c<GM.size;c++){
+        const d=document.createElement('button');
+        d.className='cell'; d.type='button'; d.textContent=GM.grid[r][c];
+        d.dataset.r=r; d.dataset.c=c; el.grid.appendChild(d); GM.cells.push(d);
+      }
+    }
+    // Táctil preciso: evita scroll de página al seleccionar
+    el.grid.addEventListener('pointerdown', onDown, {passive:false});
+    el.grid.addEventListener('pointermove', onMove, {passive:false});
+    el.grid.addEventListener('pointerup', onUp, {passive:false});
+    el.grid.addEventListener('pointercancel', onUp, {passive:false});
+    el.grid.addEventListener('touchmove', e=>{ if(GM.selecting) e.preventDefault(); }, {passive:false});
+  }
+  function renderList(){
+    el.list.innerHTML='';
+    WORDS.forEach(w=>{
+      const b=document.createElement('button');
+      b.className='chip'; b.type='button'; b.textContent=w.key.replace('NUEZMOSCADA','NUEZ MOSCADA');
+      b.id=`w-${w.key}`;
+      b.addEventListener('click',()=> showStory(w.name,w.story));
+      el.list.appendChild(b);
+    });
+    document.getElementById('gm-total').textContent = WORDS.length;
+  }
+  function updateStats(){
+    const n = GM.found.size;
+    el.found.textContent = n;
+    const pct = Math.round(n*100/WORDS.length);
+    el.pct.textContent = pct+'%';
+    el.bar.style.width = pct+'%';
+  }
+
+  function elementFromEvent(ev){
+    const pt = ('clientX' in ev) ? {x:ev.clientX,y:ev.clientY} : {x:ev.touches[0].clientX, y:ev.touches[0].clientY};
+    const elx = document.elementFromPoint(pt.x, pt.y);
+    return (elx && elx.classList.contains('cell')) ? elx : null;
+  }
+  function line(r0,c0,r1,c1){
+    const dr=Math.sign(r1-r0), dc=Math.sign(c1-c0);
+    if(!(dr===0||dc===0||Math.abs(r1-r0)===Math.abs(c1-c0))){
+      const ar=Math.abs(r1-r0), ac=Math.abs(c1-c0);
+      if(ar>ac){ c1=c0+(r1>r0? ar : -ar)*Math.sign(c1-c0||1); }
+      else     { r1=r0+(c1>c0? ac : -ac)*Math.sign(r1-r0||1); }
+    }
+    const DR=Math.sign(r1-r0), DC=Math.sign(c1-c0);
+    const out=[]; let r=r0,c=c0; out.push({r,c});
+    while(r!==r1||c!==c1){ r+=DR; c+=DC; if(r<0||c<0||r>=GM.size||c>=GM.size) break; out.push({r,c}); }
+    return out;
+  }
+  function clearActive(){ GM.cells.forEach(d=>d.classList.remove('active')); }
+  function markActive(path){ clearActive(); path.forEach(p=> document.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('active')); }
+  function markFound(path){ path.forEach(p=> document.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('found')); }
+
+  function onDown(e){
+    e.preventDefault(); GM.selecting=true;
+    const cell = elementFromEvent(e); if(!cell) return;
+    GM.start = { r:+cell.dataset.r, c:+cell.dataset.c };
+    GM.path=[GM.start]; markActive(GM.path);
+  }
+  function onMove(e){
+    if(!GM.selecting) return; e.preventDefault();
+    const cell = elementFromEvent(e); if(!cell) return;
+    const r=+cell.dataset.r, c=+cell.dataset.c;
+    GM.path = line(GM.start.r, GM.start.c, r, c);
+    markActive(GM.path);
+  }
+  function onUp(e){
+    if(!GM.selecting) return;
+    GM.selecting=false;
+    if(!GM.path || GM.path.length<2){ clearActive(); return; }
+    const text = GM.path.map(p=> GM.grid[p.r][p.c]).join('');
+    const tNorm = norm(text), tRev = norm(text.split('').reverse().join(''));
+    const hit = WORDS.find(w => tNorm===norm(w.key) || tRev===norm(w.key));
+    if(hit && !GM.found.has(hit.key)){
+      GM.found.add(hit.key);
+      markFound(GM.path);
+      document.getElementById(`w-${hit.key}`)?.classList.add('found');
+      updateStats();
+      showStory(hit.name, hit.story);
+      maybePromo();
+    }
+    clearActive();
+  }
+
+  function showStory(title, html){
+    el.title.textContent = title;
+    el.body.innerHTML = html;
+    el.story.classList.add('show');
+  }
+  el.storyX.addEventListener('click', ()=> el.story.classList.remove('show'));
+  el.story.addEventListener('click', e=>{ if(e.target===el.story) el.story.classList.remove('show'); });
+
+  /* Código promo al llegar a 7 */
+  function genCode(){
+    const s='abcdefghjkmnpqrstuvwxyz23456789'; let out='';
+    for(let i=0;i<8;i++) out+= s[(Math.random()*s.length)|0];
+    return out;
+  }
+  function maybePromo(){
+    if(GM.found.size < 7) return;
+    const existing = localStorage.getItem('xativabot-promo-code');
+    if(existing) return;
+    const code = genCode();
+    localStorage.setItem('xativabot-promo-code', code);
     const payload = { when:new Date().toISOString(), found:Array.from(GM.found), code };
+    localStorage.setItem('xativabot-game', JSON.stringify(payload));
+    try{
+      if (window.parent && window.parent !== window) window.parent.postMessage({type:'xativabot:promo', code}, '*');
+      if (window.opener && !window.opener.closed) window.opener.postMessage({type:'xativabot:promo', code}, '*');
+    }catch{}
+    alert('🎉 ¡Código promocional: '+code+'! Se añadirá a tu reserva.');
+  }
+
+  document.getElementById('gm-restart').addEventListener('click', build);
+  build();
+  </script>
+</body>
+</html>
+
     localStorage.setItem('xativabot-game', JSON.stringify(payload));
     try{
       if (window.parent && window.parent !== window) window.parent.postMessage({type:'xativabot:promo', code}, '*');
