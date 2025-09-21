@@ -1,4 +1,4 @@
-/** XativaBot – App (i18n + voz estable + alergias con diálogo + salud/temporadas + juego integrado) */
+/** XativaBot – App (i18n + voz estable + alergias con diálogo + salud/temporadas + juego + historia desplegable UI) */
 
 // ===== DOM =====
 const chatMessages   = document.getElementById('chat-messages');
@@ -70,7 +70,8 @@ const I18N = {
        season_now:"In season now:",
        season_of:"Season for",
        month_names:["January","February","March","April","May","June","July","August","September","October","November","December"],
-       game_opening:"Launching the culinary word hunt… Good luck!" },
+       game_opening:"Launching the culinary word hunt… Good luck!",
+       lore_title:"Culinary story" },
   es:{ welcome:"¡Bienvenido a Xativa! Soy AlexBot, tu cómplice culinario. Pregúntame por ingredientes, técnicas, tradiciones… o haz una reserva.",
        ask_allergies:"¿Tienes alergias o preferencias de dieta?",
        ask_allergies_specific:"Genial — ¿qué alergia o dieta debo considerar? (p. ej., gluten, marisco, leche, vegano, vegetariano)",
@@ -101,7 +102,8 @@ const I18N = {
        season_now:"Ahora en temporada:",
        season_of:"Temporada de",
        month_names:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
-       game_opening:"Abriendo la sopa de letras culinaria… ¡Suerte!" },
+       game_opening:"Abriendo la sopa de letras culinaria… ¡Suerte!",
+       lore_title:"Historia culinaria" },
   ca:{ welcome:"Benvingut a Xativa! Sóc l’AlexBot, el teu còmplice culinari. Pregunta’m per ingredients, tècniques, tradicions… o fes una reserva.",
        ask_allergies:"Tens alguna al·lèrgia o preferència de dieta?",
        ask_allergies_specific:"Perfecte — quina al·lèrgia o dieta he de tindre en compte? (p. ex., gluten, marisc, llet, vegà, vegetarià)",
@@ -132,7 +134,8 @@ const I18N = {
        season_now:"Ara en temporada:",
        season_of:"Temporada de",
        month_names:["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"],
-       game_opening:"Obrint la sopa de lletres culinària… Bona sort!" }
+       game_opening:"Obrint la sopa de lletres culinària… Bona sort!",
+       lore_title:"Història culinària" }
 };
 
 // ===== Intents =====
@@ -172,7 +175,7 @@ const KEYWORDS = {
        game:["joc","sopa","sopa de lletres","promoció"] }
 };
 
-// ===== Datasets mínimos (offline) =====
+// ===== Dataset mínimo (offline) =====
 const CULINARY = {
   es: {
     "arroz": { summary:"Base de la paella; variedades bomba o senia absorben caldo sin romperse.", techniques:["Sofreír y nacarar","Hervor y reposo"], pairings:["Azafrán","Pimentón"], nutrition:{energy_kcal:346,protein_g:6.7,fat_g:0.9,carbs_g:76}, culture:"El ‘socarrat’ es apreciado." },
@@ -200,7 +203,7 @@ async function initApp(){
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 }
 
-// ===== Data / Memory =====
+// ===== Data / Memoria =====
 async function loadData(){
   try{
     const [menuRes,loreRes,seasonRes] = await Promise.all([
@@ -216,14 +219,13 @@ async function loadData(){
 function loadMemory(){ try{ const raw=localStorage.getItem('xativabot-user'); if(raw) USER=JSON.parse(raw);}catch{} }
 function saveMemory(){ try{ localStorage.setItem('xativabot-user', JSON.stringify(USER)); }catch{} }
 
-// ===== UI events =====
+// ===== UI eventos =====
 function setupEventListeners(){
   sendBtn.addEventListener('click', handleSendMessage);
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
 
-  // chips con data-intent
   suggestionChips.forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
@@ -234,10 +236,8 @@ function setupEventListeners(){
 
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 
-  // Juego: cerrar
   gameClose?.addEventListener('click', hideGamePanel);
 
-  // Captura promo desde iframe del juego
   window.addEventListener('message', (e)=>{
     const d = e.data || {};
     if (d.type === 'xativaPromo' && d.promoCode){
@@ -290,7 +290,25 @@ function setupSpeechRecognition(){
 }
 function toggleVoiceInput(){ if(!recognition) return; isListening? recognition.stop(): recognition.start(); }
 
-// ===== Chat =====
+// ===== Chat helpers =====
+function addMessageToChat(message,sender){
+  const div=document.createElement('div');
+  div.classList.add('message', `${sender}-message`);
+  const p=document.createElement('p'); p.textContent=message; div.appendChild(p);
+  chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight;
+  setTimeout(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; },10);
+}
+function addRichMessage(html, sender='bot'){
+  const div = document.createElement('div');
+  div.classList.add('message', `${sender}-message`);
+  // contenido rico controlado
+  div.innerHTML = html;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  setTimeout(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; },10);
+}
+
+// ===== NLU =====
 function handleSendMessage(){
   const message = userInput.value.trim();
   if(message==='') return;
@@ -306,14 +324,6 @@ function handleSendMessage(){
   userInput.value=''; userInput.style.height='auto';
   processUserMessage(message);
 }
-function addMessageToChat(message,sender){
-  const div=document.createElement('div'); div.classList.add('message', `${sender}-message`);
-  const p=document.createElement('p'); p.textContent=message; div.appendChild(p);
-  chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight;
-  setTimeout(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; },10);
-}
-
-// ===== NLU =====
 function processUserMessage(raw){
   const det = detectIntent(raw);
   dispatchIntent(det.intent, det);
@@ -323,7 +333,7 @@ function detectIntent(raw){
   const K = KEYWORDS[currentLanguage];
   const result = { intent:'unknown', message: raw };
 
-  // Ingredientes por patrón
+  // Ingredientes patrón
   const pat = {
     es: /\b(háblame de|hablame de|qué es|que es|beneficios de|temporada de|historia de|sobre)\s+(.{2,})/i,
     en: /\b(tell me about|what is|benefits of|season of|history of|about)\s+(.{2,})/i,
@@ -408,8 +418,24 @@ function replyLore(){
   const topic = USER.lastDish || (['paella','fideua','all-i-pebre'][Math.floor(Math.random()*3)]);
   const t = topic.includes('paella') ? 'paella' : topic.includes('fideu') ? 'fideua' : 'all-i-pebre';
   const item = LORE.facts.find(f=>f.topic===t);
-  const text = item ? (item[currentLanguage]||item.es) : 'Historias gastronómicas en camino.';
-  reply(`${I18N[currentLanguage].lore_intro} ${text}`);
+  const text = item ? (item[currentLanguage]||item.es) : null;
+
+  if (!text) { reply('Historias gastronómicas en camino.'); return; }
+
+  // Tarjeta desplegable (accordion)
+  const title = I18N[currentLanguage].lore_title || 'Culinary story';
+  const html = `
+    <div class="lore-card">
+      <details open>
+        <summary><span class="badge">${title}</span> &nbsp; ${t.toUpperCase()}</summary>
+        <div class="body">${escapeHTMLKeepBasic(text)}</div>
+      </details>
+    </div>
+  `;
+  addRichMessage(html, 'bot');
+
+  // voz
+  if (!isMobileDevice() || userInteracted) speakText(`${I18N[currentLanguage].lore_intro} ${text}`);
 }
 function replyLocations(){
   const lines = {
@@ -465,11 +491,11 @@ function handleAllergyAnswer(message){
 function showDietaryWizard(){
   const wrap=document.createElement('div'); wrap.classList.add('message','bot-message');
   const labels = {
-    es: { cta:I18N.es.diet_cta, confirm:I18N.es.diet_confirm_btn, none:I18N.es.diet_none_btn,
+    es: { cta:"Selecciona una o varias opciones y confirma:", confirm:"Guardar y sugerir", none:"Sin restricciones",
           chips:['Sin gluten','Vegano','Vegetariano','Sin lactosa','Sin marisco','Sin frutos secos'] },
-    en: { cta:I18N.en.diet_cta, confirm:I18N.en.diet_confirm_btn, none:I18N.en.diet_none_btn,
+    en: { cta:"Select one or more and confirm:", confirm:"Save & suggest", none:"No restrictions",
           chips:['Gluten-free','Vegan','Vegetarian','Lactose-free','No shellfish','No nuts'] },
-    ca: { cta:I18N.ca.diet_cta, confirm:I18N.ca.diet_confirm_btn, none:I18N.ca.diet_none_btn,
+    ca: { cta:"Tria una o diverses i confirma:", confirm:"Desar i suggerir", none:"Sense restriccions",
           chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs'] }
   }[currentLanguage];
   wrap.innerHTML = `
@@ -673,7 +699,7 @@ function extractIngredientFromSeasonQuery(text){
   return null;
 }
 
-// ===== Reserva (email/función) =====
+// ===== Reservas =====
 function ensureRestaurantThenForm(){
   if (!USER.preferredRestaurant){
     reply(I18N[currentLanguage].pick_restaurant);
@@ -785,11 +811,9 @@ function openReservationDB(){
   });
 }
 
-// ===== Juego (panel + iframe) =====
+// ===== Juego =====
 function openGamePanel(){
-  // Mensaje corto
   reply(I18N[currentLanguage].game_opening);
-  // src con idioma
   const langQ = currentLanguage;
   gameFrame.src = `/game/culinary-game.html?lang=${encodeURIComponent(langQ)}`;
   gamePanel.hidden = false;
@@ -835,7 +859,7 @@ async function speakText(text){
   setTimeout(()=>{ try{ speechSynthesisObj.speak(utter);}catch(e){ console.warn('TTS speak failed:',e);} },0);
 }
 
-// ===== Idioma / helpers =====
+// ===== Idioma / util =====
 function changeLanguage(lang){
   currentLanguage = lang;
   document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
@@ -845,3 +869,10 @@ function changeLanguage(lang){
 }
 function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
+
+// util para texto seguro (permitimos saltos de línea básicos)
+function escapeHTMLKeepBasic(str=''){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br/>');
+}
