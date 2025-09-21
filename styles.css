@@ -117,8 +117,8 @@ body {
   gap: 14px;
 }
 
-/* Centrar SOLO el primer mensaje (bienvenida) */
-.chat-messages .message:first-child { align-self: center; }
+/* Centrar bienvenida 1 y 2 (incluye la que agrega app.js en español) */
+.chat-messages .message:nth-child(-n+2) { align-self: center; }
 
 .message {
   max-width: 86%;
@@ -146,13 +146,13 @@ body {
 }
 .welcome-message { font-size: 16px; line-height: 1.55; }
 
-/* Suggestion chips (mejor contraste y centradas) */
+/* Suggestion chips (contraste y centradas) */
 .suggestion-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin: 14px auto 8px auto;
-  justify-content: center;           /* centrado */
+  justify-content: center;
 }
 .chip {
   background: var(--primary-color);
@@ -171,7 +171,7 @@ body {
 .chip:hover { transform: translateY(-1px); }
 .chip:active { transform: translateY(0); }
 
-/* User input area (claro y legible) */
+/* User input area */
 .user-input-container {
   display: flex;
   background: var(--card-bg);
@@ -185,10 +185,10 @@ body {
 }
 #user-input {
   flex: 1;
-  border: 1px solid #e6e6e6; /* borde sutil */
+  border: 1px solid #e6e6e6;
   outline: none;
-  background: #fff;          /* fondo blanco */
-  color: #111;               /* texto negro */
+  background: #fff;
+  color: #111;
   padding: 10px 12px;
   font-family: var(--font-body);
   font-size: 16px;
@@ -266,7 +266,7 @@ body {
   width: 100%;
   max-width: 560px;
   background: #fff;            /* fondo blanco */
-  border: 1px solid rgba(139,0,0,.25); /* fino marco rojo */
+  border: 1px solid rgba(139,0,0,.25); /* marco rojo fino */
   border-radius: 14px;
   padding: 14px;
   box-shadow: 0 10px 26px rgba(0,0,0,.08);
@@ -284,7 +284,6 @@ body {
   font-family: inherit;
   font-size: 1rem;
 }
-/* Inputs blancos, texto negro */
 .reservation-form input[type="text"],
 .reservation-form input[type="email"],
 .reservation-form input[type="tel"],
@@ -294,14 +293,13 @@ body {
 .reservation-form select {
   width: 100%;
   border: 1px solid #dcdcdc;
-  background: #fff;      /* fondo blanco (no negro) */
-  color: #111;           /* texto negro */
+  background: #fff;
+  color: #111;
   border-radius: 10px;
   padding: 10px 12px;
   transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 .reservation-form textarea { min-height: 84px; resize: vertical; }
-/* Focus elegante rojo */
 .reservation-form input:focus,
 .reservation-form textarea:focus,
 .reservation-form select:focus {
@@ -311,7 +309,6 @@ body {
   background: #fff;
 }
 .reservation-form ::placeholder { color: #9aa0a6; }
-/* Botón */
 .reservation-form button[type="submit"] {
   border: none;
   border-radius: 12px;
@@ -349,5 +346,4 @@ body {
   .chip { font-size: 13px; padding: 8px 14px; }
 }
 
-/* ===== IMPORTANTE: sin “modo oscuro” forzado ===== */
-/* Se elimina el bloque @media (prefers-color-scheme: dark) para mantener siempre fondo blanco. */
+/* Sin modo oscuro forzado */
