@@ -1,71 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants">
-  <meta name="theme-color" content="#8B0000">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="XativaBot - Your personal chef assistant for Xativa restaurants" />
+  <meta name="theme-color" content="#8B0000" />
   <title>XativaBot - Your Personal Chef Assistant</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="/manifest.json?v=2">
-  <link rel="icon" type="image/png" href="images/icon-192x192.png">
-  <link rel="apple-touch-icon" href="images/apple-touch-icon-180.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    /* ====== Estilos del MODAL de juego (scoped) ====== */
-    :root{
-      --vino:#8B0000; --vino2:#5f0000; --dorado:#D4AF37; --crema:#F8F1E9; --blanco:#fff;
-    }
-    .game-modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:10px}
-    .game-modal.show{display:flex}
-    .gm-sheet{width:100%;max-width:920px;background:#fff;border-radius:18px 18px 14px 14px;box-shadow:0 30px 60px rgba(0,0,0,.35);border:2px solid #8b000022;overflow:hidden}
-    .gm-head{background:linear-gradient(180deg,#990000,var(--vino));color:#fff;padding:16px 16px 10px}
-    .gm-title{font-family:"Playfair Display",serif;font-weight:700;margin:0;font-size:clamp(20px,5vw,28px)}
-    .gm-sub{opacity:.9;margin:6px 0 0}
-    .gm-body{padding:12px 14px 18px;background:linear-gradient(180deg,#fff,#fcfcfd)}
-    .gm-row{display:grid;gap:12px;grid-template-columns:1.1fr .9fr}
-    @media (max-width: 860px){ .gm-row{grid-template-columns:1fr} }
-    .gm-panel{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:12px}
-    .gm-how{background:linear-gradient(180deg,#fff6e8,#ffeede);border:1px solid #f6d8ae;border-radius:12px;padding:10px;color:#5a3c00;margin-bottom:10px}
-    .gm-how b{color:#7a1500}
-    .gm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
-    .gm-stat{background:#fff;border:1px solid #eee;border-radius:12px;text-align:center;padding:10px}
-    .gm-stat .big{font-weight:800;font-size:clamp(18px,5vw,24px);color:var(--vino)}
-    .gm-progress{height:8px;background:#eee;border-radius:999px;overflow:hidden}
-    .gm-progress > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--dorado),#ffd463);transition:width .35s ease}
 
-    .gm-grid-wrap{margin-top:10px;border:2px dashed #f6c7c7;border-radius:12px;padding:8px;background:linear-gradient(180deg,#fff7f7,#fff9f9)}
-    .gm-grid{display:grid;gap:6px;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:contain}
-    .gm-cell{width:min(8.2vw,38px);height:min(8.2vw,38px);max-width:42px;max-height:42px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;border:1px solid #e6e6e6;box-shadow:0 3px 10px rgba(0,0,0,.06);font-weight:800;letter-spacing:.6px;color:#2b3a4a;font-size:clamp(14px,4vw,18px)}
-    .gm-cell.active{outline:3px solid rgba(255,215,0,.65);background:#fff9dd}
-    .gm-cell.found{background:#1e7d3a;color:#fff;border-color:#16622d}
-
-    .gm-words{background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid #eee;border-radius:12px;padding:12px}
-    .gm-words h3{font-family:"Playfair Display",serif;text-align:center;color:var(--vino);margin:0 0 8px;font-size:clamp(18px,4.5vw,22px)}
-    .gm-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .gm-chip{border:none;border-radius:999px;padding:10px 12px;font-weight:800;letter-spacing:.8px;background:linear-gradient(180deg,#b30c0c,var(--vino2));color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.14)}
-    .gm-chip.found{background:#1f9d55}
-    .gm-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
-    .gm-btn{background:var(--vino);border:none;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;box-shadow:0 10px 24px rgba(139,0,0,.28);cursor:pointer}
-    .gm-close{background:#111}
-
-    /* Modal historia interno */
-    .gm-story{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);z-index:10000;padding:10px}
-    .gm-story.show{display:flex}
-    .gm-sheet2{width:100%;max-width:720px;background:#fff;border-radius:16px;border:2px solid #8b000022;box-shadow:0 30px 60px rgba(0,0,0,.35);padding:14px 16px}
-    .gm-sheet2 h2{font-family:"Playfair Display",serif;margin:6px 0 10px;color:var(--vino);font-size:clamp(18px,5vw,26px)}
-    .gm-sheet2 .desc{line-height:1.8;font-size:16px}
-    .gm-x{position:absolute;right:18px;top:12px;background:var(--vino);color:#fff;border:none;border-radius:999px;width:36px;height:36px;display:grid;place-items:center;font-weight:700}
-  </style>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="/manifest.json?v=3" />
+  <link rel="icon" type="image/png" href="/images/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
 </head>
+
 <body>
   <div class="app-container">
     <header class="app-header">
       <div class="logo-container">
-        <img src="images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo">
+        <img src="images/Simbolo_A_verde.svg" alt="Xativa Logo" class="logo" />
       </div>
+
       <div style="display:flex; gap:12px; align-items:center;">
         <div class="language-selector">
           <select id="language-select" aria-label="Language">
@@ -89,11 +47,14 @@
     <main class="chat-container">
       <div class="chef-profile">
         <div class="chef-avatar">
-          <img src="images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar">
+          <img src="images/chef-avatar.png" alt="AlexBot Chef" id="chef-avatar" />
         </div>
         <div class="chef-info">
           <h1>AlexBot</h1>
-          <p class="chef-title" data-en="Executive Chef" data-es="Chef Ejecutivo" data-ca="Xef Executiu">Executive Chef</p>
+          <p class="chef-title"
+             data-en="Executive Chef"
+             data-es="Chef Ejecutivo"
+             data-ca="Xef Executiu">Chef Ejecutivo</p>
         </div>
       </div>
 
@@ -103,22 +64,45 @@
              data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
              data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
              data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
-             Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?
+             ¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?
           </p>
         </div>
       </div>
 
       <div class="suggestion-chips">
-        <button class="chip" data-intent="menu" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">Recomendaciones del menú</button>
-        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">Necesidades dietéticas</button>
-        <button class="chip" data-intent="reserve" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">Hacer una reserva</button>
-        <button class="chip" data-intent="locations" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">Ubicaciones</button>
-        <!-- NUEVO: CHIP DEL JUEGO -->
-        <button class="chip" data-intent="game" data-en="Culinary Word Search" data-es="Juego culinario" data-ca="Joc culinari">Juego culinario</button>
+        <button class="chip" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">
+          Recomendaciones del menú
+        </button>
+
+        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">
+          Necesidades dietéticas especiales
+        </button>
+
+        <button class="chip" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">
+          Hacer una reserva
+        </button>
+
+        <button class="chip" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">
+          Ubicaciones de restaurantes
+        </button>
+
+        <!-- NUEVO: enlace al juego (nombre de archivo EXACTO) -->
+        <a class="chip"
+           href="culinary.game.html"
+           data-en="Culinary word search"
+           data-es="Juego culinario"
+           data-ca="Joc culinari">
+           Juego culinario
+        </a>
       </div>
 
       <div class="user-input-container">
-        <textarea id="user-input" placeholder="Type your message..." data-en="Type your message..." data-es="Escribe tu mensaje..." data-ca="Escriu el teu missatge..."></textarea>
+        <textarea id="user-input"
+                  placeholder="Escribe tu mensaje..."
+                  data-en="Type your message..."
+                  data-es="Escribe tu mensaje..."
+                  data-ca="Escriu el teu missatge..."></textarea>
+
         <div class="input-actions">
           <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
@@ -126,6 +110,7 @@
               <path d="M12 15c2.21 0 4-1.79 4-4V5c0-2.21-1.79-4-4-4S8 2.79 8 5v6c0 2.21 1.79 4 4 4zm0-2c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2s2 .9 2 2v6c0 1.1-.9 2-2 2zm4 2v1c0 2.76-2.24 5-5 5s-5-2.24-5-5v-1H4v1c0 3.53 2.61 6.43 6 6.92V22h4v-2.08c3.39-.49 6-3.39 6-6.92v-1h-2z"/>
             </svg>
           </button>
+
           <button id="send-btn" class="send-btn" aria-label="Send">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
               <path fill="none" d="M0 0h24v24H0z"/>
@@ -138,57 +123,15 @@
 
     <div class="voice-indicator" id="voice-indicator">
       <div class="voice-waves"><span></span><span></span><span></span><span></span><span></span></div>
-      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Listening...</p>
+      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Escuchando...</p>
     </div>
   </div>
 
   <footer class="app-footer">
-    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">All rights reserved.</span></p>
+    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">Todos los derechos reservados.</span></p>
   </footer>
 
-  <!-- MODAL DEL JUEGO (integrado) -->
-  <div id="game-modal" class="game-modal" aria-modal="true" role="dialog">
-    <div class="gm-sheet">
-      <div class="gm-head">
-        <h2 class="gm-title">Sopa de Letras Gastronómica</h2>
-        <p class="gm-sub">Arrastra dentro del tablero para seleccionar; al acertar verás la historia culinaria.</p>
-      </div>
-      <div class="gm-body">
-        <div class="gm-how"><b>Tip:</b> durante el gesto táctil el tablero no se desplaza (mejor precisión).</div>
-        <div class="gm-row">
-          <div class="gm-panel">
-            <div class="gm-stats">
-              <div class="gm-stat"><div class="big" id="gm-found">0</div><div>Encontradas</div></div>
-              <div class="gm-stat"><div class="big" id="gm-total">—</div><div>Totales</div></div>
-              <div class="gm-stat"><div class="big" id="gm-pct">0%</div><div>Completado</div></div>
-            </div>
-            <div class="gm-progress"><span id="gm-bar"></span></div>
-            <div class="gm-grid-wrap">
-              <div id="gm-grid" class="gm-grid" role="grid" aria-label="Sopa de letras"></div>
-            </div>
-          </div>
-          <div class="gm-words">
-            <h3>Ingredientes por descubrir</h3>
-            <div id="gm-wordlist" class="gm-list"></div>
-            <div class="gm-footer">
-              <button class="gm-btn gm-close" id="gm-close">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- modal historia -->
-      <div id="gm-story" class="gm-story">
-        <div class="gm-sheet2">
-          <button class="gm-x" id="gm-x">✕</button>
-          <h2 id="gm-story-title">Título</h2>
-          <div id="gm-story-body" class="desc"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="/install.js"></script>
-  <script src="app.js"></script>
+  <script src="/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
