@@ -8,6 +8,7 @@
   :root{
     --primary:#8B0000; --primary-dark:#6d0019; --accent:#27ae60;
     --bg:#fff8f6; --card:#ffffff; --text:#2c3e50;
+    --yellow:#FFD166;
     --cellSize: clamp(28px, calc(100vw/14), 44px);
     --gap: 3px;
   }
@@ -34,7 +35,7 @@
     appearance:none;border:none;cursor:pointer;border-radius:12px;
     padding:10px 14px;font-weight:700;
     background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 100%);
-    color:#fff; box-shadow:0 6px 20px rgba(139,0,0,.25);
+    color:var(--yellow); box-shadow:0 6px 20px rgba(139,0,0,.25);
   }
   .grid-card{
     background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08);
@@ -75,7 +76,7 @@
   }
   .stat{opacity:.8;font-size:.92rem;margin:8px 0}
 
-  /* Responsive: en móviles apila tablero encima y panel al bajo */
+  /* Responsive */
   @media (max-width: 720px){
     .grid-wrap{flex-direction:column}
     .side{width:100%}
@@ -90,7 +91,7 @@
   }
   .card-head{
     background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color:#fff; padding:12px 14px; border-radius:16px 16px 0 0;
+    color:var(--yellow); padding:12px 14px; border-radius:16px 16px 0 0;
     display:flex; align-items:center; justify-content:space-between; gap:10px
   }
   .card-title{font-weight:900;letter-spacing:.2px}
@@ -100,7 +101,7 @@
     border-radius:10px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1
   }
 
-  /* Modal promo específico (centrado) */
+  /* Modal promo (centrada) */
   .modal.center{place-items:center}
   .promo{
     display:flex;gap:10px;align-items:center;justify-content:space-between;background:#f8f1e9;border:1px dashed #d4af37;border-radius:12px;padding:10px 12px
@@ -108,7 +109,6 @@
   .promo-code{font-weight:900;font-size:1.2rem;color:var(--primary)}
   .small{opacity:.85;font-size:.94rem}
 
-  /* Evita scroll del body cuando la modal está abierta (aplicado por JS) */
   .noscroll{overflow:hidden; height:100%}
 </style>
 </head>
@@ -132,7 +132,7 @@
   </div>
 </div>
 
-<!-- Modal LORE (bottom sheet) -->
+<!-- Modal LORE -->
 <div class="modal" id="loreModal" role="dialog" aria-modal="true" aria-labelledby="loreTitle">
   <div class="card">
     <div class="card-head">
@@ -148,7 +148,7 @@
   </div>
 </div>
 
-<!-- Modal PROMO (centrada) -->
+<!-- Modal PROMO -->
 <div class="modal center" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
   <div class="card" style="border-radius:18px">
     <div class="card-head" style="border-radius:16px 16px 0 0">
@@ -171,66 +171,19 @@
 
 <script>
 (() => {
-  // ===== idioma por querystring =====
   const params = new URLSearchParams(location.search);
   const lang = (params.get('lang') || 'es').toLowerCase();
   const T = {
-    es:{
-      title:"Sopa de letras culinaria",
-      find:"Encuentra estas palabras:",
-      info:"Selecciona letras contiguas en línea recta. Al acertar, se abrirá una ventana con la historia/mito del ingrediente.",
-      progress:"Progreso:",
-      lore:"Historia del ingrediente",
-      understood:"Entendido",
-      winTitle:"🎉 ¡Felicidades!",
-      winMsg:"Has completado el reto. Aquí tienes tu código promocional:",
-      winNote:"Lo hemos guardado y se enviará junto a tu reserva.",
-      copy:"Copiar",
-      restart:"Reiniciar"
-    },
-    en:{
-      title:"Culinary Word Search",
-      find:"Find these words:",
-      info:"Select contiguous letters in a straight line. When you find one, a window will show its story/myth.",
-      progress:"Progress:",
-      lore:"Ingredient story",
-      understood:"Got it",
-      winTitle:"🎉 Congrats!",
-      winMsg:"You nailed it. Here’s your promo code:",
-      winNote:"We saved it and will attach it to your booking.",
-      copy:"Copy",
-      restart:"Restart"
-    },
-    ca:{
-      title:"Sopa de lletres culinària",
-      find:"Troba aquestes paraules:",
-      info:"Selecciona lletres contigües en línia recta. En encertar, s’obrirà una finestra amb la història/mite.",
-      progress:"Progrés:",
-      lore:"Història de l’ingredient",
-      understood:"Entés",
-      winTitle:"🎉 Enhorabona!",
-      winMsg:"Ho has clavat. Ací tens el teu codi promocional:",
-      winNote:"L’hem guardat i s’adjuntarà a la reserva.",
-      copy:"Copiar",
-      restart:"Reiniciar"
-    }
+    es:{title:"Sopa de letras culinaria",find:"Encuentra estas palabras:",info:"Selecciona letras contiguas en línea recta. Al acertar, se abrirá una ventana con la historia/mito del ingrediente.",progress:"Progreso:",lore:"Historia del ingrediente",understood:"Entendido",winTitle:"🎉 ¡Felicidades!",winMsg:"Has completado el reto. Aquí tienes tu código promocional:",winNote:"Lo hemos guardado y se enviará junto a tu reserva.",copy:"Copiar",restart:"Reiniciar"},
+    en:{title:"Culinary Word Search",find:"Find these words:",info:"Select contiguous letters in a straight line. A window will show its story when you find one.",progress:"Progress:",lore:"Ingredient story",understood:"Got it",winTitle:"🎉 Congrats!",winMsg:"You nailed it. Here’s your promo code:",winNote:"We saved it and will attach it to your booking.",copy:"Copy",restart:"Restart"},
+    ca:{title:"Sopa de lletres culinària",find:"Troba aquestes paraules:",info:"Selecciona lletres contigües en línia recta. En encertar, s’obrirà una finestra amb la història del ingredient.",progress:"Progrés:",lore:"Història de l’ingredient",understood:"Entés",winTitle:"🎉 Enhorabona!",winMsg:"Ho has clavat. Codi promocional:",winNote:"S’ha desat i s’adjuntarà a la reserva.",copy:"Copiar",restart:"Reiniciar"}
   }[lang];
+  qs('#gameTitle').textContent=T.title; qs('#subtitle').textContent=T.find; qs('#infoBox').textContent=T.info;
+  qs('#statBox').firstChild.textContent=T.progress+' '; qs('#loreTitle').textContent=T.lore; qs('#okLore').textContent=T.understood;
+  qs('#winTitle').textContent=T.winTitle; qs('#winMsg').textContent=T.winMsg; qs('#winNote').textContent=T.winNote;
+  qs('#copyBtn').textContent=T.copy; qs('#restartBtn').textContent=T.restart;
 
-  // ===== UI textos =====
-  qs('#gameTitle').textContent = T.title;
-  qs('#subtitle').textContent  = T.find;
-  qs('#infoBox').textContent   = T.info;
-  qs('#statBox').firstChild.textContent = T.progress + ' ';
-  qs('#loreTitle').textContent = T.lore;
-  qs('#okLore').textContent    = T.understood;
-  qs('#winTitle').textContent  = T.winTitle;
-  qs('#winMsg').textContent    = T.winMsg;
-  qs('#winNote').textContent   = T.winNote;
-  qs('#copyBtn').textContent   = T.copy;
-  qs('#restartBtn').textContent= T.restart;
-
-  // ===== Dataset de palabras + mini-lore =====
-  const WORDS = [
+  const WORDS=[
     { w:"ARROZ",   lore:"El socarrat es el tesoro del fondo: textura crujiente y sabor concentrado." },
     { w:"AZAFRAN", lore:"Oro rojo: da color y aroma floral; tostar levemente potencia su magia." },
     { w:"FIDEUA",  lore:"Nacida por azar en Gandía cuando faltó arroz. Fideos tostados, sabor marino." },
@@ -239,170 +192,130 @@
     { w:"PIMENTON",lore:"Dulce o picante, ahumado o no: define chorizos, guisos y arroces." },
     { w:"CALAMAR", lore:"Aliado perfecto en arroces de mar; tierno con cocción breve o larga." },
     { w:"ALMEJA",  lore:"Aporta yodo y salinidad suave; abierta al vapor, pura elegancia." },
-    { w:"ROMERO",  lore:"Hierba mediterránea resina-pino; perfuma asados y patatas." },
+    { w:"ROMERO",  lore:"Hierba mediterránea resinosa; perfuma asados y patatas." },
     { w:"LIMON",   lore:"Acidez luminosa; equilibra grasas y refresca marinados." },
     { w:"ACEITE",  lore:"AOVE: frutado, amargo y picante — el triángulo de la calidad." },
     { w:"PAELLA",  lore:"Icono valenciano: sofrito, caldo sabroso y reposo respetuoso." }
   ];
 
-  // ===== Config del tablero =====
   const ROWS=12, COLS=12;
-  const gridEl = qs('#grid');
-  gridEl.style.setProperty('--cols', COLS);
-  const listEl = qs('#wordList');
-  const infoEl = qs('#infoBox');
-  const foundCountEl = qs('#foundCount');
-  const totalCountEl = qs('#totalCount');
-  const loreModal = qs('#loreModal');
-  const loreText  = qs('#loreText');
-  const winModal  = qs('#winModal');
-  const promoCodeEl = qs('#promoCode');
+  const gridEl=qs('#grid'); gridEl.style.setProperty('--cols', COLS);
+  const listEl=qs('#wordList'), infoEl=qs('#infoBox'), foundCountEl=qs('#foundCount'), totalCountEl=qs('#totalCount');
+  const loreModal=qs('#loreModal'), loreText=qs('#loreText');
+  const winModal=qs('#winModal'), promoCodeEl=qs('#promoCode');
+  totalCountEl.textContent=WORDS.length;
 
-  totalCountEl.textContent = WORDS.length;
-
-  // Estado
   const grid = Array.from({length:ROWS}, ()=> Array(COLS).fill(null));
-  const placed = [];
-  const found = new Set();
+  const placed=[]; const found=new Set();
 
-  // Selección (mejorada táctil)
-  let selecting = false;
-  let start = null;           // {r,c}
-  let dir = null;             // {dr, dc} en 8 direcciones
-  let trail = [];             // celdas DOM de la selección actual
+  let selecting=false, start=null, dir=null, trail=[];
+  const DIRS = [ [0,1],[1,0],[11,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1] ]; // [1,1] estaba mal tipeado (11,1) → corregimos abajo en uso
+  // Corrige el typo anterior:
+  DIRS[2]=[1,1];
 
-  // Util
-  const ABC = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
-  function rand(n){ return Math.floor(Math.random()*n); }
-  function sign(n){ return n===0?0:(n>0?1:-1); }
-  function inBounds(r,c){ return r>=0 && r<ROWS && c>=0 && c<COLS; }
-  function qs(sel){ return document.querySelector(sel); }
-  function bodyNoScroll(on){ document.documentElement.classList.toggle('noscroll', on); document.body.classList.toggle('noscroll', on); }
-
-  // Direcciones permitidas
-  const DIRS = [ [0,1], [1,0], [1,1], [0,-1], [-1,0], [-1,-1], [1,-1], [-1,1] ];
+  const ABC="ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+  function rand(n){return Math.floor(Math.random()*n)}
+  function inBounds(r,c){return r>=0&&r<ROWS&&c>=0&&c<COLS}
+  function sign(n){return n===0?0:(n>0?1:-1)}
+  function qs(s){return document.querySelector(s)}
+  function bodyNoScroll(on){document.documentElement.classList.toggle('noscroll',on);document.body.classList.toggle('noscroll',on)}
 
   function placeAll(){
     for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) grid[r][c]=null;
     placed.length=0; found.clear();
-
-    for (const obj of WORDS){
-      const W = normalize(obj.w);
-      let ok=false, tries=0;
-      while(!ok && tries<500){
+    for(const obj of WORDS){
+      const W=norm(obj.w); let ok=false, tries=0;
+      while(!ok && tries<600){
         tries++;
-        const d = DIRS[rand(DIRS.length)];
-        const r0 = rand(ROWS), c0 = rand(COLS);
+        const d=DIRS[rand(DIRS.length)];
+        const r0=rand(ROWS), c0=rand(COLS);
         let r=r0,c=c0, valid=true;
-        for (let i=0;i<W.length;i++){
-          if(!inBounds(r,c)){ valid=false; break; }
-          const cell = grid[r][c];
-          if (cell && cell !== W[i]) { valid=false; break; }
+        for(let i=0;i<W.length;i++){
+          if(!inBounds(r,c)){valid=false;break}
+          const cell=grid[r][c];
+          if(cell && cell!==W[i]){valid=false;break}
           r+=d[0]; c+=d[1];
         }
-        if (!valid) continue;
+        if(!valid) continue;
         r=r0; c=c0;
-        for (let i=0;i<W.length;i++){
-          grid[r][c] = W[i];
-          r+=d[0]; c+=d[1];
-        }
-        placed.push({w:W, start:[r0,c0], dir:d});
+        for(let i=0;i<W.length;i++){ grid[r][c]=W[i]; r+=d[0]; c+=d[1]; }
+        placed.push({w:W,start:[r0,c0],dir:d});
         ok=true;
       }
       if(!ok) console.warn('No pude colocar', obj.w);
     }
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-      if(!grid[r][c]) grid[r][c] = ABC[rand(ABC.length)];
-    }
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(!grid[r][c]) grid[r][c]=ABC[rand(ABC.length)] }
   }
 
   function draw(){
-    gridEl.innerHTML = '';
+    gridEl.innerHTML='';
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
-        const div=document.createElement('div');
-        div.className='cell';
-        div.textContent=grid[r][c];
-        div.dataset.r=r; div.dataset.c=c;
-        gridEl.appendChild(div);
+        const d=document.createElement('div');
+        d.className='cell'; d.textContent=grid[r][c]; d.dataset.r=r; d.dataset.c=c;
+        gridEl.appendChild(d);
       }
     }
     listEl.innerHTML='';
     for(const obj of WORDS){
       const b=document.createElement('button');
-      b.className='word-item';
-      b.dataset.word=obj.w;
-      b.textContent=obj.w;
+      b.className='word-item'; b.dataset.word=obj.w; b.textContent=obj.w;
       listEl.appendChild(b);
     }
-    foundCountEl.textContent = found.size;
+    foundCountEl.textContent=found.size;
   }
 
   function reset(){
-    placeAll(); draw();
-    infoEl.textContent = T.info;
-    found.clear(); foundCountEl.textContent = found.size;
-    hideLore(); hideWin();
+    placeAll(); draw(); infoEl.textContent=T.info; found.clear(); foundCountEl.textContent=found.size; hideLore(); hideWin();
   }
 
-  function normalize(s){
-    return s.toUpperCase()
-      .replace(/[ÁÀ]/g,'A').replace(/[ÉÈ]/g,'E')
-      .replace(/[ÍÌ]/g,'I').replace(/[ÓÒ]/g,'O')
-      .replace(/[ÚÙ]/g,'U').replace(/Ñ/g,'Ñ');
-  }
+  function norm(s){return s.toUpperCase().replace(/[ÁÀ]/g,'A').replace(/[ÉÈ]/g,'E').replace(/[ÍÌ]/g,'I').replace(/[ÓÒ]/g,'O').replace(/[ÚÙ]/g,'U')}
+  function clearTrail(){ for(const el of trail) el.classList.remove('selected'); trail.length=0; }
 
-  // Helper selección UI
-  function clearTrail(){
-    for (const el of trail) el.classList.remove('selected');
-    trail.length=0;
-  }
-  function markTrailFromStart(toR,toC){
-    clearTrail();
-    if (!start) return;
-
-    let r = start.r, c = start.c;
-    if (!dir){
-      // define dirección según delta dominante
-      const dr = sign(toR - r), dc = sign(toC - c);
-      if (dr===0 && dc===0) return;
-      dir = {dr, dc};
-    }
-    // Recalcula “hasta dónde” llega el dedo en la línea de dir
-    let rr=r, cc=c;
-    while (true){
-      if (rr===toR && cc===toC) break;
-      rr += dir.dr; cc += dir.dc;
-      if (!inBounds(rr,cc)) break;
-      // si nos pasamos de la línea (usuario movió “fuera”), corregimos: parar en el último dentro
-      if (Math.sign(toR - rr) !== dir.dr && Math.sign(toC - cc) !== dir.dc) break;
-    }
-    // Pinta trail desde start hasta rr,cc
-    let tr=r, tc=c;
-    while (true){
-      const cellEl = cellAt(tr,tc);
-      if (cellEl) { cellEl.classList.add('selected'); trail.push(cellEl); }
-      if (tr===rr && tc===cc) break;
-      tr += dir.dr; tc += dir.dc;
-      if (!inBounds(tr,tc)) break;
-    }
-  }
-
-  function cellAt(r,c){
-    const idx = r*COLS + c;
-    return gridEl.children[idx] || null;
+  function cellAt(r,c){ const idx=r*COLS+c; return gridEl.children[idx]||null }
+  function elementCellFromPoint(x,y){
+    const el=document.elementFromPoint(x,y);
+    if(!el) return null;
+    const cell=el.closest('.cell');
+    if(!cell) return null;
+    return {el:cell, r:+cell.dataset.r, c:+cell.dataset.c};
   }
   function cellFromEvent(e){
-    const el = e.target.closest('.cell');
-    if(!el) return null;
-    return { el, r: +el.dataset.r, c: +el.dataset.c };
+    // Con pointer capture, target es el grid; usamos elementFromPoint
+    return elementCellFromPoint(e.clientX, e.clientY);
   }
 
-  // Pointer handlers (táctil optimizado)
+  function nearestDir(fromR,fromC,toR,toC){
+    const dr=sign(toR-fromR), dc=sign(toC-fromC);
+    if(dr===0 && dc===0) return null;
+    // proyecta al conjunto de 8 dirs (dr,dc ∈ {-1,0,1} \ {(0,0)})
+    return {dr, dc};
+  }
+
+  function updateTrail(toR, toC){
+    clearTrail();
+    if(!start) return;
+    if(!dir){
+      const nd=nearestDir(start.r,start.c,toR,toC);
+      if(!nd) return;
+      dir = nd;
+    }
+    let r=start.r, c=start.c;
+    while(true){
+      const el=cellAt(r,c);
+      if(el){ el.classList.add('selected'); trail.push(el); }
+      if(r===toR && c===toC) break;
+      r+=dir.dr; c+=dir.dc;
+      if(!inBounds(r,c)) break;
+      // si nos salimos del vector lógico, paramos
+      if (Math.sign(toR - r)!==dir.dr && Math.sign(toC - c)!==dir.dc) break;
+    }
+  }
+
   gridEl.addEventListener('pointerdown', e=>{
-    const info = cellFromEvent(e); if(!info) return;
-    e.preventDefault(); // ← evita scroll
-    selecting = true; start = {r:info.r, c:info.c}; dir = null; clearTrail();
+    const info=cellFromEvent(e); if(!info) return;
+    e.preventDefault();
+    selecting=true; start={r:info.r, c:info.c}; dir=null; clearTrail();
     info.el.classList.add('selected'); trail.push(info.el);
     bodyNoScroll(true);
     gridEl.setPointerCapture(e.pointerId);
@@ -411,125 +324,88 @@
   gridEl.addEventListener('pointermove', e=>{
     if(!selecting) return;
     e.preventDefault();
-    const info = cellFromEvent(e); if(!info) return;
-    markTrailFromStart(info.r, info.c);
+    const info=cellFromEvent(e); if(!info) return;
+    updateTrail(info.r, info.c);
   }, {passive:false});
 
-  gridEl.addEventListener('pointerup', e=>{
+  function endSelection(e){
     if(!selecting) return;
-    e.preventDefault();
-    selecting = false;
-    gridEl.releasePointerCapture(e.pointerId);
-    bodyNoScroll(false);
+    e && e.preventDefault();
+    selecting=false; bodyNoScroll(false);
+    if(e && e.pointerId) try{ gridEl.releasePointerCapture(e.pointerId);}catch{}
     finalizeSelection();
-  }, {passive:false});
-
-  gridEl.addEventListener('pointercancel', ()=>{
-    selecting = false; clearTrail(); dir=null; start=null; bodyNoScroll(false);
-  });
+  }
+  gridEl.addEventListener('pointerup', endSelection, {passive:false});
+  gridEl.addEventListener('pointercancel', endSelection, {passive:false});
+  gridEl.addEventListener('lostpointercapture', endSelection);
 
   function finalizeSelection(){
-    if (!trail.length) return;
-    // Construye string de la selección en orden
-    const s = trail.map(x=>x.textContent).join('');
-    const rev = trail.slice().reverse().map(x=>x.textContent).join('');
-    let hit = null, forward = false;
-
-    for (const obj of WORDS){
-      const W = normalize(obj.w);
-      if (s === W){ hit = obj; forward = true; break; }
-      if (rev === W){ hit = obj; forward = false; break; }
+    if(!trail.length) return;
+    const s=trail.map(x=>x.textContent).join('');
+    const rev=trail.slice().reverse().map(x=>x.textContent).join('');
+    let hit=null, forward=false;
+    for(const obj of WORDS){
+      const W=norm(obj.w);
+      if(s===W){hit=obj; forward=true; break}
+      if(rev===W){hit=obj; forward=false; break}
     }
-
-    // Limpia seleccionado
     clearTrail(); dir=null; start=null;
+    if(!hit) return;
 
-    if (!hit) return;
-
-    // Marca found
-    if (!found.has(hit.w)){
-      // colorea celdas en la dirección acertada
-      const cells = forward ? collectCellsString(s) : collectCellsString(rev);
-      cells.forEach(el => el.classList.add('found'));
-      // marca palabra
-      const item = [...document.querySelectorAll('.word-item')].find(b=>b.dataset.word===hit.w);
-      if (item) item.classList.add('found');
-
-      found.add(hit.w);
-      foundCountEl.textContent = found.size;
-
-      // Muestra lore en modal inferior
+    if(!found.has(hit.w)){
+      const cells = cellsOfWord(hit.w, forward);
+      cells.forEach(el=>el.classList.add('found'));
+      const item=[...document.querySelectorAll('.word-item')].find(b=>b.dataset.word===hit.w);
+      if(item) item.classList.add('found');
+      found.add(hit.w); foundCountEl.textContent=found.size;
       showLore(hit.lore);
-
-      // Condición de victoria (7)
-      if (found.size >= 7){
-        const code = getOrCreatePromo();
-        promoCodeEl.textContent = code;
-        showWin();
-
-        // Comunicar al padre (app)
-        try{
-          parent.postMessage({ type:'CULINARY_GAME_DONE', code, words:[...found], lang }, '*');
-        }catch(e){}
+      if(found.size>=7){
+        const code=getOrCreatePromo(); promoCodeEl.textContent=code; showWin();
+        try{ parent.postMessage({type:'CULINARY_GAME_DONE', code, words:[...found], lang}, '*'); }catch{}
       }
     }
   }
 
-  function collectCellsString(str){
-    // localiza secuencia en el tablero (entre las colocadas) y devuelve nodos DOM
-    const target = normalize(str);
-    for (const plc of placed){
-      if (plc.w !== target) continue;
-      const out = [];
-      let r = plc.start[0], c = plc.start[1];
-      for (let i=0;i<plc.w.length;i++){
-        const el = cellAt(r,c); if (el) out.push(el);
-        r += plc.dir[0]; c += plc.dir[1];
+  function cellsOfWord(word, forward){
+    const target=norm(word);
+    for(const plc of placed){
+      if(plc.w!==target) continue;
+      const out=[];
+      let r=plc.start[0], c=plc.start[1];
+      const d={dr:plc.dir[0], dc:plc.dir[1]};
+      const len=plc.w.length;
+      if(!forward){
+        r=r + d.dr*(len-1); c=c + d.dc*(len-1);
+        d.dr*=-1; d.dc*=-1;
       }
+      for(let i=0;i<len;i++){ const el=cellAt(r,c); if(el) out.push(el); r+=d.dr; c+=d.dc; }
       return out;
     }
     return [];
   }
 
-  // Promo code
   function getOrCreatePromo(){
     const k='xativabot-game-promo';
-    let v = localStorage.getItem(k);
-    if (v) return v;
-    v = 'XAT-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
-    localStorage.setItem(k, v);
+    let v=localStorage.getItem(k);
+    if(v) return v;
+    v='XAT-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    localStorage.setItem(k,v);
     return v;
   }
 
-  // LORE modal
-  function showLore(text){
-    loreText.textContent = text;
-    loreModal.classList.add('show');
-  }
-  function hideLore(){
-    loreModal.classList.remove('show');
-  }
+  function showLore(txt){ loreText.textContent=txt; loreModal.classList.add('show'); }
+  function hideLore(){ loreModal.classList.remove('show'); }
   qs('#closeLore').addEventListener('click', hideLore);
   qs('#okLore').addEventListener('click', hideLore);
 
-  // WIN modal
-  function showWin(){
-    winModal.classList.add('show');
-  }
-  function hideWin(){
-    winModal.classList.remove('show');
-  }
+  function showWin(){ winModal.classList.add('show'); }
+  function hideWin(){ winModal.classList.remove('show'); }
   qs('#closeWin').addEventListener('click', hideWin);
   qs('#okWin').addEventListener('click', hideWin);
-  qs('#copyBtn').addEventListener('click', ()=>{
-    const v = promoCodeEl.textContent.trim();
-    navigator.clipboard?.writeText(v);
-  });
+  qs('#copyBtn').addEventListener('click', ()=>{ const v=promoCodeEl.textContent.trim(); navigator.clipboard?.writeText(v); });
 
-  // Reinicio
   qs('#restartBtn').addEventListener('click', reset);
 
-  // Start
   reset();
 })();
 </script>
