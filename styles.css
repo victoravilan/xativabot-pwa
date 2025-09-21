@@ -1,358 +1,235 @@
 /* ==========================
-   XativaBot PWA - Estilos (tema vino + módulos + historia desplegable)
+   XativaBot PWA - Vino tinto theme + legibilidad
    ========================== */
-:root {
-  --primary-color: #8B0000;  /* Vino tinto Xàtiva */
-  --primary-900: #6E0000;
-  --primary-700: #A61C1C;
-  --secondary-color: #F8F1E9; /* Crema */
-  --accent-color: #D4AF37;    /* Dorado */
-  --text-color: #1f1f1f;
-  --muted-text: #6b6b6b;
-  --light-text: #FFFFFF;
-  --background-color: #F6F6F7;
-  --card-bg: #FFFFFF;
-  --shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
-  --shadow-soft: 0 6px 18px rgba(0,0,0,.08);
-  --border-radius: 16px;
-  --transition: all 0.25s ease;
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Roboto', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+:root{
+  --primary-color:#8B0000;         /* vino tinto */
+  --primary-dark:#6d0019;
+  --accent-color:#D4AF37;          /* dorado */
+  --yellow:#FFD166;                /* texto destacado */
+  --text-color:#222;               /* texto base sobre claro */
+  --light-text:#fff;
+  --bg:#F8F1E9;                    /* crema */
+  --card-bg:#FFFFFF;
+  --shadow:0 6px 22px rgba(0,0,0,.12);
+  --border-radius:14px;
+  --transition: all .25s ease;
+  --font-heading:'Playfair Display', serif;
+  --font-body:'Roboto', system-ui, -apple-system, Arial, sans-serif;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  font-family: var(--font-body);
-  background:
-    radial-gradient(1200px 1200px at 10% -10%, rgba(139,0,0,.07), transparent 60%),
-    radial-gradient(900px 900px at 100% 10%, rgba(212,175,55,.08), transparent 55%),
-    var(--background-color);
-  color: var(--text-color);
-  line-height: 1.6;
-  overflow-x: hidden;
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);
+  background:radial-gradient(1200px 600px at 10% -10%, #fff0ea, transparent 60%),
+             radial-gradient(1000px 800px at 100% 10%, #ffe8e3, transparent 50%),
+             var(--bg);
+  color:var(--text-color);
+  line-height:1.6; overflow-x:hidden;
 }
 
-.app-container {
-  max-width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+/* Container */
+.app-container{max-width:100%;min-height:100vh;display:flex;flex-direction:column}
 
-/* ===== Header ===== */
-.app-header {
-  background: linear-gradient(180deg, var(--primary-color), var(--primary-900));
-  color: var(--light-text);
-  padding: 16px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  box-shadow: 0 2px 0 rgba(0,0,0,.05), inset 0 -1px 0 rgba(255,255,255,.04);
-  position: sticky; top: 0; z-index: 100;
+/* Header */
+.app-header{
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow);
+  padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:var(--shadow); position:sticky; top:0; z-index:100;
 }
-.logo-container { display: flex; align-items: center; gap: 10px; }
-.logo { height: 44px; width: auto; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
-
+.logo-container{display:flex;align-items:center;gap:10px}
+.logo{height:40px;width:auto;filter: drop-shadow(0 4px 10px rgba(0,0,0,.3))}
 .language-selector select,
 .region-selector select{
-  background-color: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  color: var(--light-text);
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  outline: none;
-  cursor: pointer;
-  transition: var(--transition);
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.35);
+  color:var(--yellow);
+  padding:8px 12px;border-radius:999px;font-size:14px;outline:none;cursor:pointer;transition:var(--transition)
 }
 .language-selector select:hover,
-.region-selector select:hover{ background-color: rgba(255,255,255,0.16); }
+.region-selector select:hover{background:rgba(255,255,255,.18)}
 .language-selector select option,
-.region-selector select option { background-color: var(--primary-900); color: var(--light-text); }
-
-/* ===== Main Chat ===== */
-.chat-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 22px;
-  max-width: 920px;
-  margin: 0 auto;
-  width: 100%;
+.region-selector select option{
+  background:#5a000f;color:#fff
 }
 
-/* ===== Perfil (módulo) ===== */
-.chef-profile {
-  display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 16px;
-  background: linear-gradient(160deg, #fff, #fff5);
-  border: 1px solid #eee;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: saturate(110%);
-}
-.chef-avatar {
-  width: 84px; height: 84px;
-  border-radius: 50%; overflow: hidden;
-  border: 3px solid var(--accent-color);
-  box-shadow: 0 6px 16px rgba(0,0,0,.1);
-}
-.chef-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.chef-info h1 {
-  font-family: var(--font-heading);
-  color: var(--primary-color);
-  margin-bottom: 4px;
-  font-size: 26px;
-  letter-spacing: .2px;
-}
-.chef-title { color: var(--muted-text); font-size: 15px; font-style: italic; }
-
-/* ===== Mensajes (cards/burbujas) ===== */
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.message {
-  max-width: 82%;
-  padding: 14px 16px;
-  border-radius: 18px;
-  margin-bottom: 2px;
-  animation: fadeIn .28s ease;
-  box-shadow: 0 1px 0 rgba(0,0,0,.02);
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
-
-.bot-message {
-  align-self: flex-start;
-  background: #fff;
-  border: 1px solid #eee;
-  border-left: 5px solid var(--accent-color);
-  border-bottom-left-radius: 8px;
-}
-.user-message {
-  align-self: flex-end;
-  color: var(--light-text);
-  background: linear-gradient(160deg, var(--primary-700), var(--primary-color));
-  border: 1px solid rgba(255,255,255,.15);
-  border-bottom-right-radius: 8px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-}
-.welcome-message { font-size: 16px; line-height: 1.55; }
-
-/* ===== Chips (mejor contraste + look vino) ===== */
-.suggestion-chips {
-  display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 6px;
-}
-.chip {
-  background: #fff; color: #201a1a;
-  border: 1px solid #ddd;
-  padding: 9px 15px;
-  border-radius: 999px;
-  font-size: 14px; font-weight: 700;
-  cursor: pointer; transition: var(--transition);
-  white-space: nowrap;
-}
-.chip:hover {
-  background: var(--primary-color);
-  color: #fff; border-color: var(--primary-color);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(139,0,0,.22);
-}
-.chip-primary {
-  background: linear-gradient(160deg, var(--primary-color), var(--primary-700));
-  color: #fff; border-color: transparent;
-  box-shadow: 0 10px 20px rgba(139,0,0,.28);
-}
-.chip-primary:hover { filter: brightness(1.06); }
-
-/* ===== Input ===== */
-.user-input-container {
-  display: grid; grid-template-columns: 1fr auto;
-  gap: 10px; align-items: center;
-  background: #fff; border-radius: var(--border-radius);
-  padding: 12px; box-shadow: var(--shadow-soft); margin-top: 14px;
-  border: 1px solid #eee;
-}
-#user-input {
-  flex: 1; border: 1px solid #e6e6e6;
-  border-radius: 12px; outline: none;
-  background: #fff; color:#171717;
-  padding: 10px 12px; font-size: 16px;
-  resize: none; max-height: 140px; min-height: 36px;
-  transition: var(--transition);
-}
-#user-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(139,0,0,.18);
-}
-#user-input::placeholder{ color:#9a9a9a; }
-
-.input-actions { display: flex; align-items: center; gap: 8px; }
-.voice-btn, .send-btn {
-  background: linear-gradient(180deg, #fff, #f8f8f8);
-  border: 1px solid #e6e6e6; cursor: pointer;
-  padding: 10px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  transition: var(--transition);
-}
-.voice-btn:hover, .send-btn:hover { background: #fff; border-color:#d0d0d0; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
-.voice-btn svg, .send-btn svg { fill: var(--primary-color); width: 22px; height: 22px; }
-.voice-btn.active { background: var(--primary-color); border-color: var(--primary-color); }
-.voice-btn.active svg { fill: var(--light-text); }
-
-/* ===== Indicador voz ===== */
-.voice-indicator {
-  position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.78); color: white;
-  padding: 14px 26px; border-radius: 28px;
-  display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 1000;
-  box-shadow: 0 14px 40px rgba(0,0,0,.35);
-}
-.voice-indicator.active { display: flex; animation: fadeIn 0.25s ease; }
-.voice-waves { display: flex; align-items: center; height: 36px; margin-bottom: 6px; }
-.voice-waves span { width: 4px; height: 18px; margin: 0 3px; background-color: var(--light-text); border-radius: 2px; animation: wave 1s infinite ease-in-out; }
-.voice-waves span:nth-child(2){ animation-delay: .1s } .voice-waves span:nth-child(3){ animation-delay: .2s }
-.voice-waves span:nth-child(4){ animation-delay: .3s } .voice-waves span:nth-child(5){ animation-delay: .4s }
-@keyframes wave { 0%,100%{height:10px;} 50%{height:28px;} }
-
-/* ===== Footer ===== */
-.app-footer {
-  background: linear-gradient(180deg, var(--primary-900), var(--primary-color));
-  color: var(--light-text); text-align: center; padding: 16px; font-size: 14px;
-  border-top: 1px solid rgba(255,255,255,.06);
+/* Main Chat */
+.chat-container{
+  flex:1; display:flex;flex-direction:column; padding:20px;
+  max-width:900px; width:100%; margin:0 auto;
 }
 
-/* ===== Panel de juego (overlay) ===== */
-.game-panel[hidden]{ display:none; }
-.game-panel {
-  position: fixed; inset: 0; background: rgba(0,0,0,.65);
-  display: flex; align-items: center; justify-content: center; z-index: 1200; padding: 16px;
+/* Chef profile */
+.chef-profile{
+  display:flex;align-items:center;gap:18px;margin-bottom:18px;padding:16px;
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow);
+  border-radius:var(--border-radius); box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.12);
 }
-.game-card {
-  width: min(980px, 100%); height: min(720px, 88vh);
-  background: #fff; border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.35);
-  display:flex; flex-direction: column; overflow:hidden; border: 1px solid #e8e8e8;
-}
-.game-head { background: #fff; padding: 10px 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee; }
-.game-head strong { font-family: var(--font-heading); color:#111; }
-.game-close { appearance:none; border:0; background:#111; color:#fff; width:32px; height:32px; border-radius:8px; cursor:pointer; }
-#game-frame { flex:1; width:100%; border:0; background:#fafafa; }
+.chef-avatar{width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--yellow)}
+.chef-avatar img{width:100%;height:100%;object-fit:cover}
+.chef-info h1{font-family:var(--font-heading); color:#fff; font-size:24px; margin-bottom:4px}
+.chef-title{color:var(--yellow)}
 
-/* ===== Historia culinaria (módulo desplegable elegante) ===== */
-.lore-card {
-  background: #fff;
-  border: 1px solid #eadfb8;
-  border-left: 6px solid var(--accent-color);
-  border-radius: 14px;
-  box-shadow: var(--shadow-soft);
-  overflow: hidden;
+/* Mensajes */
+.chat-messages{
+  flex:1; overflow-y:auto; padding:16px 0; display:flex;flex-direction:column; gap:14px;
 }
-.lore-card details { border-radius: 14px; }
-.lore-card summary {
-  user-select: none;
-  list-style: none;
-  cursor: pointer;
-  padding: 12px 14px;
-  background:
-    linear-gradient(0deg, rgba(212,175,55,.08), rgba(212,175,55,.08)),
-    linear-gradient(180deg, #fff, #fff);
-  display: flex; align-items: center; gap: 10px;
-  font-weight: 700; color: #372e1a;
+.message{
+  max-width:84%; padding:14px 16px; border-radius:18px; margin-bottom:4px; animation:fadeIn .25s ease;
+  box-shadow:0 10px 24px rgba(0,0,0,.08);
 }
-.lore-card summary::marker { display:none; }
-.lore-card .badge {
-  background: var(--primary-color); color: #fff; font-weight: 700;
-  border-radius: 999px; padding: 2px 10px; font-size: 12px; letter-spacing: .3px;
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Bot: vino tinto + texto amarillo */
+.bot-message{
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow);
+  align-self:flex-start; border-bottom-left-radius:6px;
 }
-.lore-card .body {
-  padding: 12px 14px 14px;
-  color: #2b2b2b;
-  border-top: 1px dashed rgba(212,175,55,.45);
+/* Usuario: pastilla clara de alto contraste */
+.user-message{
+  background:#ffffff; color:#111; align-self:flex-end; border-bottom-right-radius:6px;
+  border:1px solid #f1d6d6;
+}
+.welcome-message{font-size:17px; line-height:1.55; text-align:center} /* centrado pedido */
+
+/* Chips (alto contraste) */
+.suggestion-chips{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.chip{
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow);
+  border:1px solid rgba(255,255,255,.3);
+  padding:8px 14px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer;
+  transition:var(--transition); white-space:nowrap;
+  box-shadow:0 8px 18px rgba(139,0,0,.25);
+}
+.chip:hover{transform:translateY(-1px); filter:brightness(1.05)}
+.chip:active{transform:translateY(0); filter:brightness(.98)}
+
+/* Input de usuario: muy legible */
+.user-input-container{
+  display:flex; gap:10px; background:var(--card-bg);
+  border-radius:var(--border-radius); padding:12px; box-shadow:var(--shadow); margin-top:14px;
+  border:1px solid #f0dedd;
+}
+#user-input{
+  flex:1; border:none; outline:none; background:#fff; color:#111;
+  padding:12px; border-radius:12px; font-size:16px; line-height:1.5;
+  resize:none; max-height:160px; min-height:24px;
+  box-shadow: inset 0 0 0 1px #eee;
+}
+#user-input::placeholder{color:#555}
+.input-actions{display:flex;align-items:center;gap:10px}
+.voice-btn, .send-btn{
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  border:1px solid rgba(255,255,255,.3);
+  cursor:pointer; padding:10px; border-radius:14px; display:flex;align-items:center;justify-content:center;
+  transition:var(--transition); box-shadow:0 8px 18px rgba(139,0,0,.25)
+}
+.voice-btn svg, .send-btn svg{fill:var(--yellow); width:22px; height:22px}
+.voice-btn:hover, .send-btn:hover{filter:brightness(1.05)}
+
+/* Voice indicator */
+.voice-indicator{
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,.7); color:#fff; padding:14px 22px; border-radius:30px; display:none;
+  align-items:center; justify-content:center; flex-direction:column; z-index:1000;
+}
+.voice-indicator.active{display:flex; animation:fadeIn .25s ease}
+.voice-waves{display:flex;align-items:center;height:40px;margin-bottom:10px}
+.voice-waves span{display:inline-block;width:4px;height:20px;margin:0 3px;background:#fff;border-radius:2px;animation:wave 1s infinite ease-in-out}
+.voice-waves span:nth-child(2){animation-delay:.1s}
+.voice-waves span:nth-child(3){animation-delay:.2s}
+.voice-waves span:nth-child(4){animation-delay:.3s}
+.voice-waves span:nth-child(5){animation-delay:.4s}
+@keyframes wave{0%,100%{height:10px}50%{height:30px}}
+.listening-text{font-size:14px}
+
+/* Footer */
+.app-footer{
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow); text-align:center; padding:14px; font-size:14px;
 }
 
-/* ===== Reservation form (sutil y Xàtiva) ===== */
-.reservation-form {
-  display: grid; gap: 10px; margin-top: 8px; width: 100%; max-width: 560px;
-  background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 14px; box-shadow: var(--shadow-soft);
+/* ====== Formulario de reserva dentro de burbuja del bot ====== */
+.message.bot-message .reservation-form{
+  display:grid; gap:10px; margin-top:8px; width:100%; max-width:560px;
+  background:#fff; border:1px solid #eee; border-radius:14px; padding:14px; box-shadow:0 4px 18px rgba(0,0,0,.06);
 }
-.reservation-form label { font-size: 0.95rem; color: #333; display: grid; gap: 6px; }
+.reservation-form label{font-size:.95rem;color:#333;display:grid;gap:6px}
+.reservation-form input,
+.reservation-form textarea,
+.reservation-form select,
+.reservation-form button{font-family:inherit; font-size:0.95rem}
 .reservation-form input[type="text"],
 .reservation-form input[type="email"],
 .reservation-form input[type="tel"],
 .reservation-form input[type="datetime-local"],
 .reservation-form input[type="number"],
-.reservation-form textarea,
-.reservation-form select {
-  width: 100%; border: 1px solid #e5e7eb; background: #fafafa; color: #111;
-  border-radius: 10px; padding: 10px 12px; transition: var(--transition);
+.reservation-form textarea{
+  width:100%; border:1px solid #e5e7eb; background:#fafafa; color:#111; border-radius:10px; padding:10px 12px;
+  transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
-.reservation-form textarea { min-height: 84px; resize: vertical; }
+.reservation-form textarea{min-height:84px; resize:vertical}
 .reservation-form input:focus,
-.reservation-form textarea:focus,
-.reservation-form select:focus{
-  outline: none; border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(139,0,0,.15); background: #fff;
+.reservation-form textarea:focus{
+  outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(139,0,0,.15); background:#fff;
 }
-.reservation-form ::placeholder { color: #9aa0a6; }
-@media (min-width: 560px){
-  .reservation-form{ grid-template-columns: 1fr 1fr; }
-  .reservation-form label:nth-last-of-type(2){ grid-column: 1 / -1; }
-  .reservation-form button[type="submit"]{ grid-column: 1 / -1; justify-self: start; }
+.reservation-form ::placeholder{color:#9aa0a6}
+@media (min-width:560px){
+  .reservation-form{grid-template-columns:1fr 1fr}
+  .reservation-form label:nth-last-of-type(2){grid-column:1/-1}
+  .reservation-form button[type="submit"]{grid-column:1/-1}
 }
 .reservation-form button[type="submit"]{
-  appearance:none; border:none; border-radius: 12px; padding: 12px 16px;
-  background: linear-gradient(160deg, var(--primary-color), var(--primary-700));
-  color:#fff; font-weight:700; cursor:pointer; transition: var(--transition);
-  box-shadow: 0 10px 22px rgba(139,0,0,.26);
+  appearance:none;border:none;border-radius:12px;padding:12px 16px;
+  background:linear-gradient(180deg,var(--primary-color) 0%, var(--primary-dark) 100%);
+  color:var(--yellow); font-weight:700; cursor:pointer;
+  transition:transform .08s ease, box-shadow .15s ease, opacity .15s ease;
+  box-shadow:0 8px 20px rgba(139,0,0,.25);
 }
-.reservation-form button[type="submit"]:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(139,0,0,.28); }
-.reservation-form button[type="submit"]:active{ transform: translateY(0); box-shadow: 0 8px 18px rgba(139,0,0,.22); }
-.reservation-form button[disabled]{ opacity:.65; cursor:not-allowed; }
+.reservation-form button[type="submit"]:hover{transform:translateY(-1px); box-shadow:0 10px 22px rgba(139,0,0,.28)}
+.reservation-form button[type="submit"]:active{transform:translateY(0); box-shadow:0 6px 14px rgba(139,0,0,.22)}
+.reservation-form button[disabled]{opacity:.65; cursor:not-allowed}
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .chat-container { padding: 16px; }
-  .chef-profile { padding: 14px; }
-  .chef-avatar { width: 68px; height: 68px; }
-  .chef-info h1 { font-size: 22px; }
-  .message { max-width: 92%; }
+@media (max-width:768px){
+  .chat-container{padding:15px}
+  .chef-profile{padding:14px}
+  .chef-avatar{width:64px;height:64px}
+  .chef-info h1{font-size:20px}
+  .message{max-width:92%}
 }
-@media (max-width: 480px) {
-  .app-header { padding: 12px 14px; }
-  .logo { height: 34px; }
-  .language-selector select, .region-selector select { padding: 6px 10px; font-size: 12px; }
-  .chef-profile { grid-template-columns: 1fr; text-align: center; }
-  .chef-avatar { margin: 0 auto; }
-  .suggestion-chips { justify-content: center; }
-  .chip { font-size: 13px; padding: 7px 12px; }
+@media (max-width:480px){
+  .app-header{padding:10px 14px}
+  .logo{height:32px}
+  .language-selector select{padding:6px 10px; font-size:12px}
+  .chef-profile{flex-direction:column;text-align:center}
+  .chef-avatar{margin-bottom:12px}
+  .suggestion-chips{justify-content:center}
+  .chip{font-size:13px;padding:8px 12px}
 }
 
-/* ===== Dark Mode ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-color: #121212;
-    --card-bg: #1E1E1E;
-    --text-color: #E0E0E0;
-    --secondary-color: #2C1A1A;
+/* ===== Dark mode ===== */
+@media (prefers-color-scheme: dark){
+  :root{--bg:#121212; --card-bg:#1E1E1E; --text-color:#E0E0E0}
+  body{background:#111}
+  .user-message{background:#1e1e1e;color:#f0f0f0;border-color:#2a2a2a}
+  .reservation-form{background:#151515;border-color:#222}
+  .reservation-form input[type="text"],
+  .reservation-form input[type="email"],
+  .reservation-form input[type="tel"],
+  .reservation-form input[type="datetime-local"],
+  .reservation-form input[type="number"],
+  .reservation-form textarea{
+    background:#101010;border-color:#222;color:#f0f0f0;
   }
-  .app-header { box-shadow: none; }
-  .chef-profile { background: #171717; border-color:#2a2a2a; }
-  .bot-message { background:#181818; border-color:#2a2a2a; }
-  .chip { background:#1f1f1f; color:#f0f0f0; border-color:#333; }
-  .chip:hover { background: var(--primary-color); color:#fff; border-color: var(--primary-color); }
-  #user-input { background:#181818; color:#f0f0f0; border-color:#2a2a2a; }
-  .user-message { background: linear-gradient(160deg, #b52020, var(--primary-color)); }
-  .game-card { background:#151515; border-color:#222; }
-  .game-head { background:#1a1a1a; border-color:#2a2a2a; }
-  .game-close { background:#e6e6e6; color:#111; }
-  .lore-card { background:#161616; border-color:#2a2a2a; }
-  .lore-card summary { background: linear-gradient(0deg, rgba(212,175,55,.12), rgba(212,175,55,.12)); color:#f0e8d2; }
-  .lore-card .body { color:#e7e7e7; border-color: rgba(212,175,55,.35); }
+  .reservation-form input:focus,
+  .reservation-form textarea:focus{
+    border-color:#d24; box-shadow:0 0 0 3px rgba(210,34,68,.2); background:#0b0b0b;
+  }
 }
