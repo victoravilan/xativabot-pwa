@@ -1,0 +1,69 @@
+{
+  "dishes": [
+    {
+      "id": "paella-valenciana",
+      "category": "main",
+      "allergens": [],
+      "tags": ["gluten-free"],
+      "price": 16.5,
+      "names": { "en": "Paella Valenciana", "es": "Paella Valenciana", "ca": "Paella Valenciana" },
+      "desc": {
+        "en": "Traditional rice with chicken, rabbit and beans from l’Horta.",
+        "es": "Arroz tradicional con pollo, conejo y bajoqueta de l’Horta.",
+        "ca": "Arròs tradicional amb pollastre, conill i ferraura de l’Horta."
+      }
+    },
+    {
+      "id": "fideua",
+      "category": "main",
+      "allergens": ["gluten", "shellfish"],
+      "tags": [],
+      "price": 15.0,
+      "names": { "en": "Fideuà", "es": "Fideuà", "ca": "Fideuà" },
+      "desc": {
+        "en": "Short pasta cooked in seafood stock, from Gandia.",
+        "es": "Fideos cortos cocinados en caldo de marisco, de Gandía.",
+        "ca": "Fideus curts cuinats en brou de marisc, de Gandia."
+      }
+    },
+    {
+      "id": "arroz-al-horno",
+      "category": "main",
+      "allergens": [],
+      "tags": ["gluten-free"],
+      "price": 14.0,
+      "names": { "en": "Baked Rice", "es": "Arroz al Horno", "ca": "Arròs al forn" },
+      "desc": {
+        "en": "Clay-pot rice with broth, chickpeas and pork cuts.",
+        "es": "Arroz al horno con caldo, garbanzos y cortes de cerdo.",
+        "ca": "Arròs al forn amb brou, cigrons i talls de porc."
+      }
+    },
+    {
+      "id": "all-i-pebre",
+      "category": "starter",
+      "allergens": ["fish"],
+      "tags": ["gluten-free"],
+      "price": 12.0,
+      "names": { "en": "All i Pebre", "es": "All i Pebre", "ca": "All i Pebre" },
+      "desc": {
+        "en": "Eel stew with garlic and paprika from Albufera.",
+        "es": "Guiso de anguila con ajo y pimentón de l’Albufera.",
+        "ca": "Guisat d’anguila amb all i pebre de l’Albufera."
+      }
+    },
+    {
+      "id": "torrijas",
+      "category": "dessert",
+      "allergens": ["gluten", "egg", "milk"],
+      "tags": ["vegetarian"],
+      "price": 6.5,
+      "names": { "en": "Torrijas", "es": "Torrijas", "ca": "Torrijas" },
+      "desc": {
+        "en": "Soaked bread fried with cinnamon and honey.",
+        "es": "Pan remojado frito con canela y miel.",
+        "ca": "Pa remullat fregit amb canyella i mel."
+      }
+    }
+  ]
+}

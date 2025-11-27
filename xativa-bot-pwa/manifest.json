@@ -1,0 +1,56 @@
+{
+  "name": "XativaBot - Your Personal Chef Assistant",
+  "short_name": "XativaBot",
+  "description": "AI-powered chef assistant for Xativa restaurants with voice interaction",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F9F9F9",
+  "theme_color": "#8B0000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Make Reservation",
+      "short_name": "Reserve",
+      "description": "Quickly make a restaurant reservation",
+      "url": "/?action=reserve",
+      "icons": [{ "src": "/icon/reserve.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Menu",
+      "short_name": "Menu",
+      "description": "Browse our restaurant menu",
+      "url": "/?action=menu",
+      "icons": [{ "src": "/icon/menu.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot1.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/images/screenshot2.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg"
+    }
+  ],
+  "categories": ["food", "lifestyle", "restaurants"],
+  "lang": "en",
+  "dir": "ltr"
+}

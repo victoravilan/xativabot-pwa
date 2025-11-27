@@ -1,0 +1,84 @@
+// netlify/functions/season.js
+
+// Fallback mínimo si todo lo demás falla
+const FALLBACK_ES = {
+  1: { fruit: ["naranja","mandarina","limón","manzana","pera","kiwi"], veg: ["acelga","espinaca","col","coliflor","brócoli","puerro","zanahoria"] },
+  6: { fruit: ["cereza","albaricoque","melocotón","melón","sandía","higo (breva)"], veg: ["tomate","pepino","pimiento","calabacín","berenjena","judía verde"] },
+  12:{ fruit: ["naranja","mandarina","limón","kiwi","manzana","pera","caqui"], veg: ["col","coliflor","brócoli","acelga","espinaca","puerro","boniato"] }
+};
+
+export default async (req) => {
+  const { searchParams } = new URL(req.url);
+  const country = (searchParams.get('country') || 'ES').toUpperCase();
+  const region  = (searchParams.get('region') || '').toUpperCase();   // NUEVO
+  const month   = Math.min(12, Math.max(1, parseInt(searchParams.get('month')||'0',10) || new Date().getMonth()+1));
+  const lang    = (searchParams.get('lang') || 'es').toLowerCase();
+
+  if (country !== 'ES') {
+    return json(400, { error: 'Only ES supported' });
+  }
+
+  // 1) Si hay region, intenta leer data/season_es_regions.json
+  if (region) {
+    try {
+      const base = new URL(req.url);
+      base.pathname = '/data/season_es_regions.json';
+      base.search = '';
+      const res = await fetch(base.toString(), { headers: { 'cache-control': 'no-cache' } });
+      const data = await res.json();
+      const reg = data?.regions?.[region];
+      const m = reg?.months?.[String(month)];
+      if (m) {
+        return json(200, payload({
+          lang, month, country,
+          titleRoot: reg.name || region,
+          fruit: m.fruit || [],
+          veg: m.veg || m.vegetables || []
+        }));
+      }
+    } catch(e) { /* silencioso, seguirá al paso 2 */ }
+  }
+
+  // 2) Sin region (o fallo): intenta data/season_es.json nacional
+  let nat = null;
+  try {
+    const base = new URL(req.url);
+    base.pathname = '/data/season_es.json';
+    base.search = '';
+    const res = await fetch(base.toString(), { headers: { 'cache-control': 'no-cache' } });
+    const data = await res.json();
+    nat = data?.months?.[String(month)];
+  } catch(e) { /* seguirá al paso 3 */ }
+
+  const natData = nat || FALLBACK_ES[month] || { fruit: [], veg: [] };
+  return json(200, payload({
+    lang, month, country,
+    titleRoot: 'España',
+    fruit: natData.fruit || [],
+    veg: natData.veg || natData.vegetables || []
+  }));
+};
+
+function payload({ lang, month, country, titleRoot, fruit, veg }) {
+  const monthName = new Intl.DateTimeFormat(lang, { month: 'long' }).format(new Date(2000, month-1, 1));
+  const titles = {
+    es: (m)=>`Producto de temporada en ${titleRoot} (${m}):`,
+    en: (m)=>`Seasonal produce in ${titleRoot} (${m}):`,
+    ca: (m)=>`Producte de temporada a ${titleRoot} (${m}):`
+  };
+  return {
+    ok: true,
+    country,
+    month,
+    title: (titles[lang]||titles.es)(capitalize(monthName)),
+    fruit,
+    vegetables: veg,
+    refs: {
+      eufic: "https://www.eufic.org/en/explore-seasonal-fruit-and-vegetables-in-europe",
+      ec_calendar: "https://agriculture.ec.europa.eu/farming/crop-productions-and-plant-based-products/fruit-and-vegetables/fruit-and-vegetables-calendar_en"
+    }
+  };
+}
+
+function json(status, body){ return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' }}) }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1) }

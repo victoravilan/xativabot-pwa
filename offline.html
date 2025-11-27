@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#8B0000" />
+  <title>XativaBot · Sin conexión</title>
+  <style>
+    :root{
+      --primary:#8B0000;
+      --accent:#D4AF37;
+      --text:#2b2b2b;
+      --muted:#6b6b6b;
+      --bg:#F9F9F9;
+      --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;
+      background:var(--bg); color:var(--text); display:flex; align-items:center; justify-content:center; padding:16px;
+    }
+    .card{
+      width:min(640px,100%); background:var(--card); border-radius:16px; padding:24px 22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08), 0 2px 12px rgba(0,0,0,.06);
+      text-align:center;
+    }
+    .brand{
+      display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px;
+    }
+    .logo{
+      width:48px; height:48px; border-radius:12px; background:var(--primary);
+      display:grid; place-items:center; color:#fff; font-weight:800; letter-spacing:.5px;
+      box-shadow:0 6px 16px rgba(139,0,0,.25);
+    }
+    h1{margin:6px 0 8px; font-size:1.35rem}
+    p{margin:8px 0; color:var(--muted); line-height:1.5}
+    .tips{ text-align:left; margin:16px auto 10px; max-width:520px; color:#444; }
+    .tips li{ margin:6px 0 }
+    .actions{ display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+    button, a.btn{
+      appearance:none; border:0; border-radius:12px; padding:12px 16px; cursor:pointer;
+      background:var(--primary); color:#fff; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+      box-shadow:0 10px 24px rgba(139,0,0,.28); transition:transform .08s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    button:hover, a.btn:hover{transform:translateY(-1px); box-shadow:0 12px 26px rgba(139,0,0,.32)}
+    button:active, a.btn:active{transform:translateY(0); box-shadow:0 8px 18px rgba(139,0,0,.24)}
+    .ghost{ background:#fff; color:var(--primary); border:1px solid rgba(139,0,0,.25); box-shadow:none }
+    .small{ font-size:.9rem; margin-top:8px; color:#777 }
+    .badge{ display:inline-block; background:#fff0; color:#a06; border:1px dashed #e5b; border-radius:8px; padding:4px 8px; font-size:.8rem; margin-top:4px }
+    .lang{ display:none } /* se activa con JS */
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">Xa</div>
+      <div>
+        <div class="badge" id="badge">PWA</div>
+      </div>
+    </div>
+
+    <!-- ES -->
+    <div class="lang" id="lang-es">
+      <h1>Estás sin conexión</h1>
+      <p>No pudimos cargar la página. Cuando recuperes la conexión, te devolveremos a la app.</p>
+      <ul class="tips">
+        <li>Verifica tu Wi-Fi o datos móviles.</li>
+        <li>Si la app estaba abierta hace poco, parte del contenido puede estar disponible en caché.</li>
+        <li>Al volver la conexión, esta página intentará recargarse automáticamente.</li>
+      </ul>
+      <div class="actions">
+        <button id="retry-es" type="button">Reintentar ahora</button>
+        <a class="btn ghost" href="/" rel="nofollow">Ir al inicio</a>
+      </div>
+      <p class="small">XativaBot funciona offline para partes básicas, pero algunas funciones (reservas, datos) requieren conexión.</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang" id="lang-en">
+      <h1>You’re offline</h1>
+      <p>We couldn’t load the page. Once you’re back online, we’ll return you to the app.</p>
+      <ul class="tips">
+        <li>Check Wi-Fi or mobile data.</li>
+        <li>Some content may be cached from your last visit.</li>
+        <li>This page will try to reload automatically when online.</li>
+      </ul>
+      <div class="actions">
+        <button id="retry-en" type="button">Try again</button>
+        <a class="btn ghost" href="/" rel="nofollow">Go home</a>
+      </div>
+      <p class="small">XativaBot has offline support for basics; reservations and live data need connectivity.</p>
+    </div>
+
+    <!-- CA -->
+    <div class="lang" id="lang-ca">
+      <h1>Estàs fora de línia</h1>
+      <p>No hem pogut carregar la pàgina. Quan torne la connexió, et retornarem a l’aplicació.</p>
+      <ul class="tips">
+        <li>Comprova el Wi-Fi o les dades mòbils.</li>
+        <li>Part del contingut pot estar en memòria cau de l’última visita.</li>
+        <li>Aquesta pàgina intentarà recarregar-se automàticament quan hi haja connexió.</li>
+      </ul>
+      <div class="actions">
+        <button id="retry-ca" type="button">Torna-ho a provar</button>
+        <a class="btn ghost" href="/" rel="nofollow">Inici</a>
+      </div>
+      <p class="small">XativaBot admet mode offline per a bàsics; reserves i dades en viu requereixen connexió.</p>
+    </div>
+
+  </main>
+
+  <script>
+    // Idioma: escoge ES/CA/EN según navigator.language, con fallback ES
+    (function(){
+      const lang = (navigator.language || 'es').toLowerCase();
+      const id = lang.startsWith('ca') ? 'lang-ca' : lang.startsWith('en') ? 'lang-en' : 'lang-es';
+      document.getElementById(id).style.display = 'block';
+    })();
+
+    // Reintentar carga actual
+    function tryReload(){ location.reload(); }
+
+    // Botones
+    ['retry-es','retry-en','retry-ca'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', tryReload);
+    });
+
+    // Auto-reintento cuando vuelve la conexión
+    window.addEventListener('online', () => {
+      // pequeña espera para que la red se estabilice
+      setTimeout(tryReload, 300);
+    });
+
+    // Si el usuario llega con conexión ya activa (falsos negativos), ofrece reintento en 1.5 s
+    if (navigator.onLine) {
+      setTimeout(() => {
+        // Evita bucles infinitos: solo si seguimos en offline.html
+        if (document.visibilityState !== 'hidden') {
+          // prueba de fetch liviana al propio origen
+          fetch('/', { cache:'no-store', credentials:'same-origin' })
+            .then(() => tryReload())
+            .catch(() => { /* seguimos offline */ });
+        }
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

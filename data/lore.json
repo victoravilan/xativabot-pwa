@@ -1,0 +1,22 @@
+{
+  "facts": [
+    {
+      "topic": "paella",
+      "es": "La paella nació en la huerta valenciana como plato de domingo: arroz, conejo, pollo, garrofó y verduras de temporada. El ‘socarrat’ —esa capa dorada y crujiente del fondo— es un tesoro buscado con mimo. El azafrán realza el color y el aroma, y la clave está en un sofrito equilibrado y un caldo con carácter.",
+      "en": "Paella originated in Valencia’s farmlands as a Sunday dish: rice, rabbit, chicken, butter beans, and seasonal vegetables. The prized ‘socarrat’—the golden, crunchy bottom layer—signals perfect heat control. Saffron adds aroma and color; a balanced sofrito and a flavorful stock are key.",
+      "ca": "La paella va nàixer a l’horta valenciana com a plat de diumenge: arròs, conill, pollastre, garrofó i verdures de temporada. El ‘socarrat’ —capa daurada i cruixent— és un petit tresor. El safrà dona aroma i color; el sofregit i un bon caldo en són l’ànima."
+    },
+    {
+      "topic": "fideua",
+      "es": "La fideuà surge en la costa valenciana como ‘paella de fideos’. Fideo grueso o medio, sofrito marinero y caldo de pescado con carácter. El toque maestro: nacarar la pasta y hornear unos minutos para lograr textura y sabores concentrados.",
+      "en": "Fideuà was born on the Valencian coast as a ‘noodle paella’. Thick or medium noodles, a seafood sofrito, and a robust fish stock. The chef’s trick: toast the pasta lightly and finish in the oven for concentrated flavor and a perfect bite.",
+      "ca": "La fideuà sorgeix a la costa valenciana com una ‘paella de fideus’. Fideu gruixut o mitjà, sofregit mariner i caldo de peix amb caràcter. El toc mestre: enrossir lleugerament la pasta i donar-li un forn breu per concentrar sabors."
+    },
+    {
+      "topic": "all-i-pebre",
+      "es": "Guiso tradicional de l’Albufera: anguila fresca, ajo, pimentón y un majado que liga la salsa. Es un plato potente, de barca y orilla, que muestra la cocina humilde convertida en joya local.",
+      "en": "A traditional stew from l’Albufera: fresh eel, garlic, paprika and a mortar-bound sauce. A robust lakeside fisherman’s dish that elevates humble ingredients into a regional gem.",
+      "ca": "Guisat tradicional de l’Albufera: anguila fresca, all, pebre roig i un picat que lliga la salsa. Cuina humil de ribera convertida en joia local."
+    }
+  ]
+}

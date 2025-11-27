@@ -1,0 +1,41 @@
+/
+├─ index.html
+├─ styles.css
+├─ app.js                 ← versión con: diálogo de alergias, salud/ingredientes/temporadas,
+│                           voz estable, formulario de reserva (email por sucursal),
+│                           e integración del juego + guardado de código promo
+├─ sw.js                  ← service worker robusto (offline + cache busting)
+├─ manifest.json
+├─ install.js             ← botón/flow de “Instalar app”
+├─ qr.html                ← página del QR (si la usas)
+├─ vendor/
+│  └─ qrcode.min.js       ← (opcional, si el QR debe funcionar offline)
+├─ offline.html           ← página offline (fallback)
+├─ images/
+│  ├─ Simbolo_A_verde.svg
+│  ├─ chef-avatar.png
+│  ├─ icon-192x192.png
+│  ├─ icon-512x512.png
+│  ├─ icon-192x192-maskable.png
+│  ├─ icon-512x512-maskable.png
+│  ├─ apple-touch-icon-180.png
+│  ├─ menu-icon.png
+│  └─ reserve-icon.png
+├─ data/
+│  ├─ menu.json           ← carta
+│  ├─ lore.json           ← micro-monografías (paella, fideuà, all i pebre…)
+│  └─ season_es.json      ← dataset de temporada (ES)
+├─ game/                  ← (integración del minijuego)
+│  ├─ culinary-game.html  ← si lo sirves en una ruta separada (opcional)
+│  ├─ culinary-game.css
+│  └─ culinary-game.js    ← lógica del “Sopa de letras” con:
+│                           - modal de fichas históricas
+│                           - umbral de 7 palabras
+│                           - generación de código promocional
+│                           - emisión de evento `xativa:game-completed`
+│                             y persistencia en localStorage (p.ej. `xativa_promo`)
+├─ netlify/
+│  └─ functions/
+│     ├─ reservations.js  ← envía correo a la sucursal (Resend)
+│     └─ knowledge.js     ← respuestas culinarias/salud (consulta fuentes confiables)
+└─ netlify.toml           ← build & funciones
