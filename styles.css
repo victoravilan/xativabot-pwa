@@ -66,6 +66,13 @@ body {
   color: #fff;
 }
 
+/* Contenedor del botón de instalación */
+.install-container button {
+  background: var(--accent-color);
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
 /* Main container */
 .chat-container {
   flex: 1;

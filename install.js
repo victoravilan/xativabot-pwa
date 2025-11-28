@@ -1,61 +1,25 @@
-<<<<<<< HEAD
-// public/install.js
-let deferredPrompt = null;
+let deferredPrompt;
+const installBtn = document.getElementById('install-btn');
 
-// Captura el evento cuando la app cumple criterios PWA
 window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevenir que Chrome 67 y anteriores muestren el prompt automáticamente
   e.preventDefault();
+  // Guardar el evento para que pueda ser disparado más tarde
   deferredPrompt = e;
-
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'inline-flex';
+  // Mostrar el botón de instalación
+  if (installBtn) {
+    installBtn.style.display = 'inline-flex';
+  }
 });
 
-// Click del botón “Instalar”
-async function installApp(){
-  if (!deferredPrompt) return;
+function installApp() {
+  if (!deferredPrompt) {
+    alert('La aplicación ya está instalada o el navegador no soporta la instalación.');
+    return;
+  }
+  // Mostrar el prompt de instalación
   deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  // outcome: 'accepted' | 'dismissed'
+  // Ocultar el botón, ya que solo se puede usar una vez
+  if (installBtn) installBtn.style.display = 'none';
   deferredPrompt = null;
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'none';
 }
-window.installApp = installApp;
-
-// Evento cuando ya se instaló
-window.addEventListener('appinstalled', () => {
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'none';
-});
-=======
-// public/install.js
-let deferredPrompt = null;
-
-// Captura el evento cuando la app cumple criterios PWA
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'inline-flex';
-});
-
-// Click del botón “Instalar”
-async function installApp(){
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  // outcome: 'accepted' | 'dismissed'
-  deferredPrompt = null;
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'none';
-}
-window.installApp = installApp;
-
-// Evento cuando ya se instaló
-window.addEventListener('appinstalled', () => {
-  const btn = document.getElementById('install-btn');
-  if (btn) btn.style.display = 'none';
-});
->>>>>>> 337b8ebf236036d6c60b58441d582b11fcb9875f
