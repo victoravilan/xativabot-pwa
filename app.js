@@ -130,6 +130,38 @@ const I18N = {
        season_of:"Temporada de",
        month_names:["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"],
        game_open:"Obrint joc culinari…"
+  },
+  fr:{ welcome:"Bienvenue aux Restaurants Xativa ! Je suis AlexBot, votre assistant chef personnel. Comment puis-je vous aider aujourd'hui ?",
+       ask_allergies:"Avez-vous des allergies ou des préférences alimentaires ?",
+       ask_allergies_specific:"Parfait — quelles allergies ou régimes dois-je prendre en compte ? (ex : gluten, fruits de mer, lait, vegan, végétarien)",
+       menu_intro:"Voici quelques suggestions de notre menu :",
+       rec_ready:"Selon vos préférences, je recommande :",
+       rec_need_info:"Dites-moi vos allergies ou préférences et j'affinerai mes suggestions.",
+       saved_prefs:"C'est noté — je m'en souviendrai.",
+       no_match:"Je n'ai trouvé aucun plat sûr. Voulez-vous des options sans gluten ou végétariennes ?",
+       lore_intro:"Le saviez-vous ?",
+       reservation_prompt:"Parfait. Choisissez le restaurant et complétez les informations :",
+       allergies_saved:"Allergies/préférences enregistrées.",
+       say_more:"Qu'avez-vous envie aujourd'hui ?",
+       unknown:"Merci pour votre message. Comment puis-je vous aider d'autre ?",
+       and:"et",
+       res_thanks:"✅ Réservation reçue.",
+       res_offline:"📌 Vous êtes hors ligne. Elle sera envoyée dès le retour de la connexion.",
+       pick_restaurant:"Veuillez sélectionner le restaurant : Les Corts, Gràcia ou Sant Antoni.",
+       locations:"Nous avons trois établissements à Barcelone :",
+       diet_intro:"Mode chef activé 👨‍🍳 — dites-moi vos besoins et j'adapterai le menu :",
+       diet_cta:"Sélectionnez-en un ou plusieurs et confirmez :",
+       diet_confirm_btn:"Enregistrer & suggérer",
+       diet_none_btn:"Aucune restriction",
+       diet_saved_fun:(list)=>`Noté : ${list}. Je vous propose quelques idées…`,
+       diet_saved_none:"Parfait, aucune restriction — mon défi préféré. Trouvons quelque chose de délicieux…",
+       diet_humor_ping:"Allergies notées. Je gère la paella comme un pro.",
+       health_preface:"Petit point nutrition :",
+       health_disclaimer:"Ceci est une information générale, pas un avis médical.",
+       season_now:"De saison actuellement :",
+       season_of:"Saison de",
+       month_names:["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+       game_open:"Ouverture du jeu culinaire…"
   }
 };
 
@@ -170,6 +202,18 @@ const KEYWORDS = {
        health:["colesterol","triglicèrids","sucre","diabetis","hipertensió","sodi","salut","cardio"],
        seasonWords:["de temporada","està de temporada","què hi ha de temporada","temporada ara"],
        game:["joc","sopa de lletres","jugar","puzzle"]
+  },
+  fr:{ greet:["bonjour","salut","coucou"],
+       menu:["menu","carte","plats","nourriture","recommandation"],
+       rec:["recommande","suggère","que manger","quoi manger"],
+       allergy:["allergie","allergies","diététique","régime","restriction","intolérance"],
+       lore:["histoire","mythe","tradition","origine","légende"],
+       reserve:["réserver","réservation","table"],
+       restaurant:["les corts","gracia","gràcia","sant antoni","muntaner","bordeus","torrent d'en vidalet","vidalet"],
+       ingredient:["parle-moi de","qu'est-ce que","bénéfices de","saison de","histoire de","à propos","épice","épices","ingrédient","ingrédients"],
+       health:["cholestérol","triglycérides","sucre","diabète","hypertension","sodium","santé","cardio"],
+       seasonWords:["de saison","en saison","qu'est-ce qui est de saison","saison maintenant"],
+       game:["jeu","mots cachés","jouer","puzzle"]
   }
 };
 
@@ -212,9 +256,9 @@ async function initApp(){
 async function loadData(){
   try{
     const [menuRes,loreRes,seasonRes] = await Promise.all([
-      fetch('/data/menu.json'),
-      fetch('/data/lore.json'),
-      fetch('/data/season_es.json')
+      fetch('data/menu.json'),
+      fetch('data/lore.json'),
+      fetch('data/season_es.json')
     ]);
     MENU   = await menuRes.json();
     LORE   = await loreRes.json();
@@ -230,12 +274,15 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
+  // Mejorar: solo los chips de tipo button deben disparar intents, los <a> abren el juego
   suggestionChips.forEach(chip=>{
-    chip.addEventListener('click', ()=>{
-      const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
-      if (intent) dispatchIntent(intent);
-      else { userInput.value = chip.textContent; handleSendMessage(); }
-    });
+    if (chip.tagName === 'BUTTON') {
+      chip.addEventListener('click', ()=>{
+        const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
+        if (intent) dispatchIntent(intent);
+        else { userInput.value = chip.textContent; handleSendMessage(); }
+      });
+    }
   });
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
 }
@@ -316,7 +363,8 @@ function detectIntent(raw){
   const pat = {
     es: /\b(háblame de|hablame de|qué es|que es|beneficios de|temporada de|historia de|sobre)\s+(.{2,})/i,
     en: /\b(tell me about|what is|benefits of|season of|history of|about)\s+(.{2,})/i,
-    ca: /\b(parla'm de|què és|que es|beneficis de|temporada de|història de|sobre)\s+(.{2,})/i
+    ca: /\b(parla'm de|què és|que es|beneficis de|temporada de|història de|sobre)\s+(.{2,})/i,
+    fr: /\b(parle-moi de|qu'est-ce que|bénéfices de|saison de|histoire de|à propos)\s+(.{2,})/i
   }[currentLanguage];
   const m = msg.match(pat);
   if (m && m[2]) { result.intent = 'ingredient'; result.topic = cleanTopic(m[2]); return result; }
@@ -349,7 +397,8 @@ function guessTopicFromFreeText(msg){
   const stop = {
     es: ['hola','quiero','necesito','cuéntame','habla','sobre','de','del','la','el','los','las','un','una','y','o','para','como','qué','que','es','historia','beneficios','temporada','salud','cardio','en','que','qué','hay'],
     en: ['hello','i','want','need','tell','me','about','of','the','a','and','or','for','how','what','is','history','benefits','season','health','cardio','in','what','is','there'],
-    ca: ['hola','vull','necessite','explica\'m','parla','sobre','de','del','la','el','els','les','un','una','i','o','per','com','què','que','és','història','beneficis','temporada','salut','cardio','en','què','hi','ha']
+    ca: ['hola','vull','necessite','explica\'m','parla','sobre','de','del','la','el','els','les','un','una','i','o','per','com','què','que','és','història','beneficis','temporada','salut','cardio','en','què','hi','ha'],
+    fr: ['bonjour','je','veux','besoin','parle','moi','de','du','la','le','les','un','une','et','ou','pour','comment','quoi','est','histoire','bénéfices','saison','santé','cardio','dans','qu\'est','ce','qui','y','a']
   }[currentLanguage];
   const tokens = msg.split(/\s+/).filter(w => w && !stop.includes(w));
   return tokens.slice(-3).join(' ').trim() || null;
@@ -411,7 +460,8 @@ function replyLocations(){
   const lines = {
     es:[`${I18N.es.locations}`,'• Les Corts · C/ Bordeus, 35 · Barcelona','• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona','• Sant Antoni · C/ Muntaner, 6 · Barcelona'],
     en:[`${I18N.en.locations}`,'• Les Corts · C/ Bordeus, 35 · Barcelona','• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona','• Sant Antoni · C/ Muntaner, 6 · Barcelona'],
-    ca:[`${I18N.ca.locations}`,'• Les Corts · C/ Bordeus, 35 · Barcelona','• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona','• Sant Antoni · C/ Muntaner, 6 · Barcelona']
+    ca:[`${I18N.ca.locations}`,'• Les Corts · C/ Bordeus, 35 · Barcelona','• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona','• Sant Antoni · C/ Muntaner, 6 · Barcelona'],
+    fr:[`${I18N.fr.locations}`,'• Les Corts · C/ Bordeus, 35 · Barcelona','• Gràcia · C/ Torrent d’en Vidalet, 26 · Barcelona','• Sant Antoni · C/ Muntaner, 6 · Barcelona']
   }[currentLanguage];
   reply(lines.join('\n'));
 }
@@ -445,7 +495,9 @@ function handleAllergyAnswer(message){
       ? "No he detectado ninguna alergia en tu mensaje. Escribe “sin gluten”, “vegano”, “sin marisco”… o usa los botones y confirma."
       : currentLanguage==='ca'
         ? "No he detectat cap al·lèrgia. Escriu “sense gluten”, “vegà”, “sense marisc”… o usa els botons i confirma."
-        : "I didn’t detect any allergy. Type “gluten-free”, “vegan”, “no shellfish”… or use the buttons and confirm.");
+        : currentLanguage==='fr'
+          ? "Je n'ai détecté aucune allergie dans votre message. Tapez “sans gluten”, “vegan”, “sans fruits de mer”… ou utilisez les boutons et confirmez."
+          : "I didn’t detect any allergy. Type “gluten-free”, “vegan”, “no shellfish”… or use the buttons and confirm.");
   }
   DIALOG.awaiting = null;
 }
@@ -457,7 +509,9 @@ function showDietaryWizard(){
     en:{ cta:"Select one or more and confirm:", confirm:"Save & suggest", none:"No restrictions",
          chips:['Gluten-free','Vegan','Vegetarian','Lactose-free','No shellfish','No nuts'] },
     ca:{ cta:"Tria una o diverses i confirma:", confirm:"Desar i suggerir", none:"Sense restriccions",
-         chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs'] }
+         chips:['Sense gluten','Vegà','Vegetarià','Sense lactosa','Sense marisc','Sense fruits secs'] },
+    fr:{ cta:"Sélectionnez-en un ou plusieurs et confirmez :", confirm:"Enregistrer & suggérer", none:"Aucune restriction",
+         chips:['Sans gluten','Vegan','Végétarien','Sans lactose','Sans fruits de mer','Sans noix'] }
   }[currentLanguage];
   wrap.innerHTML = `
     <div class="dietary-wizard">
@@ -494,7 +548,8 @@ function parseAndSaveAllergies(text, opts={}){
   const map = {
     en:{gluten:'gluten', shellfish:'shellfish', fish:'fish', egg:'egg', milk:'milk', vegan:'vegan', vegetarian:'vegetarian', lactose:'milk', nuts:'nuts'},
     es:{gluten:'gluten', marisco:'shellfish', pescado:'fish', huevo:'egg', leche:'milk', vegano:'vegan', vegetariano:'vegetarian', lactosa:'milk', frutos:'nuts', frutos_secos:'nuts', frutossecos:'nuts', nueces:'nuts', almendras:'nuts', avellanas:'nuts'},
-    ca:{gluten:'gluten', marisc:'shellfish', peix:'fish', ou:'egg', llet:'milk', vegà:'vegan', vegetarià:'vegetarian', lactosa:'milk', fruits:'nuts', fruits_secs:'nuts', fruitssecs:'nuts', nous:'nuts', ametlles:'nuts', avellanes:'nuts'}
+    ca:{gluten:'gluten', marisc:'shellfish', peix:'fish', ou:'egg', llet:'milk', vegà:'vegan', vegetarià:'vegetarian', lactosa:'milk', fruits:'nuts', fruits_secs:'nuts', fruitssecs:'nuts', nous:'nuts', ametlles:'nuts', avellanes:'nuts'},
+    fr:{gluten:'gluten', fruits_de_mer:'shellfish', poisson:'fish', oeuf:'egg', lait:'milk', vegan:'vegan', végétarien:'vegetarian', lactose:'milk', noix:'nuts', amandes:'nuts', noisettes:'nuts'}
   }[currentLanguage];
   const foundAllergies=[], foundPrefs=[];
   for(const [k,v] of Object.entries(map)){
@@ -530,7 +585,8 @@ async function handleIngredient(topicRaw){
   const localKeyMap = {
     es:{ "arroz":"arroz","azafrán":"azafrán","aceite de oliva":"aceite de oliva" },
     en:{ "rice":"arroz","saffron":"azafrán","olive oil":"aceite de oliva" },
-    ca:{ "arròs":"arroz","safrà":"azafrán","oli d'oliva":"aceite de oliva" }
+    ca:{ "arròs":"arroz","safrà":"azafrán","oli d'oliva":"aceite de oliva" },
+    fr:{ "riz":"arroz","safran":"azafrán","huile d'olive":"aceite de oliva" }
   }[lang]||{};
   const tLow = topic.toLowerCase();
   const localKey = Object.keys(localKeyMap).find(k=>tLow.includes(k));
@@ -546,11 +602,13 @@ async function handleIngredient(topicRaw){
   if (!parts.length){
     reply(lang==='es' ? "Puedo hablar de especias, técnicas e ingredientes (cúrcuma, comino, canela, laurel, vainilla, arroz, azafrán…). ¿Cuál te interesa?"
          : lang==='ca' ? "Puc parlar d'espècies, tècniques i ingredients (cúrcuma, comí, canyella, llorer, vainilla, arròs, safrà…). Quin t’interessa?"
-                       : "I can talk about spices, techniques and ingredients (turmeric, cumin, cinnamon, bay leaf, vanilla, rice, saffron…). Which one?");
+                       : lang==='fr' ? "Je peux parler d'épices, de techniques et d'ingrédients (curcuma, cumin, cannelle, laurier, vanille, riz, safran…). Lequel vous intéresse ?"
+                                     : "I can talk about spices, techniques and ingredients (turmeric, cumin, cinnamon, bay leaf, vanilla, rice, saffron…). Which one?");
     return;
   }
   const preface = lang==='es' ? "A ver… tema sabroso. Te cuento al grano:"
                 : lang==='ca' ? "A veure… tema gustós. T’ho conte al gra:"
+                : lang==='fr' ? "Voyons… sujet savoureux. Je vous raconte en détail :"
                                : "Oh, that’s a delicious topic. Here’s the good stuff:";
   reply(preface + "\n" + parts.join('\n'));
 }
@@ -571,7 +629,9 @@ async function handleHealthQuery(topicRaw){
       ? "Puedo orientarte sobre colesterol, presión arterial, azúcares, sodio… Pregunta: “alimentos que bajan el colesterol” o “¿aceite de oliva y corazón?”"
       : (lang==='ca')
         ? "Puc orientar-te sobre colesterol, pressió arterial, sucres, sodi… Prova: “aliments que baixen el colesterol” o “oli d’oliva i cor”"
-        : "I can help with cholesterol, blood pressure, sugars, sodium… Try “foods that lower cholesterol” or “olive oil and heart”.";
+        : (lang==='fr')
+          ? "Je peux vous orienter sur le cholestérol, la pression artérielle, les sucres, le sodium… Demandez : “aliments qui abaissent le cholestérol” ou “huile d'olive et cœur”"
+          : "I can help with cholesterol, blood pressure, sugars, sodium… Try “foods that lower cholesterol” or “olive oil and heart”.";
   }
   reply(`${I18N[lang].health_preface}\n${text}\n\n${I18N[lang].health_disclaimer}`);
 }
@@ -583,6 +643,7 @@ function handleSeasonQuery(payload){
     if (info) reply(info);
     else reply(currentLanguage==='es' ? "No tengo la temporada de ese producto todavía."
          : currentLanguage==='ca' ? "Encara no tinc la temporada d’aquest producte."
+         : currentLanguage==='fr' ? "Je n'ai pas encore la saison de ce produit."
                                   : "I don’t have that item’s season yet.");
     return;
   }
@@ -591,12 +652,14 @@ function handleSeasonQuery(payload){
   if (!list.length){
     reply(currentLanguage==='es' ? "No tengo datos de temporada para ese mes."
          : currentLanguage==='ca' ? "No tinc dades de temporada per a eixe mes."
+         : currentLanguage==='fr' ? "Je n'ai pas de données saisonnières pour ce mois."
                                   : "No season data for that month.");
     return;
   }
   const monthName = I18N[currentLanguage].month_names[month-1];
   const header = currentLanguage==='es' ? `${I18N.es.season_now} (${monthName}):`
               : currentLanguage==='ca' ? `${I18N.ca.season_now} (${monthName}):`
+              : currentLanguage==='fr' ? `${I18N.fr.season_now} (${monthName}):`
                                        : `${I18N.en.season_now} (${monthName}):`;
   const lines = list.slice(0,24).map(p => `• ${p.name[currentLanguage] || p.name.es}${p.kind==='veg'?' 🥦':' 🍓'}`);
   reply(`${header}\n${lines.join('\n')}${list.length>24?'\n…':''}`);
@@ -606,12 +669,13 @@ function seasonForIngredient(topic, lang){
   const t = topic.toLowerCase();
   const item = SEASON.produce.find(p=>{
     const n = p.name;
-    return (n.es && t.includes(n.es.toLowerCase())) || (n.en && t.includes(n.en.toLowerCase())) || (n.ca && t.includes(n.ca.toLowerCase()));
+    return (n.es && t.includes(n.es.toLowerCase())) || (n.en && t.includes(n.en.toLowerCase())) || (n.ca && t.includes(n.ca.toLowerCase())) || (n.fr && t.includes(n.fr.toLowerCase()));
   });
   if (!item) return null;
   const months = (item.months||[]).sort((a,b)=>a-b).map(m => I18N[lang].month_names[m-1]).join(', ');
   const head = lang==='es' ? `${I18N.es.season_of} ${item.name[lang]||item.name.es}:`
            : lang==='ca' ? `${I18N.ca.season_of} ${item.name[lang]||item.name.es}:`
+           : lang==='fr' ? `${I18N.fr.season_of} ${item.name[lang]||item.name.es}:`
                          : `${I18N.en.season_of} ${item.name[lang]||item.name.es}:`;
   return `${head} ${months || '—'}`;
 }
@@ -623,7 +687,8 @@ function hasMonthName(text, lang){
   const months = {
     es:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","setiembre","octubre","noviembre","diciembre"],
     en:["january","february","march","april","may","june","july","august","september","october","november","december"],
-    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"]
+    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"],
+    fr:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]
   }[lang] || [];
   const s = text.toLowerCase();
   return months.some(m => s.includes(m));
@@ -632,7 +697,8 @@ function extractMonthFromText(text, lang){
   const months = {
     es:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","setiembre","octubre","noviembre","diciembre"],
     en:["january","february","march","april","may","june","july","august","september","october","november","december"],
-    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"]
+    ca:["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"],
+    fr:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]
   }[lang] || [];
   const s = text.toLowerCase();
   for (let i=0;i<months.length;i++){
@@ -670,7 +736,7 @@ function showReservationForm(){
 
   wrap.innerHTML=`
     <form id="reservation-form" class="reservation-form">
-      <label><span data-es="Restaurante:" data-en="Restaurant:" data-ca="Restaurant:">Restaurante:</span><br>
+      <label><span data-es="Restaurante:" data-en="Restaurant:" data-ca="Restaurant:" data-fr="Restaurant:">Restaurante:</span><br>
         <select name="restaurant" required>
           <option value="" ${restVal===''?'selected':''}>—</option>
           <option value="les_corts" ${restVal==='les_corts'?'selected':''}>Les Corts · Bordeus, 35</option>
@@ -679,34 +745,39 @@ function showReservationForm(){
         </select>
       </label><br>
 
-      <label><span data-en="Name:" data-es="Nombre:" data-ca="Nom:">Nombre:</span><br>
+      <label><span data-en="Name:" data-es="Nombre:" data-ca="Nom:" data-fr="Nom:">Nombre:</span><br>
         <input type="text" name="name" required placeholder="Alex García"></label><br>
 
-      <label><span data-en="Email:" data-es="Correo:" data-ca="Correu:">Correo:</span><br>
+      <label><span data-en="Email:" data-es="Correo:" data-ca="Correu:" data-fr="Email:">Correo:</span><br>
         <input type="email" name="email" placeholder="you@example.com"></label><br>
 
-      <label><span data-en="Phone:" data-es="Teléfono:" data-ca="Telèfon:">Teléfono:</span><br>
+      <label><span data-en="Phone:" data-es="Teléfono:" data-ca="Telèfon:" data-fr="Téléphone:">Teléfono:</span><br>
         <input type="tel" name="phone" placeholder="+34 600 000 000"></label><br>
 
-      <label><span data-en="Date & Time:" data-es="Fecha y hora:" data-ca="Data i hora:">Fecha y hora:</span><br>
+      <label><span data-en="Date & Time:" data-es="Fecha y hora:" data-ca="Data i hora:" data-fr="Date et heure:">Fecha y hora:</span><br>
         <input type="datetime-local" name="dateTime" required min="${minStr}" value="${defStr}"></label><br>
 
-      <label><span data-en="Party Size:" data-es="Número de comensales:" data-ca="Nombre de comensals:">Número de comensales:</span><br>
+      <label><span data-en="Party Size:" data-es="Número de comensales:" data-ca="Nombre de comensals:" data-fr="Nombre de convives:">Número de comensales:</span><br>
         <input type="number" name="partySize" min="1" max="20" value="2"></label><br>
 
-      <label><span data-en="Preferred dishes:" data-es="Platos deseados:" data-ca="Plats desitjats:">Platos deseados:</span><br>
+      <label><span data-en="Preferred dishes:" data-es="Platos deseados:" data-ca="Plats desitjats:" data-fr="Plats souhaités:">Platos deseados:</span><br>
         <input type="text" name="dishes" placeholder="Paella valenciana, Fideuà..."></label><br>
 
-      <label><span data-en="Allergies:" data-es="Alergias:" data-ca="Al·lèrgies:">Alergias:</span><br>
+      <label><span data-en="Allergies:" data-es="Alergias:" data-ca="Al·lèrgies:" data-fr="Allergies:">Alergias:</span><br>
         <input type="text" name="allergies" placeholder="gluten, marisco..." value="${prefillAllergies}"></label><br>
 
-      <label><span data-en="Notes:" data-es="Notas:" data-ca="Notes:">Notas:</span><br>
+      <label><span data-en="Notes:" data-es="Notas:" data-ca="Notes:" data-fr="Remarques:">Notas:</span><br>
         <textarea name="notes" placeholder="Preferencias extra, celebración, etc.">${promo ? ('Código promo: '+promo) : ''}</textarea></label><br>
 
       <input type="hidden" name="promoCode" value="${promo}">
       ${promo ? '<div style="font-size:13px;color:#0a7d35">🎉 Código promocional detectado y añadido a la reserva.</div>' : ''}
 
-      <button type="submit" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva">Confirmar Reserva</button>
+      <button type="submit" data-en="Confirm Reservation" data-es="Confirmar Reserva" data-ca="Confirmar Reserva" data-fr="Confirmer la réservation">Confirmar Reserva</button>
+      <!-- Botón WhatsApp oculto, ya no es necesario -->
+      <button type="button" id="whatsapp-reserve-btn" style="display:none"></button>
+      <div style="text-align:center;margin-top:6px;font-size:0.95em;display:none;">
+        <span id="whatsapp-number" style="color:#25D366;font-weight:bold;">+34 600 000 000</span>
+      </div>
     </form>`;
   chatMessages.appendChild(wrap); chatMessages.scrollTop=chatMessages.scrollHeight;
   changeLanguage(currentLanguage);
@@ -715,51 +786,54 @@ function showReservationForm(){
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
-
     const data=Object.fromEntries(new FormData(form).entries());
     if (!data.restaurant){ addMessageToChat(I18N[currentLanguage].pick_restaurant, 'bot'); btn.disabled=false; return; }
 
-    data.id='res_'+Date.now();
-    data.uiLanguage=currentLanguage;
+    // NUEVA LÓGICA: Generar mensaje para WhatsApp
+    const restaurantNameMap = {
+      'les_corts': 'Les Corts',
+      'gracia': 'Gràcia',
+      'sant_antoni': 'Sant Antoni'
+    };
 
-    try{
-      const local=new Date(data.dateTime);
-      if(isNaN(local.getTime())) throw new Error('Invalid date');
-      data.dateTimeISO=new Date(local.getTime()-local.getTimezoneOffset()*60000).toISOString();
-    }catch(_){
-      addMessageToChat("⚠️ Fecha/hora inválida.", 'bot'); btn.disabled=false; return;
+    const restaurantName = restaurantNameMap[data.restaurant] || data.restaurant;
+    const localDateTime = new Date(data.dateTime).toLocaleString(currentLanguage, { dateStyle: 'full', timeStyle: 'short' });
+
+    // Lógica para crear un enlace de confirmación para el restaurante
+    let confirmationLink = '';
+    if (data.phone) {
+      // Limpiar el número de teléfono para el enlace wa.me (quitar espacios, +, -)
+      const cleanedPhone = data.phone.replace(/[\s+-]/g, '');
+      confirmationLink = `*Confirmar al cliente:* https://wa.me/${cleanedPhone}`;
     }
 
-    try{
-      const r=await submitReservation(data);
-      addMessageToChat(`${I18N[currentLanguage].res_thanks} ID: ${r.reservation.id}`, 'bot');
-      USER.preferredRestaurant = data.restaurant; saveMemory();
-      wrap.remove();
-    }catch(err){
-      console.warn('Offline/Server error, queue reservation:', err.message);
-      await queueReservation(data);
-      addMessageToChat(I18N[currentLanguage].res_offline, 'bot');
-      wrap.remove();
-    }finally{ btn.disabled=false; }
+    const messageParts = [
+      `*NUEVA RESERVA (XativaBot)*`,
+      `-----------------------------`,
+      `*Restaurante:* ${restaurantName}`,
+      `*Nombre:* ${data.name}`,
+      `*Comensales:* ${data.partySize}`,
+      `*Fecha y Hora:* ${localDateTime}`,
+      `*Teléfono:* ${data.phone || '(no provisto)'}`,
+      `*Email:* ${data.email || '(no provisto)'}`,
+      `*Alergias:* ${data.allergies || 'Ninguna'}`,
+      `*Platos deseados:* ${data.dishes || 'Ninguno'}`,
+      `*Notas:* ${data.notes || 'Ninguna'}`,
+      `*Código Promo:* ${data.promoCode || 'No'}`,
+      confirmationLink // Se añade el enlace de confirmación (estará vacío si no hay teléfono)
+    ];
+    const whatsappMessage = encodeURIComponent(messageParts.join('\n'));
+    const restaurantPhone = '34600411309';
+    const whatsappURL = `https://wa.me/${restaurantPhone}?text=${whatsappMessage}`;
+
+    // Abrir WhatsApp en una nueva pestaña
+    window.open(whatsappURL, '_blank');
+    addMessageToChat('✅ ¡Perfecto! Se está abriendo WhatsApp para que envíes la reserva. Solo pulsa "Enviar".', 'bot');
+    btn.disabled = false;
+    wrap.remove();
   });
-}
-async function submitReservation(reservation){
-  const resp=await fetch('/.netlify/functions/reservations',{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(reservation)
-  });
-  const data=await resp.json(); if(!resp.ok) throw new Error(data.error||'Reservation failed'); return data;
-}
-async function queueReservation(reservation){
-  const db=await openReservationDB(); const tx=db.transaction(['reservations'],'readwrite');
-  tx.objectStore('reservations').put(reservation);
-  if('serviceWorker'in navigator && 'SyncManager'in window){ const reg=await navigator.serviceWorker.ready; await reg.sync.register('reservation-sync'); }
-}
-function openReservationDB(){
-  return new Promise((resolve,reject)=>{
-    const req=indexedDB.open('xativabot-db',1);
-    req.onupgradeneeded=(ev)=>{ const db=ev.target.result; if(!db.objectStoreNames.contains('reservations')) db.createObjectStore('reservations',{keyPath:'id'}); };
-    req.onsuccess=(ev)=>resolve(ev.target.result); req.onerror=(ev)=>reject(ev.target.error);
-  });
+
+
 }
 
 // ===== TTS =====
@@ -782,7 +856,7 @@ function pickVoiceFor(lang){
   const wanted=lang.toLowerCase(), primary=wanted.slice(0,2);
   let v=availableVoices.find(v=>v.lang?.toLowerCase()===wanted) || availableVoices.find(v=>v.lang?.toLowerCase().startsWith(primary));
   if (v) return v;
-  const fallbacks = primary==='ca'?['es','en']: primary==='es'?['en']:['es'];
+  const fallbacks = primary==='ca'?['es','en']: primary==='es'?['en']: primary==='fr'?['en']:['es'];
   for(const fb of fallbacks){ const m=availableVoices.find(v=>v.lang?.toLowerCase().startsWith(fb)); if(m) return m; }
   return availableVoices[0]||null;
 }
@@ -802,11 +876,16 @@ async function speakText(text){
 function changeLanguage(lang){
   currentLanguage = lang;
   document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
+  // Cambiar placeholder del input
   userInput.placeholder = userInput.getAttribute('data-'+lang) || userInput.placeholder;
+  // Cambiar texto de los chips
+  document.querySelectorAll('.chip').forEach(chip=>{
+    if(chip.getAttribute('data-'+lang)) chip.textContent = chip.getAttribute('data-'+lang);
+  });
   if (recognition) recognition.lang = getLangCode(lang);
   reply(I18N[currentLanguage].ask_allergies);
 }
-function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES'})[lang] || 'en-US'; }
+function getLangCode(lang){ return ({en:'en-US', es:'es-ES', ca:'ca-ES', fr:'fr-FR'})[lang] || 'en-US'; }
 function isMobileDevice(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
 
 // =======================
@@ -958,7 +1037,7 @@ function gmLine(r0,c0,r1,c1){
   if(!(dr===0 || dc===0 || Math.abs(r1-r0)===Math.abs(c1-c0))){
     const ar=Math.abs(r1-r0), ac=Math.abs(c1-c0);
     if(ar>ac){ c1 = c0 + (r1>r0? ar : -ar)*Math.sign(c1-c0 || 1); }
-    else     { r1 = r0 + (c1>c0? ac : -ac)*Math.sign(r1-r0 || 1); }
+    else     { r1 = r0 + (c1>r0? ac : -ac)*Math.sign(r1-c0 || 1); }
   }
   const DR=Math.sign(r1-r0), DC=Math.sign(c1-c0);
   const out=[]; let r=r0,c=c0; out.push({r,c});

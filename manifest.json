@@ -2,33 +2,33 @@
   "name": "XativaBot - Your Personal Chef Assistant",
   "short_name": "XativaBot",
   "description": "AI-powered chef assistant for Xativa restaurants with voice interaction",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#F9F9F9",
   "theme_color": "#8B0000",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/images/icon-192x192.png",
+      "src": "images/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/images/icon-192x192-maskable.png",
+      "src": "images/icon-192x192-maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/images/icon-512x512.png",
+      "src": "images/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/images/icon-512x512-maskable.png",
+      "src": "images/icon-512x512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -39,20 +39,20 @@
       "name": "Make Reservation",
       "short_name": "Reserve",
       "description": "Quickly make a restaurant reservation",
-      "url": "/index.html?action=reserve",
-      "icons": [{ "src": "/images/reserve-icon.png", "sizes": "96x96" }]
+      "url": "index.html?action=reserve",
+      "icons": [{ "src": "images/reserve-icon.png", "sizes": "96x96" }]
     },
     {
       "name": "View Menu",
       "short_name": "Menu",
       "description": "Browse our restaurant menu",
-      "url": "/index.html?action=menu",
-      "icons": [{ "src": "/images/menu-icon.png", "sizes": "96x96" }]
+      "url": "index.html?action=menu",
+      "icons": [{ "src": "images/menu-icon.png", "sizes": "96x96" }]
     }
   ],
   "screenshots": [
-    { "src": "/images/screenshot1.jpg", "sizes": "1280x720", "type": "image/jpeg" },
-    { "src": "/images/screenshot2.jpg", "sizes": "1280x720", "type": "image/jpeg" }
+    { "src": "images/screenshot1.jpg", "sizes": "1280x720", "type": "image/jpeg" },
+    { "src": "images/screenshot2.jpg", "sizes": "1280x720", "type": "image/jpeg" }
   ],
   "categories": ["food", "lifestyle", "restaurants"],
   "lang": "es",

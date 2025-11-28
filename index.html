@@ -9,9 +9,9 @@
   <title>XativaBot - Your Personal Chef Assistant</title>
 
   <link rel="stylesheet" href="styles.css" />
-  <link rel="manifest" href="/manifest.json?v=3" />
-  <link rel="icon" type="image/png" href="/images/icon-192x192.png" />
-  <link rel="apple-touch-icon" href="/images/apple-touch-icon-180.png" />
+  <link rel="manifest" href="manifest.json?v=3" />
+  <link rel="icon" type="image/png" href="images/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="images/apple-touch-icon-180.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
@@ -30,15 +30,7 @@
             <option value="en">English</option>
             <option value="es" selected>Español</option>
             <option value="ca">Català</option>
-          </select>
-        </div>
-        <div class="region-selector">
-          <select id="region-select" aria-label="Region">
-            <option value="">España (nacional)</option>
-            <option value="ES-VC">Comunitat Valenciana</option>
-            <option value="ES-AN">Andalucía</option>
-            <option value="ES-CN">Canarias</option>
-            <option value="ES-GA">Galicia</option>
+            <option value="fr">Français</option>
           </select>
         </div>
       </div>
@@ -54,44 +46,38 @@
           <p class="chef-title"
              data-en="Executive Chef"
              data-es="Chef Ejecutivo"
-             data-ca="Xef Executiu">Chef Ejecutivo</p>
+             data-ca="Xef Executiu"
+             data-fr="Chef Exécutif">Chef Ejecutivo</p>
         </div>
       </div>
 
       <div class="chat-messages" id="chat-messages">
-        <div class="message bot-message">
-          <p class="welcome-message"
-             data-en="Welcome to Xativa Restaurants! I'm AlexBot, your personal chef assistant. How can I help you today?"
-             data-es="¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?"
-             data-ca="Benvingut als Restaurants Xativa! Sóc AlexBot, el teu assistent de xef personal. Com puc ajudar-te avui?">
-             ¡Bienvenido a Restaurantes Xativa! Soy AlexBot, tu asistente de chef personal. ¿Cómo puedo ayudarte hoy?
-          </p>
-        </div>
+        <!-- Mensaje de bienvenida eliminado para evitar duplicados -->
       </div>
 
       <div class="suggestion-chips">
-        <button class="chip" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú">
+        <button class="chip" data-en="Menu recommendations" data-es="Recomendaciones del menú" data-ca="Recomanacions del menú" data-fr="Recommandations du menu">
           Recomendaciones del menú
         </button>
 
-        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials">
+        <button class="chip" data-intent="allergy" data-en="Special dietary needs" data-es="Necesidades dietéticas especiales" data-ca="Necessitats dietètiques especials" data-fr="Besoins diététiques spéciaux">
           Necesidades dietéticas especiales
         </button>
 
-        <button class="chip" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva">
+        <button class="chip" data-en="Make a reservation" data-es="Hacer una reserva" data-ca="Fer una reserva" data-fr="Faire une réservation">
           Hacer una reserva
         </button>
 
-        <button class="chip" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants">
+        <button class="chip" data-en="Restaurant locations" data-es="Ubicaciones de restaurantes" data-ca="Ubicacions de restaurants" data-fr="Emplacements des restaurants">
           Ubicaciones de restaurantes
         </button>
 
-        <!-- NUEVO: enlace al juego (nombre de archivo EXACTO) -->
         <a class="chip"
-           href="culinary.game.html"
+           href="xativa-game.html"
            data-en="Culinary word search"
            data-es="Juego culinario"
-           data-ca="Joc culinari">
+           data-ca="Joc culinari"
+           data-fr="Jeu culinaire">
            Juego culinario
         </a>
       </div>
@@ -101,7 +87,8 @@
                   placeholder="Escribe tu mensaje..."
                   data-en="Type your message..."
                   data-es="Escribe tu mensaje..."
-                  data-ca="Escriu el teu missatge..."></textarea>
+                  data-ca="Escriu el teu missatge..."
+                  data-fr="Écrivez votre message..."></textarea>
 
         <div class="input-actions">
           <button id="voice-input-btn" class="voice-btn" aria-label="Voice input">
@@ -123,19 +110,19 @@
 
     <div class="voice-indicator" id="voice-indicator">
       <div class="voice-waves"><span></span><span></span><span></span><span></span><span></span></div>
-      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant...">Escuchando...</p>
+      <p class="listening-text" data-en="Listening..." data-es="Escuchando..." data-ca="Escoltant..." data-fr="Écoute...">Escuchando...</p>
     </div>
   </div>
 
   <footer class="app-footer">
-    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats.">Todos los derechos reservados.</span></p>
+    <p>© 2023 Xativa Restaurants. <span data-en="All rights reserved." data-es="Todos los derechos reservados." data-ca="Tots els drets reservats." data-fr="Tous droits réservés.">Todos los derechos reservados.</span></p>
   </footer>
 
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('sw.js')
           .then(reg => console.log('Service worker registered!', reg))
           .catch(err => console.log('Service worker registration failed:', err));
       });

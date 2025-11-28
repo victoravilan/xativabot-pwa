@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras Gastronómica</title>
+    <style>
+        :root {
+            --primary-color: #8B0000; /* Granate/Vino tinto */
+            --secondary-color: #6d0019; /* Vino tinto más oscuro */
+            --accent-color: #27ae60;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --light-text: #ffffff;
+            --gold: #ffd700;
+            --light-gold: #fff3e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffebeb 100%);
+            color: var(--dark-text);
+            min-height: 100vh;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            color: var(--light-text);
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.2);
+        }
+        
+        h1 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--gold);
+            border-radius: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        
+        .game-container {
+            background: white;
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(139, 0, 0, 0.15);
+            margin-bottom: 30px;
+            width: 100%;
+            border: 3px solid var(--primary-color);
+        }
+        
+        .instructions {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            color: var(--dark-text);
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .grid-container {
+            overflow-x: auto;
+            margin: 0 auto;
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            background: #fffaf8;
+            border-radius: 15px;
+            border: 2px dashed #f8d7da;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 3px;
+            background: #fff5f5;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #f0e6e6;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-family: 'Courier New', Courier, monospace;
+            position: relative;
+            z-index: 1;
+            touch-action: none;
+        }
+        
+        .cell:hover:not(.found) {
+            background: var(--light-gold);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(139, 0, 0, 0.1);
+        }
+        
+        .cell.selected {
+            background: #ffe0b2;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+            font-weight: 900;
+            z-index: 10;
+        }
+        
+        .cell.found {
+            background: var(--accent-color);
+            color: var(--light-text);
+            border-color: #1e8449;
+            cursor: default;
+            transform: none;
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+            animation: foundAnimation 0.5s ease-out;
+            z-index: 5;
+        }
+        
+        @keyframes foundAnimation {
+            0% { transform: scale(1); background: #ffe0b2; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); background: var(--accent-color); }
+        }
+        
+        .word-list-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #fdf2f2 0%, #fceaea 100%);
+            border-radius: 20px;
+            border: 2px solid #f8d7da;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .word-list-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .word-list-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--gold);
+        }
+        
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .word-item {
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #8B0000 0%, #6d0019 100%);
+            color: white;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            text-align: center;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 6px rgba(139, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .word-item:hover:not(.found) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(139, 0, 0, 0.3);
+            background: linear-gradient(135deg, #a52a2a 0%, #8B0000 100%);
+        }
+        
+        .word-item.found {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            text-decoration: line-through;
+            opacity: 0.9;
+            transform: none;
+            box-shadow: 0 3px 6px rgba(39, 174, 96, 0.2);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 25px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalAppear 0.4s ease-out;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            font-size: 32px;
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: bold;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .close-modal:hover {
+            background: #e74c3c;
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+        }
+        
+        .modal h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--gold);
+            text-align: center;
+            font-size: 1.8rem;
+            position: relative;
+        }
+        
+        .modal h2::before {
+            content: '🍷';
+            position: absolute;
+            left: -10px;
+            top: -5px;
+            font-size: 1.5rem;
+        }
+        
+        .modal h2::after {
+            content: '🍷';
+            position: absolute;
+            right: -10px;
+            top: -5px;
+            font-size: 1.5rem;
+        }
+        
+        .modal p {
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-align: justify;
+            font-size: 1.1rem;
+            text-indent: 30px;
+        }
+        
+        .modal p::first-letter {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            float: left;
+            line-height: 1;
+            padding-right: 8px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            margin: 25px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #ccc;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--gold));
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(139, 0, 0, 0.2);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #f8d7da;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .cell {
+                width: 38px;
+                height: 38px;
+                font-size: 0.95rem;
+                padding: 4px;
+            }
+            
+            .word-item {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .cell {
+                width: 42px;
+                height: 42px;
+                font-size: 1rem;
+                border-radius: 6px;
+                padding: 6px;
+            }
+            
+            .game-container {
+                padding: 15px;
+                border-radius: 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .instructions {
+                padding: 15px;
+                font-size: 0.95rem;
+            }
+            
+            .modal-content {
+                padding: 25px 20px;
+                border-radius: 20px;
+            }
+            
+            .close-modal {
+                width: 40px;
+                height: 40px;
+                font-size: 26px;
+                top: 15px;
+                right: 15px;
+            }
+            
+            .modal h2 {
+                font-size: 1.5rem;
+            }
+            
+            .word-list {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+        
+        /* Animaciones adicionales */
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(0); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .celebration {
+            animation: celebration 1s ease-out;
+        }
+        
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .selection-path {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2;
+            background: rgba(255, 204, 178, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 data-es="Sopa de Letras Gastronómica" data-en="Culinary Word Search" data-ca="Sopa de Lletres Gastronòmica" data-fr="Mots Cachés Culinaires">Sopa de Letras Gastronómica</h1>
+            <p class="subtitle" data-es="Descubre ingredientes, especias y vegetales de todo el mundo" data-en="Discover ingredients, spices and vegetables from around the world" data-ca="Descobreix ingredients, espècies i vegetals d'arreu del món" data-fr="Découvrez des ingrédients, des épices et des légumes du monde entier">Descubre ingredientes, especias y vegetales de todo el mundo</p>
+        </header>
+        
+        <div class="game-container">
+            <div class="instructions" data-es="🍷 Cómo jugar: Toca y arrastra suavemente para seleccionar palabras. Las palabras pueden estar en cualquier dirección. ¡La selección es más sensible y fácil! Al encontrar una palabra, descubrirás su fascinante historia gastronómica." data-en="🍷 How to play: Tap and drag gently to select words. Words can be in any direction. Each word found reveals its culinary story!" data-ca="🍷 Com jugar: Toca i arrossega suaument per seleccionar paraules. Les paraules poden estar en qualsevol direcció. Cada paraula descoberta revela la seva història culinària!" data-fr="🍷 Comment jouer : Touchez et faites glisser doucement pour sélectionner des mots. Les mots peuvent être dans toutes les directions. Chaque mot trouvé révèle son histoire culinaire !">🍷 Cómo jugar: Toca y arrastra suavemente para seleccionar palabras. Las palabras pueden estar en cualquier dirección. ¡La selección es más sensible y fácil! Al encontrar una palabra, descubrirás su fascinante historia gastronómica.</div>
+            
+            <div class="game-stats-historic-container">
+                <div class="stats-panel redesigned-stats">
+                    <div class="stats-flex">
+                        <div class="stat-block">
+                            <div id="foundCount" class="stat-value">0</div>
+                            <div class="stat-label"><span class="stat-icon">🔍</span> Encontradas</div>
+                        </div>
+                        <div class="stat-block">
+                            <div id="totalCount" class="stat-value">0</div>
+                            <div class="stat-label"><span class="stat-icon">📋</span> Totales</div>
+                        </div>
+                        <div class="stat-block">
+                            <div id="percentage" class="stat-value">0%</div>
+                            <div class="stat-label"><span class="stat-icon">🏆</span> Completado</div>
+                        </div>
+                        <div class="stat-block">
+                            <div id="timer" class="stat-value">00:00</div>
+                            <div class="stat-label"><span class="stat-icon">⏱️</span> Tiempo</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+                <div class="historic-panel" id="historicPanel">
+                    <div class="historic-title"><span>📈</span> Histórico de partidas</div>
+                    <div class="historic-list" id="historicList"></div>
+                </div>
+            </div>
+
+            <div class="grid-container">
+              <div class="grid" id="wordSearchGrid"></div>
+            </div>
+            <div class="word-list-container">
+              <h3 class="word-list-title">Ingredientes por descubrir</h3>
+              <div class="word-list" id="wordList"></div>
+              <button id="restartGameBtn" style="margin: 20px auto 0; display: block; font-size: 1.1rem; background: #8B0000; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; cursor: pointer;">🔄 Reiniciar juego</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="infoModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <h2 id="modalTitle">Título</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tamaño de la cuadrícula (ajustable)
+        let gridSize = 14; // Puedes cambiar el tamaño según la dificultad
+
+        // Variables globales para selección y eventos
+        let selectedCells = [];
+        let currentDirection = null;
+        let lastCell = null;
+        let selectionPaths = [];
+        let isDragging = false;
+        let touchStartCell = null;
+
+        // Persistencia de histórico y estadísticas
+        let gameHistory = JSON.parse(localStorage.getItem('xativaGameHistory') || '[]');
+        let gameStartTime = null;
+
+        // 52 palabras con historias (puedes ampliar los textos de cada una)
+        const allWordsInfo = [
+            { key: "CANELA", title: "Canela", content: "La canela, obtenida de la corteza del árbol Cinnamomum, fue tan valiosa en la antigüedad que se usaba como moneda de cambio..." },
+            { key: "COMINO", title: "Comino", content: "El comino, con su aroma terroso y cálido, ha sido una de las especias más utilizadas desde hace más de 5.000 años..." },
+            { key: "CILANTRO", title: "Cilantro", content: "El cilantro es una de las pocas plantas que genéticamente divide a la humanidad..." },
+            { key: "JENGIBRE", title: "Jengibre", content: "El jengibre ha sido venerado durante milenios no solo como especia sino como medicina..." },
+            { key: "TOMATE", title: "Tomate", content: "Cuando los conquistadores españoles llevaron el tomate de América a Europa en el siglo XVI..." },
+            { key: "BERENJENA", title: "Berenjena", content: "Originaria de la India, donde ha sido cultivada por más de 4.000 años..." },
+            { key: "QUINOA", title: "Quinoa", content: "La quinoa fue considerada sagrada por los incas..." },
+            { key: "CURCUMA", title: "Cúrcuma", content: "Conocida como 'azafrán de la India', la cúrcuma ha sido utilizada durante 4.000 años..." },
+            { key: "AGUACATE", title: "Aguacate", content: "Los aztecas llamaban al aguacate 'ahuacatl', que significa 'testículo'..." },
+            { key: "ALBAHACA", title: "Albahaca", content: "Su nombre deriva del griego 'basilikón', que significa 'real'..." },
+            { key: "ROMERO", title: "Romero", content: "Desde la antigua Grecia, el romero ha estado asociado con la memoria..." },
+            { key: "VAINILLA", title: "Vainilla", content: "La vainilla es el segundo condimento más caro del mundo, después del azafrán..." },
+            { key: "NUEZMOSCADA", title: "Nuez Moscada", content: "En el siglo XVII, la nuez moscada era tan valiosa que los holandeses cambiaron la isla de Manhattan..." },
+            { key: "PIMIENTA", title: "Pimienta", content: "Durante la Edad Media, la pimienta era tan valiosa que se usaba como moneda de cambio..." },
+            { key: "CLAVO", title: "Clavo", content: "Los clavos de olor, originarios de las Islas Molucas en Indonesia..." },
+            { key: "ANIS", title: "Anís", content: "El anís es una de las especias más antiguas, utilizada por egipcios y romanos..." },
+            { key: "CARDAMOMO", title: "Cardamomo", content: "El cardamomo es conocido como la reina de las especias en la India..." },
+            { key: "ENELDO", title: "Eneldo", content: "El eneldo era apreciado por griegos y romanos por su aroma y propiedades medicinales..." },
+            { key: "ESTRAGON", title: "Estragón", content: "El estragón es esencial en la cocina francesa, especialmente en salsas..." },
+            { key: "HINOJO", title: "Hinojo", content: "El hinojo era considerado sagrado por los antiguos griegos..." },
+            { key: "LAUREL", title: "Laurel", content: "El laurel simbolizaba la victoria en la antigua Grecia y Roma..." },
+            { key: "LIMON", title: "Limón", content: "El limón llegó a Europa a través de los árabes en la Edad Media..." },
+            { key: "MENTA", title: "Menta", content: "La menta es famosa por su frescura y su uso en infusiones y postres..." },
+            { key: "MOSTAZA", title: "Mostaza", content: "La mostaza ha sido cultivada desde hace más de 3.000 años..." },
+            { key: "OREGANO", title: "Orégano", content: "El orégano es fundamental en la cocina mediterránea..." },
+            { key: "PAPRIKA", title: "Paprika", content: "La paprika es un pilar en la cocina húngara y española..." },
+            { key: "PEREJIL", title: "Perejil", content: "El perejil es una de las hierbas más universales..." },
+            { key: "SALVIA", title: "Salvia", content: "La salvia era considerada una planta sagrada por los romanos..." },
+            { key: "SESAMO", title: "Sésamo", content: "El sésamo es una de las semillas más antiguas cultivadas por el hombre..." },
+            { key: "TOMILLO", title: "Tomillo", content: "El tomillo era usado por los egipcios en embalsamamientos..." },
+            { key: "ALMENDRA", title: "Almendra", content: "La almendra es originaria de Asia Central y se extendió por el Mediterráneo..." },
+            { key: "AVENA", title: "Avena", content: "La avena es un cereal muy nutritivo, base de muchos desayunos..." },
+            { key: "CACAO", title: "Cacao", content: "El cacao era considerado el alimento de los dioses por los mayas..." },
+            { key: "CAFE", title: "Café", content: "El café es la bebida estimulante más popular del mundo..." },
+            { key: "CEBADA", title: "Cebada", content: "La cebada fue uno de los primeros cereales domesticados..." },
+            { key: "CHIA", title: "Chía", content: "La chía era un alimento básico para los aztecas y mayas..." },
+            { key: "COCO", title: "Coco", content: "El coco es conocido como el árbol de la vida en muchas culturas..." },
+            { key: "DATIL", title: "Dátil", content: "El dátil es un fruto muy energético, básico en el Medio Oriente..." },
+            { key: "FRAMBUESA", title: "Frambuesa", content: "La frambuesa es apreciada desde la antigüedad por su sabor y color..." },
+            { key: "GARBANZO", title: "Garbanzo", content: "El garbanzo es esencial en la dieta mediterránea y de Oriente Medio..." },
+            { key: "LENTEJA", title: "Lenteja", content: "La lenteja es uno de los cultivos más antiguos del mundo..." },
+            { key: "MAIZ", title: "Maíz", content: "El maíz fue domesticado en México hace más de 7.000 años..." },
+            { key: "MANI", title: "Maní", content: "El maní es originario de Sudamérica y es rico en proteínas..." },
+            { key: "NARANJA", title: "Naranja", content: "La naranja es uno de los cítricos más consumidos en el mundo..." },
+            { key: "PISTACHO", title: "Pistacho", content: "El pistacho es originario de Asia Central y se cultiva desde hace milenios..." },
+            { key: "PLATANO", title: "Plátano", content: "El plátano es una de las frutas tropicales más populares..." },
+            { key: "SOJA", title: "Soja", content: "La soja es fundamental en la alimentación asiática..." },
+            { key: "TRIGO", title: "Trigo", content: "El trigo es el cereal más cultivado del mundo..." },
+            { key: "UVA", title: "Uva", content: "La uva es la base del vino y ha sido cultivada desde la antigüedad..." },
+            { key: "ZANAHORIA", title: "Zanahoria", content: "La zanahoria era originalmente púrpura antes de popularizarse la variedad naranja..." },
+            { key: "ZAPALLO", title: "Zapallo", content: "El zapallo es una calabaza muy apreciada en Sudamérica..." }
+        ];
+
+        // Selección rotativa de palabras
+        function getRandomWords(n) {
+            const shuffled = allWordsInfo.slice().sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, n);
+        }
+
+        let wordsInfo = {};
+        let currentWords = [];
+        let foundWords = new Set();
+
+        function setupGame() {
+            // Selecciona solo 15 palabras
+            currentWords = getRandomWords(15);
+            wordsInfo = {};
+            currentWords.forEach(w => { wordsInfo[w.key] = { title: w.title, content: w.content }; });
+            foundWords = new Set();
+            gridSize = 15; // Fijo para asegurar espacio
+            createGrid();
+            updateStats();
+            renderWordList();
+            gameStartTime = Date.now();
+            renderHistory();
+        }
+
+        function renderWordList() {
+            const wordList = document.getElementById('wordList');
+            wordList.innerHTML = '';
+            Object.keys(wordsInfo).forEach(word => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item floating';
+                wordItem.textContent = word;
+                wordItem.dataset.word = word;
+                wordItem.addEventListener('click', () => {
+                    if (!foundWords.has(word)) {
+                        hintWord(word);
+                    }
+                });
+                wordList.appendChild(wordItem);
+            });
+            document.getElementById('totalCount').textContent = Object.keys(wordsInfo).length;
+        }
+
+        // Sobrescribe createGrid para usar palabras rotativas
+        function createGrid() {
+            const grid = document.getElementById('wordSearchGrid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            const gridArray = Array(gridSize).fill().map(() => Array(gridSize).fill(''));
+            const words = Object.keys(wordsInfo);
+            for (const word of words) {
+                let placed = false;
+                for (let tries = 0; tries < 100; tries++) {
+                    if (placeWord(word, gridArray)) { placed = true; break; }
+                }
+                if (!placed) { console.warn('No se pudo colocar la palabra:', word); }
+            }
+            // Rellenar huecos con letras aleatorias
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (gridArray[i][j] === '') {
+                        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                        gridArray[i][j] = letters.charAt(Math.floor(Math.random() * letters.length));
+                    }
+                }
+            }
+            // Renderizar celdas
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = gridArray[i][j];
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('mousedown', handleMouseDown);
+                    cell.addEventListener('mouseenter', handleMouseEnter);
+                    cell.addEventListener('mouseup', handleCellClick);
+                    window.addEventListener('mouseup', handleWindowMouseUp);
+                    cell.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    cell.addEventListener('touchmove', handleTouchMove, { passive: false });
+                    cell.addEventListener('touchend', handleTouchEnd);
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // Coloca una palabra en la cuadrícula en una dirección aleatoria (horizontal, vertical, diagonal)
+        function placeWord(word, gridArray) {
+            const directions = [
+                [0, 1],   // derecha
+                [1, 0],   // abajo
+                [1, 1],   // diagonal abajo-derecha
+                [1, -1],  // diagonal abajo-izquierda
+                [0, -1],  // izquierda
+                [-1, 0],  // arriba
+                [-1, -1], // diagonal arriba-izquierda
+                [-1, 1]   // diagonal arriba-derecha
+            ];
+            const size = gridArray.length;
+            const dir = directions[Math.floor(Math.random() * directions.length)];
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const d = directions[Math.floor(Math.random() * directions.length)];
+                const maxRow = d[0] === 1 ? size - word.length : d[0] === -1 ? word.length - 1 : size - 1;
+                const maxCol = d[1] === 1 ? size - word.length : d[1] === -1 ? word.length - 1 : size - 1;
+                const row = d[0] === -1 ? Math.floor(Math.random() * (size - word.length + 1)) + word.length - 1 : Math.floor(Math.random() * (maxRow + 1));
+                const col = d[1] === -1 ? Math.floor(Math.random() * (size - word.length + 1)) + word.length - 1 : Math.floor(Math.random() * (maxCol + 1));
+                let canPlace = true;
+                for (let i = 0; i < word.length; i++) {
+                    const r = row + d[0] * i;
+                    const c = col + d[1] * i;
+                    if (r < 0 || r >= size || c < 0 || c >= size) { canPlace = false; break; }
+                    if (gridArray[r][c] !== '' && gridArray[r][c] !== word[i]) { canPlace = false; break; }
+                }
+                if (canPlace) {
+                    for (let i = 0; i < word.length; i++) {
+                        const r = row + d[0] * i;
+                        const c = col + d[1] * i;
+                        gridArray[r][c] = word[i];
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Manejo de eventos para mouse
+        function handleMouseDown(event) {
+            const cell = event.target;
+            if (cell.classList.contains('found')) return;
+            
+            clearSelection();
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            selectedCells.push({row, col, element: cell});
+            cell.classList.add('selected');
+            isDragging = true;
+            lastCell = {row, col, element: cell};
+        }
+        
+        function handleMouseEnter(event) {
+            if (!isDragging || selectedCells.length === 0) return;
+            
+            const cell = event.target;
+            if (cell.classList.contains('found')) return;
+            
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            // Si es la misma celda, no hacer nada
+            if (lastCell && lastCell.row === row && lastCell.col === col) return;
+            
+            // Si es la primera celda después del inicio
+            if (selectedCells.length === 1) {
+                const startRow = selectedCells[0].row;
+                const startCol = selectedCells[0].col;
+                
+                const dRow = Math.sign(row - startRow);
+                const dCol = Math.sign(col - startCol);
+                
+                if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && (dRow !== 0 || dCol !== 0)) {
+                    currentDirection = [dRow, dCol];
+                    selectedCells.push({row, col, element: cell});
+                    cell.classList.add('selected');
+                    lastCell = {row, col, element: cell};
+                }
+                return;
+            }
+            
+            // Continuar en la misma dirección
+            if (currentDirection) {
+                const expectedRow = lastCell.row + currentDirection[0];
+                const expectedCol = lastCell.col + currentDirection[1];
+                
+                // Permitir cierta tolerancia en la selección
+                if (Math.abs(row - expectedRow) <= 1 && Math.abs(col - expectedCol) <= 1) {
+                    // Encontrar la celda correcta en la dirección
+                    const correctRow = lastCell.row + currentDirection[0];
+                    const correctCol = lastCell.col + currentDirection[1];
+                    
+                    // Verificar si la celda correcta está disponible
+                    const grid = document.getElementById('wordSearchGrid');
+                    const correctCellElement = grid.querySelector(`.cell[data-row="${correctRow}"][data-col="${correctCol}"]`);
+                    
+                    if (correctCellElement && !correctCellElement.classList.contains('found')) {
+                        // Si la celda correcta no está seleccionada, añadirla
+                        if (!selectedCells.some(cell => cell.row === correctRow && cell.col === correctCol)) {
+                            correctCellElement.classList.add('selected');
+                            selectedCells.push({row: correctRow, col: correctCol, element: correctCellElement});
+                            lastCell = {row: correctRow, col: correctCol, element: correctCellElement};
+                        }
+                    } else if (!selectedCells.some(cell => cell.row === row && cell.col === col)) {
+                        // Si la celda correcta no está disponible, usar la celda actual
+                        cell.classList.add('selected');
+                        selectedCells.push({row, col, element: cell});
+                        lastCell = {row, col, element: cell};
+                    }
+                }
+            }
+        }
+        
+        function handleCellClick(event) {
+            if (!isDragging && selectedCells.length === 0) {
+                const cell = event.target;
+                if (cell.classList.contains('found')) return;
+                
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                selectedCells.push({row, col, element: cell});
+                cell.classList.add('selected');
+                
+                // Verificar si se formó una palabra
+                const selectedWord = selectedCells.map(cell => cell.element.textContent).join('');
+                checkWord(selectedWord);
+                clearSelection();
+            }
+        }
+        
+        function handleWindowMouseUp() {
+            if (selectedCells.length > 1) {
+                const selectedWord = selectedCells.map(cell => cell.element.textContent).join('');
+                checkWord(selectedWord);
+            }
+            isDragging = false;
+        }
+        
+        // Manejo táctil para dispositivos móviles - versión mejorada
+        function handleTouchStart(event) {
+            event.preventDefault();
+            const touch = event.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            const cell = element?.closest('.cell');
+            
+            if (!cell || cell.classList.contains('found')) return;
+            
+            clearSelection();
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            selectedCells.push({row, col, element: cell});
+            cell.classList.add('selected');
+            touchStartCell = {row, col, element: cell};
+            lastCell = {row, col, element: cell};
+        }
+        
+        function handleTouchMove(event) {
+            event.preventDefault();
+            if (!touchStartCell) return;
+            
+            const touch = event.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            const cell = element?.closest('.cell');
+            
+            if (!cell || cell.classList.contains('found')) return;
+            
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            // Si es la misma celda, no hacer nada
+            if (lastCell && lastCell.row === row && lastCell.col === col) return;
+            
+            // Si es la primera celda después del inicio
+            if (selectedCells.length === 1) {
+                const startRow = selectedCells[0].row;
+                const startCol = selectedCells[0].col;
+                
+                const dRow = Math.sign(row - startRow);
+                const dCol = Math.sign(col - startCol);
+                
+                if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && (dRow !== 0 || dCol !== 0)) {
+                    currentDirection = [dRow, dCol];
+                    selectedCells.push({row, col, element: cell});
+                    cell.classList.add('selected');
+                    lastCell = {row, col, element: cell};
+                }
+                return;
+            }
+            
+            // Continuar en la misma dirección con tolerancia mejorada
+            if (currentDirection) {
+                const expectedRow = lastCell.row + currentDirection[0];
+                const expectedCol = lastCell.col + currentDirection[1];
+                
+                // Mayor tolerancia para dispositivos táctiles
+                if (Math.abs(row - expectedRow) <= 1 && Math.abs(col - expectedCol) <= 1) {
+                    // Buscar la celda correcta en la dirección
+                    const correctRow = lastCell.row + currentDirection[0];
+                    const correctCol = lastCell.col + currentDirection[1];
+                    
+                    const grid = document.getElementById('wordSearchGrid');
+                    const correctCellElement = grid.querySelector(`.cell[data-row="${correctRow}"][data-col="${correctCol}"]`);
+                    
+                    if (correctCellElement && !correctCellElement.classList.contains('found')) {
+                        // Si la celda correcta no está seleccionada, añadirla
+                        if (!selectedCells.some(cell => cell.row === correctRow && cell.col === correctCol)) {
+                            correctCellElement.classList.add('selected');
+                            selectedCells.push({row: correctRow, col: correctCol, element: correctCellElement});
+                            lastCell = {row: correctRow, col: correctCol, element: correctCellElement};
+                        }
+                    } else if (!selectedCells.some(cell => cell.row === row && cell.col === col)) {
+                        // Si la celda correcta no está disponible, usar la celda actual
+                        cell.classList.add('selected');
+                        selectedCells.push({row, col, element: cell});
+                        lastCell = {row, col, element: cell};
+                    }
+                }
+            }
+        }
+        
+        function handleTouchEnd(event) {
+            event.preventDefault();
+            if (selectedCells.length > 0) {
+                const selectedWord = selectedCells.map(cell => cell.element.textContent).join('');
+                checkWord(selectedWord);
+            }
+            touchStartCell = null;
+        }
+        
+        // Verificar si la palabra seleccionada es válida
+        function checkWord(word) {
+            const words = Object.keys(wordsInfo);
+            
+            // Buscar la palabra exacta o su reverso
+            let foundWord = null;
+            
+            for (const w of words) {
+                if (w === word) {
+                    foundWord = w;
+                    break;
+                }
+                if (w.split('').reverse().join('') === word) {
+                    foundWord = w;
+                    break;
+                }
+            }
+            
+            if (foundWord && !foundWords.has(foundWord)) {
+                // Marcar como encontrada
+                foundWords.add(foundWord);
+                selectedCells.forEach(cell => {
+                    cell.element.classList.add('found');
+                    cell.element.classList.add('celebration');
+                    setTimeout(() => {
+                        cell.element.classList.remove('celebration');
+                    }, 1000);
+                });
+                
+                // Marcar palabra en la lista
+                const wordItems = document.querySelectorAll('.word-item');
+                wordItems.forEach(item => {
+                    if (item.dataset.word === foundWord) {
+                        item.classList.add('found');
+                        item.style.animation = 'none';
+                        setTimeout(() => {
+                            item.style.animation = '';
+                        }, 10);
+                    }
+                });
+                
+                // Mostrar información
+                setTimeout(() => {
+                    showWordInfo(foundWord);
+                }, 500);
+                
+                // Actualizar estadísticas
+                updateStats();
+                
+                // Verificar si se encontraron todas las palabras
+                if (foundWords.size === words.length) {
+                    saveGameToHistory();
+                    renderHistory();
+                    setTimeout(() => {
+                        const modal = document.getElementById('infoModal');
+                        modal.style.display = 'flex';
+                        document.getElementById('modalTitle').innerHTML = '🎉 ¡Felicidades, Maestro Culinario! 🎉';
+                        document.getElementById('modalContent').innerHTML = 
+                            '<p>Has encontrado todos los ingredientes y especias. ¡Tu conocimiento gastronómico es impresionante!</p>' +
+                            '<p>Exploraste la historia de 15 ingredientes fundamentales que han viajado por el mundo, cruzado océanos, inspirado exploraciones y revolucionado cocinas.</p>' +
+                            '<p>¡Gracias por jugar a la Sopa de Letras Gastronómica!</p>';
+                    }, 1000);
+                }
+            } else if (selectedCells.length > 1) {
+                // Si no es una palabra válida, animar con shake
+                selectedCells.forEach(cell => {
+                    cell.element.classList.add('shake');
+                    setTimeout(() => {
+                        cell.element.classList.remove('shake');
+                    }, 500);
+                });
+                setTimeout(clearSelection, 600);
+            } else {
+                setTimeout(clearSelection, 300);
+            }
+        }
+        
+        // Limpiar selección
+        function clearSelection() {
+            selectedCells.forEach(cell => {
+                cell.element.classList.remove('selected');
+            });
+            selectedCells = [];
+            currentDirection = null;
+            lastCell = null;
+            
+            // Eliminar cualquier path de selección
+            selectionPaths.forEach(path => {
+                if (path.parentNode) {
+                    path.parentNode.removeChild(path);
+                }
+            });
+            selectionPaths = [];
+        }
+        
+        // Mostrar información de la palabra
+        function showWordInfo(word) {
+            const modal = document.getElementById('infoModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalTitle.textContent = wordsInfo[word].title;
+            modalContent.innerHTML = `<p>${wordsInfo[word].content}</p>`;
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Dar pista de una palabra
+        function hintWord(word) {
+            // Encontrar la primera letra de la palabra en la cuadrícula
+            const cells = document.querySelectorAll('.cell');
+            for (let cell of cells) {
+                if (cell.textContent === word[0] && !cell.classList.contains('found')) {
+                    cell.classList.add('pulse');
+                    setTimeout(() => {
+                        cell.classList.remove('pulse');
+                    }, 2000);
+                    cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const totalWords = Object.keys(wordsInfo).length;
+            const foundCount = foundWords.size;
+            const percentage = Math.round((foundCount / totalWords) * 100);
+            document.getElementById('foundCount').textContent = foundCount;
+            document.getElementById('totalCount').textContent = totalWords;
+            document.getElementById('percentage').textContent = `${percentage}%`;
+            document.getElementById('progressBar').style.width = `${percentage}%`;
+        }
+
+        // Guardar partida en el histórico
+        function saveGameToHistory() {
+            const totalWords = Object.keys(wordsInfo).length;
+            const foundCount = foundWords.size;
+            const percentage = Math.round((foundCount / totalWords) * 100);
+            const duration = Math.round((Date.now() - gameStartTime) / 1000); // segundos
+            const entry = {
+                date: new Date().toLocaleString(),
+                found: foundCount,
+                total: totalWords,
+                percent: percentage,
+                duration: duration,
+                words: Array.from(foundWords)
+            };
+            gameHistory.push(entry);
+            if (gameHistory.length > 10) gameHistory.shift(); // Máximo 10 partidas
+            localStorage.setItem('xativaGameHistory', JSON.stringify(gameHistory));
+        }
+
+        // Renderizar histórico de partidas
+        function renderHistory() {
+            let historyPanel = document.getElementById('historyPanel');
+            if (!historyPanel) {
+                historyPanel = document.createElement('div');
+                historyPanel.id = 'historyPanel';
+                historyPanel.className = 'history-panel';
+                const container = document.querySelector('.game-container');
+                container.appendChild(historyPanel);
+            }
+            if (!gameHistory.length) {
+                historyPanel.innerHTML = '<div class="history-title">Histórico de partidas</div><div class="history-empty">No hay partidas previas.</div>';
+                return;
+            }
+            let html = '<div class="history-title">\uD83C\uDF72 Histórico de partidas</div>';
+            html += '<table class="history-table"><thead><tr><th>Fecha</th><th>Encontradas</th><th>Totales</th><th>%</th><th>Tiempo</th></tr></thead><tbody>';
+            for (let i = gameHistory.length - 1; i >= 0; i--) {
+                const h = gameHistory[i];
+                html += `<tr><td>${h.date}</td><td>${h.found}</td><td>${h.total}</td><td>${h.percent}%</td><td>${formatDuration(h.duration)}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            historyPanel.innerHTML = html;
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 60) return seconds + 's';
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}m ${s}s`;
+        }
+        
+        // Cerrar modal
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('infoModal').style.display = 'none';
+        });
+        
+        // Cerrar modal al hacer clic fuera del contenido
+        document.getElementById('infoModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.style.display = 'none';
+            }
+        });
+        
+        // Iniciar el juego cuando se carga la página
+        window.addEventListener('DOMContentLoaded', function() {
+            setupGame();
+            // ...ajuste de tamaño y traducción...
+            function adjustGridSize() {
+                const gridContainer = document.querySelector('.grid-container');
+                const containerWidth = gridContainer.clientWidth - 40;
+                const cellSize = Math.min(containerWidth / gridSize, 50);
+                const grid = document.getElementById('wordSearchGrid');
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.style.width = `${cellSize}px`;
+                    cell.style.height = `${cellSize}px`;
+                });
+            }
+            adjustGridSize();
+            window.addEventListener('resize', adjustGridSize);
+        });
+
+        // Añadir traducción dinámica para títulos e instrucciones
+        function updateGameLanguage(lang) {
+            document.querySelectorAll('[data-'+lang+']').forEach(el=>{ el.textContent = el.getAttribute('data-'+lang); });
+        }
+        // Detectar idioma del navegador o usar español por defecto
+        const userLang = (navigator.language||'es').slice(0,2);
+        const supportedLangs = ['es','en','ca','fr'];
+        const lang = supportedLangs.includes(userLang) ? userLang : 'es';
+        updateGameLanguage(lang);
+
+        document.getElementById('restartGameBtn').onclick = () => { setupGame(); };
+    </script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!doctype html>
 <html lang="es">
 <head>
@@ -74,3 +75,81 @@
   </script>
 </body>
 </html>
+=======
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Instalar/Compartir XativaBot</title>
+  <meta name="theme-color" content="#8B0000">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    :root{ --primary:#8B0000; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; margin:0; padding:24px; background:#fafafa; color:#222;}
+    .card{max-width:760px; margin:0 auto; background:#fff; border-radius:16px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.08);}
+    h1{margin:0 0 12px;}
+    p{margin:8px 0 0;}
+    #qrcode{display:flex; align-items:center; justify-content:center; padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:600;}
+    .btn.primary{ background:var(--primary); color:#fff; border-color:var(--primary); }
+    .url{word-break:break-all; font-size:14px; color:#555; margin-left:auto}
+    footer{margin-top:18px; font-size:13px; color:#666;}
+    a.btn-link{ text-decoration:none; }
+    @media (max-width:560px){ .url{flex-basis:100%; margin-left:0} }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Instalar / Compartir XativaBot</h1>
+    <p>1) Escanea el QR desde tu móvil. 2) Al abrir la web, pulsa <strong>“Instalar aplicación”</strong> (Android) o <em>Añadir a pantalla de inicio</em> (iPhone/Safari).</p>
+
+    <div id="qrcode" style="margin:16px 0;"></div>
+
+    <div class="row">
+      <a class="btn a btn-link" href="https://alex-xativa.netlify.app/" target="_blank" rel="noopener">🚀 Abrir la app</a>
+      <button class="btn primary" id="share-btn">🔗 Compartir enlace</button>
+      <button class="btn" id="copy-btn">📋 Copiar enlace</button>
+      <span class="url" id="app-url"></span>
+    </div>
+
+    <footer>
+      <p><strong>iPhone (Safari):</strong> pulsa <em>Compartir</em> → <em>Añadir a pantalla de inicio</em> (no aparece botón “Instalar”).</p>
+      <p><strong>Android (Chrome):</strong> verás “Instalar aplicación” o menú ⋮ → <em>Añadir a pantalla de inicio</em>.</p>
+    </footer>
+  </div>
+
+  <!-- QR Code lib (ligera) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    // URL fija de tu app en Netlify
+    const APP_URL = "https://alex-xativa.netlify.app/";
+
+    document.getElementById('app-url').textContent = APP_URL;
+
+    // Genera QR en canvas
+    const container = document.getElementById('qrcode');
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    QRCode.toCanvas(canvas, APP_URL, { width: 240, margin: 2 }, (err)=>{ if(err) console.error(err); });
+
+    // Web Share (si está disponible)
+    document.getElementById('share-btn').onclick = async () => {
+      if (navigator.share){
+        try { await navigator.share({ title:'XativaBot', text:'Pruébala aquí:', url: APP_URL }); }
+        catch(e){ /* usuario canceló */ }
+      } else {
+        alert('Tu navegador no soporta el compartido nativo. Usa el botón “Copiar enlace”.');
+      }
+    };
+
+    // Copiar al portapapeles
+    document.getElementById('copy-btn').onclick = async () => {
+      try { await navigator.clipboard.writeText(APP_URL); alert('Enlace copiado'); }
+      catch(e){ alert('No se pudo copiar. Copia manualmente: ' + APP_URL); }
+    };
+  </script>
+</body>
+</html>
+>>>>>>> 337b8ebf236036d6c60b58441d582b11fcb9875f
