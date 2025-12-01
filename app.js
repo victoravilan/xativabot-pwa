@@ -277,31 +277,15 @@ function setupEventListeners(){
   userInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSendMessage(); }});
   voiceBtn?.addEventListener('click', toggleVoiceInput);
   languageSelect.addEventListener('change',(e)=> changeLanguage(e.target.value));
-  // Mejorar: solo los chips de tipo button deben disparar intents, los <a> abren el juego
+  // Los chips de tipo <button> disparan intents, los <a> son enlaces normales.
   suggestionChips.forEach(chip=>{
-    if (chip.tagName === 'BUTTON') {
+    if (chip.tagName === 'BUTTON' && chip.dataset.intent) {
       chip.addEventListener('click', ()=>{
-        const intent = chip.dataset.intent || inferIntentFromChipText(chip.textContent || '');
-        if (intent) dispatchIntent(intent);
-        else { userInput.value = chip.textContent; handleSendMessage(); }
+        dispatchIntent(chip.dataset.intent);
       });
     }
   });
   userInput.addEventListener('input',()=>{ userInput.style.height='auto'; userInput.style.height=(userInput.scrollHeight)+'px'; });
-}
-function inferIntentFromChipText(txt){
-  const t = (txt||'').toLowerCase();
-  const sets = {
-    menu: ['menu','menú','carta','recomendaciones','recomanacions'],
-    allergy: ['diet','dietary','alerg','dietéticas','dietètiques','vegano','vegetariano','allergy','restric'],
-    reserve: ['reserve','reservation','reservar','reserva','booking'],
-    locations: ['locations','ubicaciones','ubicacions','direcciones','direccions','address'],
-    game: ['juego','word','sopa','joc','play','puzzle']
-  };
-  for (const [intent, arr] of Object.entries(sets)){
-    if (arr.some(k => t.includes(k))) return intent;
-  }
-  return null;
 }
 
 // ===== Compat =====
