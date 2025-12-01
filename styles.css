@@ -153,6 +153,21 @@ body {
 }
 .welcome-message { font-size: 16px; line-height: 1.55; }
 
+/* Mensaje especial del sistema para instalación */
+.system-message {
+  background: var(--accent-color);
+  color: var(--primary-color);
+  border-color: rgba(139, 0, 0, 0.2);
+  align-self: center;
+  max-width: 90%;
+}
+.install-prompt p { margin-bottom: 12px; }
+.install-prompt .chip {
+  margin-right: 8px;
+  background: var(--primary-color);
+  color: white;
+}
+
 /* Suggestion chips (contraste y centradas) */
 .suggestion-chips {
   display: flex;

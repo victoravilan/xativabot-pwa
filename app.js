@@ -244,6 +244,9 @@ async function initApp(){
   await loadData();
   addMessageToChat(I18N[currentLanguage].welcome, 'bot');
 
+  // Mostrar el prompt de instalación la primera vez
+  setTimeout(showFirstTimeInstallPrompt, 1500);
+
   // escucha mensajes del juego para promo
   window.addEventListener('message', (e)=>{
     if (e?.data?.type === 'xativabot:promo' && e.data.code) {
@@ -834,6 +837,63 @@ function showReservationForm(){
   });
 
 
+}
+
+// ===== Lógica de Instalación PWA =====
+
+function showFirstTimeInstallPrompt() {
+  // No mostrar si ya se ha mostrado antes o si la app ya está en modo standalone
+  if (localStorage.getItem('installPromptShown') === 'true' || window.matchMedia('(display-mode: standalone)').matches) {
+    return;
+  }
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  let installMessageHtml = '';
+
+  if (isIOS) {
+    // Instrucciones para iOS
+    installMessageHtml = `
+      <div class="install-prompt">
+        <p><strong>¿Quieres una experiencia nativa?</strong></p>
+        <p>Para instalar esta app en tu iPhone, pulsa el icono de <strong>Compartir</strong>
+           <svg width="20" height="20" viewBox="0 0 24 24" style="display:inline-block; vertical-align:bottom; margin:0 2px;"><path fill="currentColor" d="M13 4.5V14h-2V4.5l-3.25 3.25L6.34 6.34L12 .69l5.66 5.66l-1.41 1.41L13 4.5zm-1 11.5H4v6h16v-6h-8z"/></svg>
+           y luego selecciona <strong>"Añadir a la pantalla de inicio"</strong>.</p>
+        <button class="chip" onclick="this.parentElement.parentElement.parentElement.remove()">Entendido</button>
+      </div>
+    `;
+  } else if (window.deferredPrompt) {
+    // Botón para Android y Desktop (Chrome/Edge)
+    installMessageHtml = `
+      <div class="install-prompt">
+        <p><strong>¿Quieres una experiencia nativa?</strong></p>
+        <p>Instala la aplicación en tu dispositivo con un solo clic para un acceso más rápido y funciones offline.</p>
+        <button id="trigger-install-btn" class="chip">📲 Instalar App</button>
+        <button class="chip" style="background: #777;" onclick="this.parentElement.parentElement.parentElement.remove()">Ahora no</button>
+      </div>
+    `;
+  } else {
+    // No se puede instalar o el evento no se ha disparado aún
+    return;
+  }
+
+  // Inyectar el mensaje en el chat
+  const div = document.createElement('div');
+  div.classList.add('message', 'bot-message', 'system-message');
+  div.innerHTML = installMessageHtml;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Añadir listener al botón de instalación si existe
+  const triggerInstallBtn = document.getElementById('trigger-install-btn');
+  if (triggerInstallBtn) {
+    triggerInstallBtn.addEventListener('click', () => {
+      installApp(); // Llama a la función global de install.js
+      div.remove(); // Oculta el mensaje después de intentar instalar
+    });
+  }
+
+  localStorage.setItem('installPromptShown', 'true');
 }
 
 // ===== TTS =====
