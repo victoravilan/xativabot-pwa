@@ -402,10 +402,7 @@ function dispatchIntent(intent, payload={}){
   switch(intent){
     case 'greet': reply(I18N[currentLanguage].say_more); break;
     case 'menu': replyMenu(); break;
-    case 'recommend':
-      if(!USER.allergies.length && !USER.preferences.length) startAllergyDialog();
-      else replyRecommendations();
-      break;
+    case 'recommend': replyMenu(); break; // Corregido: Muestra recomendaciones generales directamente.
     case 'allergy': startAllergyDialog(); break;
     case 'lore': replyLore(); break;
     case 'reserve': ensureRestaurantThenForm(); break;
